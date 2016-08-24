@@ -1,11 +1,11 @@
-# laaws-metadata-extractor [![Build Status](https://travis-ci.org/lockss/laaws-metadata-extractor.svg?branch=master)](https://travis-ci.org/lockss/laaws-metadata-extractor)
-The wrapper around the metadata extractor and reporter.
+# laaws-metadata-extractor [![Build Status](https://travis-ci.org/lockss/laaws-mdq.svg?branch=master)](https://travis-ci.org/lockss/laaws-mdq)
+The wrapper around the Metadata Query Service.
 
 ### Clone the repo
-`git clone --recursive https://github.com/lockss/laaws-metadata.git`
+`git clone --recursive https://github.com/lockss/laaws-mdq.git`
 
 ### Set up the TDB tree:
-Edit ./runLaawsMdx and set the TDB_DIR variable properly.
+Edit ./runLaawsMdq and set the TDB_DIR variable properly.
 
 ### Build and install the required LOCKSS daemon jar files:
 run `initBuild`
@@ -13,10 +13,10 @@ run `initBuild`
 ### Build and run:
 `./runLaawsMdx`
 
-The log is at ./laawsmdx.log
+The log is at ./laawsmdq.log
 
 ### Stop:
-`./stopLaawsMdx`
+`./stopLaawsMdq`
 
 ### API is documented at:
 #### localhost:8888/docs/

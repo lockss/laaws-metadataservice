@@ -24,7 +24,7 @@
 #
 if [ -f dpid ] ; then
   kill -9 `cat dpid` && rm -f dpid
-  echo LaawsMdx stopped
+  echo LaawsMdq stopped
 else
-  echo LaawsMdx not running
+  echo LaawsMdq not running
 fi
