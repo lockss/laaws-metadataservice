@@ -22,12 +22,10 @@
 # be used in advertising or otherwise to promote the sale, use or other dealings
 # in this Software without prior written authorization from Stanford University.
 #
-TDB_DIR=tdbxml/prod
-TITLE_DBS="`find ${TDB_DIR} -maxdepth 1 -name \*.xml | sort`"
-PROP_URL_LIST="common.xml ${TITLE_DBS} lockss.txt lockss.opt"
+PROP_URL_LIST="common.xml lockss.txt lockss.opt"
 
 # NB leading space meaningful here
 PROP_ARGS=`echo " " $PROP_URL_LIST | sed 's/ [ ]*/ -p /g'`
 
-mvn clean package exec:java -Dexec.args="$PROP_ARGS" > laawsmdx.log 2>&1 &
+mvn clean package exec:java -Dexec.args="$PROP_ARGS" > laawsmdq.log 2>&1 &
 echo $! > dpid

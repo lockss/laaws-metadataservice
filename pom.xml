@@ -4,10 +4,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.lockss.laaws</groupId>
-    <artifactId>laaws-metadata-extractor</artifactId>
+    <artifactId>laaws-metadata-query</artifactId>
     <packaging>jar</packaging>
     <version>1.0</version>
-    <name>laaws-metadata-extractor</name>
+    <name>laaws-metadata-query</name>
 
     <dependencies>
         <!-- jersey dependencies for server -->
@@ -409,7 +409,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>org.lockss.laaws.mdx.server.LaawsMdxApp</mainClass>
+                    <mainClass>org.lockss.laaws.mdq.server.LaawsMdqApp</mainClass>
                 </configuration>
             </plugin>
             <plugin>

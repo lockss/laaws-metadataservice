@@ -1,0 +1,12 @@
+{
+  "library":"jersey2",
+  "groupId":"org.lockss.laaws",
+  "artifactId":"mdq",
+  "artifactVersion":"1.0.0",
+  "modelPackage":"org.lockss.laaws.mdq.model",
+  "apiPackage":"org.lockss.laaws.mdq.api",
+  "invokerPackage":"org.lockss.laaws.mdq",
+  "hideGenerationTimestamp": true,
+  "title": "Lockss Metadata Query"
+}
+

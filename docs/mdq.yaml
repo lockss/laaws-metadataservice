@@ -1,8 +1,8 @@
 swagger: '2.0'
 info:
-  description: Metadata Extractor for LAAWS
+  description: Metadata Query for LAAWS
   version: 1.0.0
-  title: LAAWS-Metadata Extractor
+  title: LAAWS-Metadata Query
   contact:
     name: 'LOCKSS Support'
     url: 'http://www.lockss.org/'
@@ -11,7 +11,7 @@ info:
     name: 'Modified BSD License'
     url: 'http://www.lockss.org/support/open-source-license/'
 host: 'laaws.lockss.org:443'
-basePath: /mdx
+basePath: /mdq
 tags:
   - name: Default
     description: Default section
