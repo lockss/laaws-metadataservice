@@ -15,474 +15,74 @@ basePath: /mdq
 tags:
   - name: Default
     description: Default section
-  - name: au
-    description: Tasks on AUs
-  - name: job
-    description: Tasks on jobs
+  - name: url
+    description: Tasks that return URLs.
 schemes:
   - https
 paths:
-  /au:
+  /url/openurl:
+    post:
+      tags:
+        - url
+      summary: Performs an OpenURL query.
+      description: Provides the URL that results from performing an OpenURL query.
+      operationId: postOpenUrl
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: params
+          in: body
+          description: The OpenURL parameters.
+          required: true
+          schema:
+            $ref: '#/definitions/openUrlParams'
+      responses:
+        '200':
+          description: The data related to the performed OpenURL query.
+          schema:
+            $ref: '#/definitions/urlInfo'
+  '/url/doi/{doi}':
     get:
       tags:
-        - au
-      summary: Get a list of existing AUs
-      description: Get a list of all existing AUs (no parameters) or a list of the AUs in a page defined by the page index and size
-      operationId: getAu
+        - url
+      summary: Gets the URL for a DOI.
+      description: Provides the access URL for a DOI given the DOI.
+      operationId: getUrlDoi
       consumes: []
       produces:
         - application/json
       parameters:
-        - name: 'page'
-          in: query
-          description: The identifier of the page of AUs to be returned
-          required: false
-          type: integer
-          default: 1
-        - name: 'limit'
-          in: query
-          description: The number of AUs per page
-          required: false
-          type: integer
-          default: 50
-      responses:
-        '200':
-          description: The requested AUs
-          schema:
-            $ref: '#/definitions/auPageInfo'
-        '500':
-            description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-  '/au/{auid}':
-    get:
-      tags:
-        - au
-      summary: Get the metadata stored for an AU
-      description: Get the metadata stored for an AU given the AU identifier
-      operationId: getAuAuid
-      consumes: []
-      produces:
-        - application/json
-      parameters:
-        - name: auid
+        - name: doi
           in: path
-          description: The identifier of the AU for which the metadata is requested
+          description: The DOI for which the access URL is requested.
           required: true
           type: string
       responses:
         '200':
-          description: The metadata of the specified AU
+          description: The access URL for the specified DOI.
           schema:
-            $ref: '#/definitions/auMetadata'
-        '404':
-          description: AU not found
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-    put:
-      tags:
-        - au
-      summary: Reindex the metadata for an AU
-      description: Reindex the metadata for an AU given the AU identifier
-      operationId: putAuAuid
-      consumes: []
-      produces:
-        - application/json
-      parameters:
-        - name: auid
-          in: path
-          description: The identifier of the AU for which the metadata is to be reindexed
-          required: true
-          type: string
-      responses:
-        '202':
-          description: The job created to reindex the AU metadata
-          schema:
-            $ref: '#/definitions/job'
-        '401':
-          description: Unauthorized request
-        '403':
-          description: Forbidden request
-        '404':
-          description: AU not found
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-    delete:
-      tags:
-        - au
-      summary: Delete the metadata stored for an AU
-      description: Delete the metadata stored for an AU given the AU identifier
-      operationId: deleteAuAuid
-      consumes: []
-      produces: 
-        - application/json
-      parameters:
-        - name: auid
-          in: path
-          description: The identifier of the AU for which the metadata is to be deleted
-          required: true
-          type: string
-      responses:
-        '202':
-          description: The job created to delete the AU metadata
-          schema:
-            $ref: '#/definitions/job'
-        '401':
-          description: Unauthorized request
-        '403':
-          description: Forbidden request
-        '404':
-          description: AU not found
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-  '/au/{auid}/job':
-    get:
-      tags:
-        - au
-      summary: Get the job for an AU
-      description: Get the job for an AU given the AU identifier
-      operationId: getAuAuidJob
-      consumes: []
-      produces:
-        - application/json
-      parameters:
-        - name: auid
-          in: path
-          description: The identifier of the AU for which the job is requested
-          required: true
-          type: string
-      responses:
-        '200':
-          description: The job for the AU
-          schema:
-            $ref: '#/definitions/job'
-        '404':
-          description: AU not found
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-  /job:
-    get:
-      tags:
-        - job
-      summary: Get a list of currently active jobs
-      description: Get a list of all currently active jobs (no parameters) or a list of the currently active jobs in a page defined by the page index and size
-      operationId: getJob
-      consumes: []
-      produces:
-        - application/json
-      parameters:
-        - name: 'page'
-          in: query
-          description: The identifier of the page of jobs to be returned
-          required: false
-          type: integer
-          default: 1
-        - name: 'limit'
-          in: query
-          description: The number of jobs per page
-          required: false
-          type: integer
-          default: 50
-      responses:
-        '200':
-          description: The requested jobs
-          schema:
-              $ref: '#/definitions/jobPageInfo'
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-    delete:
-      tags:
-        - job
-      summary: Delete all of the currently queued and active jobs
-      description: Delete all of the currently queued and active jobs
-      operationId: deleteJob
-      consumes: []
-      produces: 
-       - application/json
-      parameters: []
-      responses:
-        '200':
-          description: Jobs were successfully deleted
-        '401':
-          description: Unauthorized request
-        '403':
-          description: Forbidden request
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-  '/job/au/{auid}':
-    get:
-      tags:
-        - job
-      summary: Get the job for an AU
-      description: Get the job for an AU given the AU identifier
-      operationId: getJobAuAuid
-      consumes: []
-      produces:
-        - application/json
-      parameters:
-        - name: auid
-          in: path
-          description: The identifier of the AU for which the job is requested
-          required: true
-          type: string
-      responses:
-        '200':
-          description: The job for the AU
-          schema:
-            $ref: '#/definitions/job'
-        '404':
-          description: AU not found
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-    delete:
-      tags:
-        - job
-      summary: Delete the job for an AU
-      description: Delete the job for an AU given the AU identifier
-      operationId: deleteJobAuAuid
-      consumes: []
-      produces:
-        - application/json
-      parameters:
-        - name: auid
-          in: path
-          description: The identifier of the AU whose job is to be deleted
-          required: true
-          type: string
-      responses:
-        '200':
-          description: The deleted AU job
-          schema:
-            $ref: '#/definitions/job'
-        '401':
-          description: Unauthorized request
-        '403':
-          description: Forbidden request
-        '404':
-          description: AU not found
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-  '/job/{jobid}':
-    get:
-      tags:
-        - job
-      summary: Get a job
-      description: Get a job given the job identifier
-      operationId: getJobJobid
-      consumes: []
-      produces:
-        - application/json
-      parameters:
-        - name: jobid
-          in: path
-          description: The identifier of the requested job
-          required: true
-          type: string
-      responses:
-        '200':
-          description: The status of the requested job
-          schema:
-            $ref: '#/definitions/status'
-        '404':
-          description: Job not found
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-    delete:
-      tags:
-        - job
-      summary: Delete a job
-      description: Delete a job given the job identifier, stopping any current processing, if necessary
-      operationId: deleteJobJobid
-      consumes: []
-      produces:
-        - application/json
-      parameters:
-        - name: jobid
-          in: path
-          description: The identifier of the job to be deleted
-          required: true
-          type: string
-      responses:
-        '200':
-          description: The deleted job
-          schema:
-            $ref: '#/definitions/job'
-        '401':
-          description: Unauthorized request
-        '403':
-          description: Forbidden request
-        '404':
-          description: Job not found.
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
+            $ref: '#/definitions/urlInfo'
 definitions:
-  status:
+  openUrlParams:
+    type: object
+    description: The map of OpenURL query parameters.
+    additionalProperties:
+      type: string
+      description: The value of the parameter for the parameter name.
+  urlInfo:
     type: object
     required:
-      - code
-      - msg
+      - params
+      - url
     properties:
-      code:
-        type: integer
-        format: int32
-        description: The numeric value for the current state.
-      msg:
-        type: string
-        description: A text message defining the current state.
-    description: The existing state of a job.
-  job:
-    type: object
-    required:
-      - au
-      - creationDate
-      - id
-      - status
-    properties:
-      au:
-        $ref: '#/definitions/au'
-      id:
-        type: string
-        description: The identifier of this job.
-      description:
-        type: string
-        description: A description of the task being performed by this job.
-      creationDate:
-        type: string
-        format: date
-        description: The timestamp when this job was created.
-      startDate:
-        type: string
-        format: date
-        description: The timestamp when this job processing started.
-      endDate:
-        type: string
-        format: date
-        description: The timestamp when this job processing ended.
-      status:
-        $ref: '#/definitions/status'
-    description: An asynchronous task to be performed.
-  auMetadata:
-    type: object
-    properties:
-      auMetadataList:
-        type: array
-        description: The metadata for each article in the AU.
-        items:
-          $ref: '#/definitions/articleMetadata'
-    description: The metadata for an AU.
-  au:
-    type: object
-    required:
-      - id
-    properties:
-      id:
-        type: string
-        description: The identifier of this AU.
-      job:
-        type: string
-        description: The identifier of the job associated with this AU.
-      name:
-        type: string
-        description: The name of the AU, for display purposes.
-    description: An Archival Unit.
-  articleMetadata:
-    type: object
-    properties:
-      scalarMap:
+      params:
         type: object
-        description: The map of scalar metadata elements for this article.
+        description: The map of parameters.
         additionalProperties:
           type: string
-          description: The scalar value of the metadata for the key.
-      listMap:
-        type: object
-        description: The map of listed metadata elements for this article.
-        additionalProperties:
-          type: array
-          description: The list value of the metadata for the key.
-          items:
-            type: string
-      mapMap:
-        type: object
-        description: The map of mapped metadata elements for this article.
-        additionalProperties:
-          type: object
-          description: The map value of the metadata for the key.
-          additionalProperties:
-            type: string
-    description: The metadata generated for a single article.
-  auPageInfo:
-    type: object
-    required:
-      - aus
-      - pageInfo
-    properties:
-      aus:
-        type: array
-        description: The AUs displayed in the page.
-        items:
-          $ref: '#/definitions/au'
-      pageInfo:
-        $ref: '#/definitions/pageInfo'
-    description: A display page of AUs.
-  jobPageInfo:
-    type: object
-    required:
-      - jobs
-      - pageInfo
-    properties:
-      jobs:
-        type: array
-        description: The jobs displayed in the page.
-        items:
-          $ref: '#/definitions/job'
-      pageInfo:
-        $ref: '#/definitions/pageInfo'
-    description: A display page of jobs.
-  pageInfo:
-    type: object
-    required:
-      - curLink
-      - currentPage
-      - resultsPerPage
-      - totalCount
-    properties:
-      totalCount:
-        type: integer
-        format: int32
-        description: The total number of elements to be paginated.
-      resultsPerPage:
-        type: integer
-        format: int32
-        description: The number of results per page.
-      currentPage:
-        type: integer
-        format: int32
-        description: The current page number.
-      curLink:
+          description: The value of the parameter for the parameter name.
+      url:
         type: string
-        description: The link to the current page.
-      nextLink:
-        type: string
-        description: The link to the next page.
-    description: The information related to pagination of content.
+        description: The URL.
+    description: The information related to a URL.

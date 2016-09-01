@@ -1,0 +1,11 @@
+cd lockss-daemon
+git checkout snafl-changes
+echo "Building LOCKSS jars...\n"
+ant jar-lockss
+ant jar-plugins
+cd ..
+# make sure we install the missing mvn jars
+# the lockss libs we use
+echo "Installing LOCKSS jars to maven repo...\n"
+mvn install:install-file -Dfile=lockss-daemon/lib/lockss.jar -DpomFile=poms/lockss-2016.pom 
+mvn install:install-file -Dfile=lockss-daemon/lib/lockss-plugins.jar -DpomFile=poms/lockss-plugins-2016.pom
