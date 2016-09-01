@@ -27,5 +27,5 @@ PROP_URL_LIST="common.xml lockss.txt lockss.opt"
 # NB leading space meaningful here
 PROP_ARGS=`echo " " $PROP_URL_LIST | sed 's/ [ ]*/ -p /g'`
 
-mvn clean package exec:java -Dexec.args="$PROP_ARGS" > laawsmdq.log 2>&1 &
+mvn clean package exec:java -Dexec.args="$PROP_ARGS" > logs/laawsmdq.log 2>&1 &
 echo $! > dpid
