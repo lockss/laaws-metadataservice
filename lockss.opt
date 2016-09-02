@@ -113,5 +113,11 @@ org.lockss.log.UrlCacher.level=debug3
 #org.lockss.log.XmlPropertyLoader.level=debug3
 org.lockss.log.WarcExploder.level=debug3
 
-org.lockss.metadataManager.mandatoryFields=publisher;provider
-org.lockss.metadataManager.onDemandMetadataExtractionOnly=true
+org.lockss.openUrlResolver.urlCacheFromWs=true
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.addressLocation=http://localhost:8081/ws/ContentService?wsdl
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.password=lockss-p
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.serviceName=ContentServiceImplService
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.targetNameSpace=http://content.ws.lockss.org/
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.timeoutValue=600
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.userName=lockss-u
+org.lockss.ui.port=8082
