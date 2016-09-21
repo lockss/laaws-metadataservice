@@ -25,52 +25,27 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.model;
+package org.lockss.laaws.mdq.api;
 
-import java.util.Objects;
-import io.swagger.annotations.ApiModel;
-import java.util.HashMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 
 /**
- * The map of OpenURL query parameters.
+ * Base provider of access to the metadata of an AU.
  */
-@ApiModel(description = "The map of OpenURL query parameters.")
-public class OpenUrlParams extends HashMap<String, String>  {
-  private static final long serialVersionUID = -3048777262522360381L;
-
-  @Override
-  public boolean equals(java.lang.Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(super.hashCode());
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("class OpenUrlParams {\n");
-    sb.append("    ").append(toIndentedString(super.toString())).append("\n");
-    sb.append("}");
-    return sb.toString();
-  }
-
+public abstract class AuApiService {
   /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
+   * Provides the metadata stored for an AU given the AU identifier.
+   * 
+   * @param auid
+   *          A String with the AU identifier.
+   * @param securityContext
+   *          A SecurityContext providing access to security related
+   *          information.
+   * @return a Response with any data that needs to be returned to the runtime.
+   * @throws NotFoundException
+   *           if the AU with the given identifier does not exist.
    */
-  private String toIndentedString(java.lang.Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
-  }
+  public abstract Response getAuAuid(String auid,
+      SecurityContext securityContext) throws NotFoundException;
 }

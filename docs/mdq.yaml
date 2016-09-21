@@ -39,11 +39,40 @@ basePath: /mdq
 tags:
   - name: Default
     description: Default section
+  - name: au
+    description: Tasks on AUs
   - name: url
     description: Tasks that return URLs.
 schemes:
   - https
 paths:
+  '/au/{auid}':
+    get:
+      tags:
+        - au
+      summary: Get the metadata stored for an AU
+      description: Get the metadata stored for an AU given the AU identifier
+      operationId: getAuAuid
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: auid
+          in: path
+          description: The identifier of the AU for which the metadata is requested
+          required: true
+          type: string
+      responses:
+        '200':
+          description: The metadata of the specified AU
+          schema:
+            $ref: '#/definitions/auMetadata'
+        '404':
+          description: AU not found
+        '500':
+          description: Internal server error
+        '503':
+          description: Some or all of the system is not available
   /url/openurl:
     post:
       tags:
@@ -88,6 +117,41 @@ paths:
           schema:
             $ref: '#/definitions/urlInfo'
 definitions:
+  auMetadata:
+    type: object
+    properties:
+      auMetadataList:
+        type: array
+        description: The metadata for each article in the AU.
+        items:
+          $ref: '#/definitions/articleMetadata'
+    description: The metadata for an AU.
+  articleMetadata:
+    type: object
+    properties:
+      scalarMap:
+        type: object
+        description: The map of scalar metadata elements for this article.
+        additionalProperties:
+          type: string
+          description: The scalar value of the metadata for the key.
+      listMap:
+        type: object
+        description: The map of listed metadata elements for this article.
+        additionalProperties:
+          type: array
+          description: The list value of the metadata for the key.
+          items:
+            type: string
+      mapMap:
+        type: object
+        description: The map of mapped metadata elements for this article.
+        additionalProperties:
+          type: object
+          description: The map value of the metadata for the key.
+          additionalProperties:
+            type: string
+    description: The metadata generated for a single article.
   openUrlParams:
     type: object
     description: The map of OpenURL query parameters.

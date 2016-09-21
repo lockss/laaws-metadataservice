@@ -33,56 +33,36 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import org.lockss.laaws.mdq.api.factories.UrlApiServiceFactory;
-import org.lockss.laaws.mdq.model.OpenUrlParams;
+import org.lockss.laaws.mdq.api.factories.AuApiServiceFactory;
 
-@Path("/url")
-@Api(value = "/url")
-public class UrlApi  {
-  private final UrlApiService delegate = UrlApiServiceFactory.getUrlApi();
+/**
+ * Provider of access to the metadata of an AU.
+ */
+@Path("/au")
+@Api(value = "/au")
+public class AuApi  {
+  private final AuApiService delegate = AuApiServiceFactory.getAuApi();
 
   /**
-   * Provides the access URL for a DOI given the DOI.
+   * Provides the metadata stored for an AU given the AU identifier.
    * 
-   * @param doi
-   *          A String with the DOI for which the access URL is requested.
+   * @param auid
+   *          A String with the AU identifier.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
    * @return a Response with any data that needs to be returned to the runtime.
-   * @throws ApiException
-   *           if there is a problem obtaining the URL.
+   * @throws NotFoundException
+   *           if the AU with the given identifier does not exist.
    */
   @GET
-  @Path("/doi/{doi}")
-  @Produces({"application/json"})
-  public Response getUrlDoi(
-      @ApiParam(value = "The DOI for which the access URL is requested.",
-      required = true) @PathParam("doi")
-      String doi, @Context SecurityContext securityContext)
-	  throws ApiException {
-    return delegate.getUrlDoi(doi, securityContext);
-  }
-
-  /**
-   * Provides the URL that results from performing an OpenURL query
-   * 
-   * @param params
-   *          An OpenUrlParams with the OpenURL query parameters.
-   * @param securityContext
-   *          A SecurityContext providing access to security related
-   *          information.
-   * @return a Response with any data that needs to be returned to the runtime.
-   * @throws ApiException
-   *           if there is a problem obtaining the URL.
-   */
-  @POST
-  @Path("/openurl")
+  @Path("/{auid}")
   @Produces({ "application/json" })
-  public Response postOpenUrl(
-      @ApiParam(value = "The OpenURL query parameters.", required = true)
-      OpenUrlParams params, @Context SecurityContext securityContext)
-	  throws ApiException {
-    return delegate.postOpenUrl(params, securityContext);
+  public Response getAuAuid(
+      @ApiParam(value =
+      "The identifier of the AU for which the metadata is requested",
+      required=true) @PathParam("auid") String auid,
+      @Context SecurityContext securityContext) throws NotFoundException {
+    return delegate.getAuAuid(auid,securityContext);
   }
 }

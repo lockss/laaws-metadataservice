@@ -27,16 +27,41 @@
  */
 package org.lockss.laaws.mdq.model;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import io.swagger.annotations.ApiModel;
-import java.util.HashMap;
+import io.swagger.annotations.ApiModelProperty;
+import org.lockss.metadata.AuMetadataDetail;
+import org.lockss.metadata.AuMetadataDetail.ArticleMetadataDetail;
 
 /**
- * The map of OpenURL query parameters.
- */
-@ApiModel(description = "The map of OpenURL query parameters.")
-public class OpenUrlParams extends HashMap<String, String>  {
-  private static final long serialVersionUID = -3048777262522360381L;
+ * The metadata for an AU.
+ **/
+@ApiModel(description = "The metadata for an AU.")
+public class AuMetadata   {
+  private List<ArticleMetadata> auMetadataList =
+      new ArrayList<ArticleMetadata>();
+
+  public AuMetadata(AuMetadataDetail auMd) {
+    for (ArticleMetadataDetail articleMd : auMd.getArticles()) {
+      auMetadataList.add(new ArticleMetadata(articleMd));
+    }
+  }
+
+  /**
+   * The metadata for each article in the AU.
+   * 
+   * @return auMetadataList
+   **/
+  @ApiModelProperty(value = "The metadata for each article in the AU.")
+  public List<ArticleMetadata> getAuMetadataList() {
+    return auMetadataList;
+  }
+
+  public void setAuMetadataList(List<ArticleMetadata> auMetadataList) {
+    this.auMetadataList = auMetadataList;
+  }
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -46,19 +71,21 @@ public class OpenUrlParams extends HashMap<String, String>  {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    return true;
+    AuMetadata auMetadata = (AuMetadata) o;
+    return Objects.equals(this.auMetadataList, auMetadata.auMetadataList);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode());
+    return Objects.hash(auMetadataList);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class OpenUrlParams {\n");
-    sb.append("    ").append(toIndentedString(super.toString())).append("\n");
+    sb.append("class AuMetadata {\n");
+    sb.append("    auMetadataList: ").append(toIndentedString(auMetadataList))
+    .append("\n");
     sb.append("}");
     return sb.toString();
   }

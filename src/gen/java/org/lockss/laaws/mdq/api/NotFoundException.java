@@ -25,52 +25,31 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.model;
+package org.lockss.laaws.mdq.api;
 
-import java.util.Objects;
-import io.swagger.annotations.ApiModel;
-import java.util.HashMap;
+public class NotFoundException extends ApiException {
+  private static final long serialVersionUID = -2870841644566221738L;
+  private int code;
 
-/**
- * The map of OpenURL query parameters.
- */
-@ApiModel(description = "The map of OpenURL query parameters.")
-public class OpenUrlParams extends HashMap<String, String>  {
-  private static final long serialVersionUID = -3048777262522360381L;
-
-  @Override
-  public boolean equals(java.lang.Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(super.hashCode());
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("class OpenUrlParams {\n");
-    sb.append("    ").append(toIndentedString(super.toString())).append("\n");
-    sb.append("}");
-    return sb.toString();
+  /**
+   * Constructor.
+   *
+   * @param code
+   *          An int with the exception code.
+   * @param msg
+   *          A String with the exception detail message.
+   */
+  public NotFoundException(int code, String msg) {
+    super(code, msg);
+    this.code = code;
   }
 
   /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
+   * Provides the exception code.
+   *
+   * @return an int with the exception code.
    */
-  private String toIndentedString(java.lang.Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
+  public int getCode() {
+    return code;
   }
 }

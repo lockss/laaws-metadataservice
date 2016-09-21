@@ -25,52 +25,32 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.model;
+package org.lockss.laaws.mdq.client;
 
-import java.util.Objects;
-import io.swagger.annotations.ApiModel;
-import java.util.HashMap;
+import java.net.URLEncoder;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
 
 /**
- * The map of OpenURL query parameters.
+ * Client for the getAuAuid() operation.
  */
-@ApiModel(description = "The map of OpenURL query parameters.")
-public class OpenUrlParams extends HashMap<String, String>  {
-  private static final long serialVersionUID = -3048777262522360381L;
+public class GetAuAuidClient extends BaseClient {
 
-  @Override
-  public boolean equals(java.lang.Object o) {
-    if (this == o) {
-      return true;
+  public static void main(String[] args) throws Exception {
+    for (int i = 0; i < args.length; i++) {
+      System.out.println("arg[" + i + "] = " + args[i]);
     }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
+
+    String encodedAuId = URLEncoder.encode(args[0], "UTF-8");
+    System.out.println("encodedAuId = '" + encodedAuId + "'");
+
+    if (args.length > 0) {
+      WebTarget webTarget = ClientBuilder.newClient().target(baseUri)
+	  .path("au").path(encodedAuId);
+
+      System.out.println(webTarget.request().get(String.class));
+    } else {
+      System.err.println("ERROR: Missing command line argument with auId");
     }
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(super.hashCode());
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("class OpenUrlParams {\n");
-    sb.append("    ").append(toIndentedString(super.toString())).append("\n");
-    sb.append("}");
-    return sb.toString();
-  }
-
-  /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
-   */
-  private String toIndentedString(java.lang.Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
   }
 }
