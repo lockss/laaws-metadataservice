@@ -48,6 +48,14 @@ public class GetAuAuidClient extends BaseClient {
       WebTarget webTarget = ClientBuilder.newClient().target(baseUri)
 	  .path("au").path(encodedAuId);
 
+      if (args.length > 1) {
+        webTarget = webTarget.queryParam(args[0], args[1]);
+
+        if (args.length > 3) {
+          webTarget = webTarget.queryParam(args[2], args[3]);
+        }
+      }
+
       System.out.println(webTarget.request().get(String.class));
     } else {
       System.err.println("ERROR: Missing command line argument with auId");

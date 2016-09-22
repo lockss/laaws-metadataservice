@@ -33,13 +33,13 @@ import java.util.Map;
 import java.util.Objects;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import org.lockss.metadata.AuMetadataDetail.ArticleMetadataDetail;
+import org.lockss.metadata.ItemMetadataDetail;
 
 /**
- * The metadata generated for a single article.
+ * The metadata generated for a single item.
  **/
-@ApiModel(description = "The metadata generated for a single article.")
-public class ArticleMetadata   {
+@ApiModel(description = "The metadata generated for a single item.")
+public class ItemMetadata   {
   private Map<String, String> scalarMap = new HashMap<String, String>();
   private Map<String, List<String>> listMap =
       new HashMap<String, List<String>>();
@@ -47,19 +47,19 @@ public class ArticleMetadata   {
   private Map<String, Map<String, String>> mapMap =
       new HashMap<String, Map<String, String>>();
 
-  public ArticleMetadata(ArticleMetadataDetail articleMd) {
-    scalarMap = articleMd.getScalarMap();
-    listMap = articleMd.getListMap();
-    mapMap = articleMd.getMapMap();
+  public ItemMetadata(ItemMetadataDetail itemMd) {
+    scalarMap = itemMd.getScalarMap();
+    listMap = itemMd.getListMap();
+    mapMap = itemMd.getMapMap();
   }
 
   /**
-   * The map of scalar metadata elements for this article.
+   * The map of scalar metadata elements for this item.
    * 
    * @return scalarMap
    **/
   @ApiModelProperty(value =
-      "The map of scalar metadata elements for this article.")
+      "The map of scalar metadata elements for this item.")
   public Map<String, String> getScalarMap() {
     return scalarMap;
   }
@@ -69,12 +69,12 @@ public class ArticleMetadata   {
   }
 
   /**
-   * The map of listed metadata elements for this article.
+   * The map of listed metadata elements for this item.
    * 
    * @return listMap
    **/
   @ApiModelProperty(value =
-      "The map of listed metadata elements for this article.")
+      "The map of listed metadata elements for this item.")
   public Map<String, List<String>> getListMap() {
     return listMap;
   }
@@ -84,12 +84,12 @@ public class ArticleMetadata   {
   }
 
   /**
-   * The map of mapped metadata elements for this article.
+   * The map of mapped metadata elements for this item.
    * 
    * @return mapMap
    **/
   @ApiModelProperty(value =
-      "The map of mapped metadata elements for this article.")
+      "The map of mapped metadata elements for this item.")
   public Map<String, Map<String, String>> getMapMap() {
     return mapMap;
   }
@@ -106,10 +106,10 @@ public class ArticleMetadata   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ArticleMetadata articleMetadata = (ArticleMetadata) o;
-    return Objects.equals(this.scalarMap, articleMetadata.scalarMap) &&
-        Objects.equals(this.listMap, articleMetadata.listMap) &&
-        Objects.equals(this.mapMap, articleMetadata.mapMap);
+    ItemMetadata itemMetadata = (ItemMetadata) o;
+    return Objects.equals(this.scalarMap, itemMetadata.scalarMap) &&
+        Objects.equals(this.listMap, itemMetadata.listMap) &&
+        Objects.equals(this.mapMap, itemMetadata.mapMap);
   }
 
   @Override
@@ -120,7 +120,7 @@ public class ArticleMetadata   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ArticleMetadata {\n");
+    sb.append("class ItemMetadata {\n");
     sb.append("    scalarMap: ").append(toIndentedString(scalarMap))
     .append("\n");
     sb.append("    listMap: ").append(toIndentedString(listMap)).append("\n");

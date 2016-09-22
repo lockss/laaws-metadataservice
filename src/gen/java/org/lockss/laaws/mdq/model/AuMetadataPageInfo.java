@@ -32,35 +32,36 @@ import java.util.List;
 import java.util.Objects;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import org.lockss.metadata.AuMetadataDetail;
-import org.lockss.metadata.AuMetadataDetail.ArticleMetadataDetail;
 
 /**
- * The metadata for an AU.
- **/
-@ApiModel(description = "The metadata for an AU.")
-public class AuMetadata   {
-  private List<ArticleMetadata> auMetadataList =
-      new ArrayList<ArticleMetadata>();
-
-  public AuMetadata(AuMetadataDetail auMd) {
-    for (ArticleMetadataDetail articleMd : auMd.getArticles()) {
-      auMetadataList.add(new ArticleMetadata(articleMd));
-    }
-  }
+ * The display page of AU metadata.
+ */
+@ApiModel(description = "The display page of AU metadata.")
+public class AuMetadataPageInfo   {
+  private List<ItemMetadata> items = new ArrayList<ItemMetadata>();
+  private PageInfo pageInfo = null;
 
   /**
-   * The metadata for each article in the AU.
+   * The metadata for the AU items in the page.
    * 
-   * @return auMetadataList
+   * @return items
    **/
-  @ApiModelProperty(value = "The metadata for each article in the AU.")
-  public List<ArticleMetadata> getAuMetadataList() {
-    return auMetadataList;
+  @ApiModelProperty(required = true,
+      value = "The metadata for the AU items in the page.")
+  public List<ItemMetadata> getItems() {
+    return items;
   }
 
-  public void setAuMetadataList(List<ArticleMetadata> auMetadataList) {
-    this.auMetadataList = auMetadataList;
+  public void setItems(List<ItemMetadata> items) {
+    this.items = items;
+  }
+
+  public PageInfo getPageInfo() {
+    return pageInfo;
+  }
+
+  public void setPageInfo(PageInfo pageInfo) {
+    this.pageInfo = pageInfo;
   }
 
   @Override
@@ -71,21 +72,22 @@ public class AuMetadata   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AuMetadata auMetadata = (AuMetadata) o;
-    return Objects.equals(this.auMetadataList, auMetadata.auMetadataList);
+    AuMetadataPageInfo auMetadataPageInfo = (AuMetadataPageInfo) o;
+    return Objects.equals(this.items, auMetadataPageInfo.items) &&
+        Objects.equals(this.pageInfo, auMetadataPageInfo.pageInfo);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(auMetadataList);
+    return Objects.hash(items, pageInfo);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AuMetadata {\n");
-    sb.append("    auMetadataList: ").append(toIndentedString(auMetadataList))
-    .append("\n");
+    sb.append("class AuMetadataPageInfo {\n");
+    sb.append("    items: ").append(toIndentedString(items)).append("\n");
+    sb.append("    pageInfo: ").append(toIndentedString(pageInfo)).append("\n");
     sb.append("}");
     return sb.toString();
   }

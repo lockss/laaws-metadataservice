@@ -51,7 +51,7 @@ paths:
       tags:
         - au
       summary: Get the metadata stored for an AU
-      description: Get the metadata stored for an AU given the AU identifier
+      description: Get the full metadata stored for an AU given the AU identifier or a pageful of the metadata defined by the page index and size
       operationId: getAuAuid
       consumes: []
       produces:
@@ -62,11 +62,23 @@ paths:
           description: The identifier of the AU for which the metadata is requested
           required: true
           type: string
+        - name: 'page'
+          in: query
+          description: The identifier of the page of metadata to be returned
+          required: false
+          type: integer
+          default: 1
+        - name: 'limit'
+          in: query
+          description: The number of items per page
+          required: false
+          type: integer
+          default: 50
       responses:
         '200':
           description: The metadata of the specified AU
           schema:
-            $ref: '#/definitions/auMetadata'
+            $ref: '#/definitions/auMetadataPageInfo'
         '404':
           description: AU not found
         '500':
@@ -117,27 +129,32 @@ paths:
           schema:
             $ref: '#/definitions/urlInfo'
 definitions:
-  auMetadata:
+  auMetadataPageInfo:
     type: object
+    required:
+      - items
+      - pageInfo
     properties:
-      auMetadataList:
+      items:
         type: array
-        description: The metadata for each article in the AU.
+        description: The metadata for the AU items in the page.
         items:
-          $ref: '#/definitions/articleMetadata'
-    description: The metadata for an AU.
-  articleMetadata:
+          $ref: '#/definitions/itemMetadata'
+      pageInfo:
+        $ref: '#/definitions/pageInfo'
+    description: The display page of AU metadata.
+  itemMetadata:
     type: object
     properties:
       scalarMap:
         type: object
-        description: The map of scalar metadata elements for this article.
+        description: The map of scalar metadata elements for this item.
         additionalProperties:
           type: string
           description: The scalar value of the metadata for the key.
       listMap:
         type: object
-        description: The map of listed metadata elements for this article.
+        description: The map of listed metadata elements for this item.
         additionalProperties:
           type: array
           description: The list value of the metadata for the key.
@@ -145,13 +162,40 @@ definitions:
             type: string
       mapMap:
         type: object
-        description: The map of mapped metadata elements for this article.
+        description: The map of mapped metadata elements for this item.
         additionalProperties:
           type: object
           description: The map value of the metadata for the key.
           additionalProperties:
             type: string
-    description: The metadata generated for a single article.
+    description: The metadata generated for a single item.
+  pageInfo:
+    type: object
+    required:
+      - curLink
+      - currentPage
+      - resultsPerPage
+      - totalCount
+    properties:
+      totalCount:
+        type: integer
+        format: int32
+        description: The total number of elements to be paginated.
+      resultsPerPage:
+        type: integer
+        format: int32
+        description: The number of results per page.
+      currentPage:
+        type: integer
+        format: int32
+        description: The current page number.
+      curLink:
+        type: string
+        description: The link to the current page.
+      nextLink:
+        type: string
+        description: The link to the next page.
+    description: The information related to pagination of content.
   openUrlParams:
     type: object
     description: The map of OpenURL query parameters.

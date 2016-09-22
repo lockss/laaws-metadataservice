@@ -35,17 +35,25 @@ import javax.ws.rs.core.SecurityContext;
  */
 public abstract class AuApiService {
   /**
-   * Provides the metadata stored for an AU given the AU identifier.
+   * Provides the full metadata stored for an AU given the AU identifier or a
+   * pageful of the metadata defined by the page index and size.
    * 
    * @param auid
    *          A String with the AU identifier.
+   * @param page
+   *          An Integer with the index of the page to be returned.
+   * @param limit
+   *          An Integer with the maximum number of AU metadata items to be
+   *          returned.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
    * @return a Response with any data that needs to be returned to the runtime.
    * @throws NotFoundException
    *           if the AU with the given identifier does not exist.
+   * @throws ApiException
+   *           if there are other problems.
    */
-  public abstract Response getAuAuid(String auid,
-      SecurityContext securityContext) throws NotFoundException;
+  public abstract Response getAuAuid(String auid, Integer page, Integer limit,
+      SecurityContext securityContext) throws NotFoundException, ApiException;
 }
