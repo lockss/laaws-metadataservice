@@ -35,12 +35,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import org.apache.log4j.Logger;
-import org.lockss.app.LockssDaemon;
+import org.lockss.app.LockssApp;
+//import org.lockss.app.LockssDaemon;
 import org.lockss.laaws.mdq.api.*;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.PageInfo;
 import org.lockss.metadata.ItemMetadataDetail;
+import org.lockss.metadata.MetadataManager;
 
 /**
  * Implementation of the base provider of access to the metadata of an AU.
@@ -125,8 +127,11 @@ public class AuApiServiceImpl extends AuApiService {
     result.setPageInfo(pi);
 
     try {
-      List<ItemMetadataDetail> itemDetails = LockssDaemon.getLockssDaemon()
-	  .getMetadataManager().getAuMetadataDetail(auid, page, limit);
+//      List<ItemMetadataDetail> itemDetails = LockssDaemon.getLockssDaemon()
+//	  .getMetadataManager().getAuMetadataDetail(auid, page, limit);
+      List<ItemMetadataDetail> itemDetails = ((MetadataManager)LockssApp
+	  .getManager(MetadataManager.getManagerKey()))
+	  .getAuMetadataDetail(auid, page, limit);
       if (log.isDebugEnabled()) {
 	log.debug("itemDetails.size() = " + itemDetails.size());
 	log.debug("itemDetails = " + itemDetails);
