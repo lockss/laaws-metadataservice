@@ -28,7 +28,6 @@
 package org.lockss.laaws.mdq.client;
 
 import java.net.URLEncoder;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 
 /**
@@ -45,8 +44,8 @@ public class GetUrlDoiClient extends BaseClient {
     System.out.println("encodedDoi = '" + encodedDoi + "'");
 
     if (args.length > 0) {
-      WebTarget webTarget = ClientBuilder.newClient().target(baseUri)
-	  .path("url").path("doi").path(encodedDoi);
+      WebTarget webTarget =
+	  getWebTarget().path("url").path("doi").path(encodedDoi);
 
       System.out.println(webTarget.request().get(String.class));
     } else {

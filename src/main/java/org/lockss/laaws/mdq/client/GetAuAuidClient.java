@@ -28,7 +28,6 @@
 package org.lockss.laaws.mdq.client;
 
 import java.net.URLEncoder;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 
 /**
@@ -45,8 +44,7 @@ public class GetAuAuidClient extends BaseClient {
     System.out.println("encodedAuId = '" + encodedAuId + "'");
 
     if (args.length > 0) {
-      WebTarget webTarget = ClientBuilder.newClient().target(baseUri)
-	  .path("au").path(encodedAuId);
+      WebTarget webTarget = getWebTarget().path("au").path(encodedAuId);
 
       if (args.length > 1) {
         webTarget = webTarget.queryParam(args[0], args[1]);
