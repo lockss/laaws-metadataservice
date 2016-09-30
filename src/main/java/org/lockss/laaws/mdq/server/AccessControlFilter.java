@@ -61,6 +61,8 @@ public class AccessControlFilter implements ContainerRequestFilter {
   public static final String ROLE_ANY = "anyRole";
 
   private static final String forbiddenAccess = "Access blocked for all users.";
+  private static final String noAuthorizationHeader =
+      "No authorization header.";
   private static final String noCredentials = "No userid/password credentials.";
   private static final String badCredentials =
       "Bad userid/password credentials.";
@@ -152,18 +154,78 @@ public class AccessControlFilter implements ContainerRequestFilter {
       permissibleRoles = getPermissibleRoles(methodName, pathSegments);
     }
 
+    // Get the authorization header.
+    String authorizationHeader =
+	requestContext.getHeaderString("authorization");
+    if (log.isDebugEnabled())
+      log.debug("authorizationHeader = " + authorizationHeader);
+
+    // Check whether no authorization header was found.
+    if (authorizationHeader == null) {
+      // Yes: Report the problem.
+      log.info(noAuthorizationHeader);
+
+      requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
+	  .entity(noAuthorizationHeader).build());
+      return;
+    }
+
+    // Get the user credentials in the authorization header.
+    String[] credentials = decodeBasicAuthorizationHeader(authorizationHeader);
+
+    // Check whether no credentials were found.
+    if (credentials == null) {
+      // Yes: Report the problem.
+      log.info(noCredentials);
+
+      requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
+	  .entity(noCredentials).build());
+      return;
+    }
+
+    // Check whether the found credentials are not what was expected.
+    if (credentials.length != 2) {
+      // Yes: Report the problem.
+      log.info(badCredentials);
+      log.info(Arrays.toString(credentials));
+
+      requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
+	  .entity(badCredentials).build());
+      return;
+    }
+
+    if (log.isDebugEnabled()) log.debug("credentials[0] = " + credentials[0]);
+
     // Get the user account.
-    UserAccount userAccount =
-	getUserAccount(requestContext.getHeaderString("authorization"));
+    UserAccount userAccount = LockssDaemon.getLockssDaemon().getAccountManager()
+	.getUser(credentials[0]);
 
     // Check whether no user was found.
     if (userAccount == null) {
       // Yes: Report the problem.
       log.info(noUser);
-      log.info("userAccount = " + userAccount);
 
       requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
-	  .entity(noUser).build());
+	  .entity(badCredentials).build());
+      return;
+    }
+
+    if (log.isDebugEnabled())
+      log.debug("userAccount.getName() = " + userAccount.getName());
+
+    // Verify the user credentials.
+    boolean goodCredentials = userAccount.check(credentials[1]);
+    if (log.isDebugEnabled()) log.debug("goodCredentials = " + goodCredentials);
+
+    // Check whether the user credentials are not good.
+    if (!goodCredentials) {
+      // Yes: Report the problem.
+      log.info(badCredentials);
+      log.info("userAccount.getName() = " + userAccount.getName());
+      log.info("bad credentials = " + Arrays.toString(credentials));
+
+      requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
+	  .entity(badCredentials).build());
       // No: Check whether the user has the role required to execute this
       // operation.
     } else if (isAuthorized(userAccount, permissibleRoles)) {
@@ -177,44 +239,6 @@ public class AccessControlFilter implements ContainerRequestFilter {
       requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
 	  .entity(noRequiredRole).build());
     }
-  }
-
-  /**
-   * Provides the account of the user making the request.
-   * 
-   * @param authorizationHeader
-   *          A String with the Authorization header.
-   * @return a (possibly null) UserAccount with the account of the user making
-   *         the request.
-   */
-  private UserAccount getUserAccount(String authorizationHeader) {
-    if (log.isDebugEnabled())
-      log.debug("authorizationHeader = " + authorizationHeader);
-
-    if (authorizationHeader == null) {
-      return null;
-    }
-
-    String[] credentials = decodeBasicAuthorizationHeader(authorizationHeader);
-
-    if (credentials == null) {
-      log.info(noCredentials);
-      return null;
-    }
-
-    if (credentials.length != 2) {
-      log.info(badCredentials);
-      return null;
-    }
-
-    if (log.isDebugEnabled()) log.debug("credentials[0] = " + credentials[0]);
-
-    // Get the user account.
-    UserAccount userAccount = LockssDaemon.getLockssDaemon().getAccountManager()
-	.getUser(credentials[0]);
-    if (log.isDebugEnabled()) log.debug("userAccount = " + userAccount);
-
-    return userAccount;
   }
 
   /**
@@ -260,9 +284,8 @@ public class AccessControlFilter implements ContainerRequestFilter {
    */
   private boolean isAuthorized(UserAccount userAccount,
       Set<String> permissibleRoles) {
-    if (log.isDebugEnabled()) log.debug("userAccount = " + userAccount);
-
     if (log.isDebugEnabled()) {
+      log.debug("userAccount.getName() = " + userAccount.getName());
       log.debug("userAccount.getRoles() = " + userAccount.getRoles());
       log.debug("userAccount.getRoleSet() = " + userAccount.getRoleSet());
     }
