@@ -35,7 +35,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import org.lockss.laaws.mdq.api.factories.AuApiServiceFactory;
-import org.lockss.laaws.mdq.server.AccessControlFilter;
+import org.lockss.rs.auth.AccessControlFilter;
 
 /**
  * Provider of access to the metadata of an AU.

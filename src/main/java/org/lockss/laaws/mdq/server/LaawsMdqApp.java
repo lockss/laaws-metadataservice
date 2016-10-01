@@ -48,6 +48,7 @@ import org.lockss.config.CurrentConfig;
 import org.lockss.daemon.ResourceUnavailableException;
 import org.lockss.db.DbManager;
 import org.lockss.metadata.MetadataManager;
+import org.lockss.rs.auth.AccessControlFilter;
 import org.lockss.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

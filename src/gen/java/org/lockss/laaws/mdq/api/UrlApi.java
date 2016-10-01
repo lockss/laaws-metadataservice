@@ -36,7 +36,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import org.lockss.laaws.mdq.api.factories.UrlApiServiceFactory;
 import org.lockss.laaws.mdq.model.OpenUrlParams;
-import org.lockss.laaws.mdq.server.AccessControlFilter;
+import org.lockss.rs.auth.AccessControlFilter;
 
 @Path("/url")
 @Api(value = "/url")

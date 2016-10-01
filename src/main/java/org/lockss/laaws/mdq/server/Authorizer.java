@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.ws.rs.core.PathSegment;
+import org.lockss.rs.auth.AccessControlFilter;
 //import org.lockss.servlet.LockssServlet;
 
 /**
