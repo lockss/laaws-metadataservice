@@ -47,10 +47,10 @@ public class UrlInfo {
   }
 
   /**
-   * The parameters that define this URL.
+   * The parameters that define a URL.
    **/
   @ApiModelProperty(required = true,
-      value = "The parameters that define this URL.")
+      value = "The parameters that define a URL.")
   public Map<String, String> getParams() {
     return params;
   }

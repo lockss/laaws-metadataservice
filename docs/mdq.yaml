@@ -45,6 +45,12 @@ tags:
     description: Tasks that return URLs.
 schemes:
   - https
+securityDefinitions:
+  basicAuth:
+    type: basic
+    description: HTTP Basic Authentication. Works over `HTTP` and `HTTPS`
+security:
+  - basicAuth: []
 paths:
   '/au/{auid}':
     get:
@@ -57,7 +63,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - name: auid
+        - name: 'auid'
           in: path
           description: The identifier of the AU for which the metadata is requested
           required: true
@@ -210,7 +216,7 @@ definitions:
     properties:
       params:
         type: object
-        description: The map of parameters.
+        description: The parameters that define a URL.
         additionalProperties:
           type: string
           description: The value of the parameter for the parameter name.

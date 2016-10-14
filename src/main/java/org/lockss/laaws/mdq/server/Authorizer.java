@@ -27,42 +27,63 @@
  */
 package org.lockss.laaws.mdq.server;
 
+//import java.lang.reflect.Method;
 import java.util.HashSet;
-import java.util.List;
+//import java.util.List;
 import java.util.Set;
-import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ResourceInfo;
+//import javax.ws.rs.core.PathSegment;
 import org.lockss.rs.auth.AccessControlFilter;
-//import org.lockss.servlet.LockssServlet;
+//import org.lockss.rs.auth.Roles;
+import org.lockss.util.Logger;
 
 /**
  * Finer-grained role authorization filter for this service.
  */
 public class Authorizer extends AccessControlFilter {
+  private static final Logger log = Logger.getLogger(Authorizer.class);
 
   /**
    * Provides the names of the roles permissible for the user to be able to
    * execute operations of this web service.
    * 
+   * @param resourceInfo
+   *          A ResourceInfo with information about the resource involved.
+   * @param requestContext
+   *          A ContainerRequestContext with the request context.
+   * 
    * @return a Set<String> with the permissible roles.
    */
   @Override
-  protected Set<String> getPermissibleRoles(String method,
-      List<PathSegment> pathSegments) {
+  protected Set<String> getPermissibleRoles(ResourceInfo resourceInfo,
+      ContainerRequestContext requestContext) {
+    final String DEBUG_HEADER = "getPermissibleRoles(): ";
+    if (log.isDebug2()) log.debug2(DEBUG_HEADER + "Invoked.");
 
     Set<String> permissibleRoles = new HashSet<String>();
 
-//    if ("GET".equals(method)) {
+//    Method method = resourceInfo.getResourceMethod();
+//    if (log.isDebug3()) log.debug3(DEBUG_HEADER + "method = " + method);
+//
+//    // Get the request path segments.
+//    List<PathSegment> pathSegments = requestContext.getUriInfo()
+//	.getPathSegments();
+//    if (log.isDebug3())
+//      log.debug3(DEBUG_HEADER + "pathSegments = " + pathSegments);
+//
+//    if ("GET".equals(requestContext.getMethod().toUpperCase())) {
 //      if (pathSegments.size() == 2
 //	  && "au".equals(pathSegments.get(0).getPath().toLowerCase())) {
-//	permissibleRoles.add(LockssServlet.ROLE_CONTENT_ACCESS);
+//	permissibleRoles.add(Roles.ROLE_CONTENT_ACCESS);
 //      } else if (pathSegments.size() == 3
 //	  && "url".equals(pathSegments.get(0).getPath().toLowerCase())
 //	  && "doi".equals(pathSegments.get(1).getPath().toLowerCase())) {
-//	permissibleRoles.add(LockssServlet.ROLE_CONTENT_ACCESS);
+//	permissibleRoles.add(Roles.ROLE_CONTENT_ACCESS);
 //      } else if (pathSegments.size() == 2
 //	  && "url".equals(pathSegments.get(0).getPath().toLowerCase())
 //	  && "openurl".equals(pathSegments.get(1).getPath().toLowerCase())) {
-//	permissibleRoles.add(LockssServlet.ROLE_CONTENT_ACCESS);
+//	permissibleRoles.add(Roles.ROLE_CONTENT_ACCESS);
 //      }
 //    }
 

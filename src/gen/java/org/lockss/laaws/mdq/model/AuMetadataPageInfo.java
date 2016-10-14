@@ -56,6 +56,12 @@ public class AuMetadataPageInfo   {
     this.items = items;
   }
 
+  /**
+   * Get pageInfo
+   * 
+   * @return pageInfo
+   **/
+  @ApiModelProperty(required = true, value = "")
   public PageInfo getPageInfo() {
     return pageInfo;
   }

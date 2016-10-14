@@ -46,7 +46,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.lockss.app.LockssDaemon;
 import org.lockss.config.CurrentConfig;
 import org.lockss.daemon.ResourceUnavailableException;
-import org.lockss.db.DbManager;
+import org.lockss.metadata.MetadataDbManager;
 import org.lockss.metadata.MetadataManager;
 import org.lockss.rs.auth.AccessControlFilter;
 import org.lockss.util.Constants;
@@ -77,7 +77,8 @@ public class LaawsMdqApp extends LockssDaemon {
       // start plugin manager after generic services
       new ManagerDesc(PLUGIN_MANAGER, "org.lockss.plugin.PluginManager"),
       // start database manager before any manager that uses it.
-      new ManagerDesc(DbManager.getManagerKey(), "org.lockss.db.DbManager"),
+      new ManagerDesc(MetadataDbManager.getManagerKey(),
+	  "org.lockss.metadata.MetadataDbManager"),
       // start metadata manager after pluggin manager and database manager.
       new ManagerDesc(MetadataManager.getManagerKey(),
 	  "org.lockss.metadata.MetadataManager"),
