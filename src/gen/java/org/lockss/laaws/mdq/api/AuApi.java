@@ -29,13 +29,14 @@ package org.lockss.laaws.mdq.api;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
-import javax.annotation.security.RolesAllowed;
+import javax.annotation.security.PermitAll;
+//import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import org.lockss.laaws.mdq.api.factories.AuApiServiceFactory;
-import org.lockss.rs.auth.Roles;
+//import org.lockss.rs.auth.Roles;
 
 /**
  * Provider of access to the metadata of an AU.
@@ -68,7 +69,9 @@ public class AuApi  {
   @GET
   @Path("/{auid}")
   @Produces({ "application/json" })
-  @RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
+  // TODO: Fix authentication and authorization.
+  //@RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
+  @PermitAll
   public Response getAuAuid(
       @ApiParam(value =
       "The identifier of the AU for which the metadata is requested",

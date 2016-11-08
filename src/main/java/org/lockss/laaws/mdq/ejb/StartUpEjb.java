@@ -25,28 +25,7 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.client;
+package org.lockss.laaws.mdq.ejb;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import org.jboss.resteasy.client.jaxrs.BasicAuthentication;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-
-/**
- * A base client for all of the LAAWS-MDQ web service operations.
- */
-public class BaseClient {
-  private static final String userName = "lockss-u";
-  private static final String password = "lockss-p";
-
-  private static final String baseUri = "http://localhost:8888";
-
-  protected static WebTarget getWebTarget() {
-    Client client = ClientBuilder.newClient();
-    ResteasyWebTarget webTarget = (ResteasyWebTarget)client.target(baseUri);
-    webTarget.register(new BasicAuthentication(userName, password));
-
-    return webTarget;
-  }
+public interface StartUpEjb {
 }

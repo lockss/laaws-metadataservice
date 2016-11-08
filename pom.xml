@@ -24,44 +24,129 @@ Except as contained in this notice, the name of Stanford University shall not
 be used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from Stanford University.
 --> 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+           http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.lockss.laaws</groupId>
+  <artifactId>laaws-metadata-query</artifactId>
+  <name>LAAWS Metadata Query</name>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>war</packaging>
 
-    <modelVersion>4.0.0</modelVersion>
+  <properties>
+    <version.wildfly.swarm>2016.10.0</version.wildfly.swarm>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <failOnMissingWebXml>false</failOnMissingWebXml>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jetty.version>9.3.7.v20160115</jetty.version>
+        <slf4j-version>1.7.18</slf4j-version>
+    <version.resteasy>3.0.19.Final</version.resteasy>
+  </properties>
 
-    <groupId>org.lockss.laaws</groupId>
-    <artifactId>laaws-metadata-query</artifactId>
-    <packaging>jar</packaging>
-    <version>1.0</version>
-    <name>laaws-metadata-query</name>
-
+  <dependencyManagement>
     <dependencies>
-        <!-- jersey dependencies for server -->
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-server</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.containers</groupId>
-            <artifactId>jersey-container-servlet-core</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-json-jackson</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.ext.rx</groupId>
-            <artifactId>jersey-rx-client-java8</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-multipart</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
+      <dependency>
+        <groupId>org.wildfly.swarm</groupId>
+        <artifactId>bom-all</artifactId>
+        <version>${version.wildfly.swarm}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <finalName>laaws-metadata-query</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.wildfly.swarm</groupId>
+        <artifactId>wildfly-swarm-plugin</artifactId>
+        <version>${version.wildfly.swarm}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>package</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
+                <inherited>true</inherited>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <fork>true</fork>
+                    <compilerArgument>-XDignore.symbol.file</compilerArgument>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.9.1</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/gen/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+  <dependencies>
+    <!-- Java EE 7 dependency -->
+    <dependency>
+      <groupId>javax</groupId>
+      <artifactId>javaee-api</artifactId>
+      <version>7.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- WildFly Swarm Fractions -->
+    <dependency>
+      <groupId>org.wildfly.swarm</groupId>
+      <artifactId>cdi</artifactId>
+    </dependency><dependency>
+      <groupId>org.wildfly.swarm</groupId>
+      <artifactId>swagger-webapp</artifactId>
+    </dependency><dependency>
+      <groupId>org.wildfly.swarm</groupId>
+      <artifactId>ejb</artifactId>
+    </dependency><dependency>
+      <groupId>org.wildfly.swarm</groupId>
+      <artifactId>jaxrs</artifactId>
+    </dependency><dependency>
+      <groupId>org.wildfly.swarm</groupId>
+      <artifactId>undertow</artifactId>
+    </dependency><dependency>
+      <groupId>org.wildfly.swarm</groupId>
+      <artifactId>swagger</artifactId>
+    </dependency><dependency>
+      <groupId>org.wildfly.swarm</groupId>
+      <artifactId>jaxrs-cdi</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-client</artifactId>
+      <version>${version.resteasy}</version>
+      <scope>provided</scope>
+    </dependency>
+
         <!-- jetty dependencies -->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
@@ -78,41 +163,12 @@ in this Software without prior written authorization from Stanford University.
             <artifactId>jetty-util</artifactId>
             <version>${jetty.version}</version>
         </dependency>
-        <!-- swagger -->
-        <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-jersey2-jaxrs</artifactId>
-            <version>${swagger.version}</version>
-        </dependency>
+
         <!-- logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>${slf4j-version}</version>
-        </dependency>
-        <!-- joda time -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-joda</artifactId>
-            <version>2.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>2.9.2</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.9</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.test-framework.providers</groupId>
-            <artifactId>jersey-test-framework-provider-bundle</artifactId>
-            <version>${jersey.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
         </dependency>
 
         <!-- LOCKSS daemon -->
@@ -182,11 +238,6 @@ in this Software without prior written authorization from Stanford University.
             <version>1.3.4</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-bundle</artifactId>
-            <version>2.6.2</version>
-        </dependency>
-        <dependency>
             <groupId>com.googlecode.gettext-commons</groupId>
             <artifactId>gettext-commons</artifactId>
             <version>0.9.8</version>
@@ -215,11 +266,6 @@ in this Software without prior written authorization from Stanford University.
             <groupId>net.sourceforge.javacsv</groupId>
             <artifactId>javacsv</artifactId>
             <version>2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>javax</groupId>
-            <artifactId>javaee-api</artifactId>
-            <version>6.0</version>
         </dependency>
         <dependency>
             <groupId>javatar</groupId>
@@ -338,13 +384,6 @@ in this Software without prior written authorization from Stanford University.
             <version>9.1-901.jdbc4</version>
         </dependency>
         <dependency>
-            <groupId>sun.jdk</groupId>
-            <artifactId>rt.jar</artifactId>
-            <version>1.8</version>
-            <scope>system</scope>
-            <systemPath>${java.home}/lib/rt.jar</systemPath>
-        </dependency>
-        <dependency>
             <groupId>commons-collections</groupId>
             <artifactId>commons-collections</artifactId>
             <version>3.2.2</version>
@@ -387,11 +426,6 @@ in this Software without prior written authorization from Stanford University.
             <version>1990809</version>
         </dependency>
         <dependency>
-            <groupId>org.lockss.thirdparty.org.josql</groupId>
-            <artifactId>JoSQL</artifactId>
-            <version>2.2</version>
-        </dependency>
-        <dependency>
             <groupId>org.lockss.thirdparty.dk.itst.oiosaml</groupId>
             <artifactId>oiosaml-java</artifactId>
             <version>21188-PATCHED</version>
@@ -407,67 +441,4 @@ in this Software without prior written authorization from Stanford University.
             <version>20010119</version>
         </dependency>
     </dependencies>
-
-    <build>
-        <sourceDirectory>src/main/java</sourceDirectory>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
-                <inherited>true</inherited>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <fork>true</fork>
-                    <compilerArgument>-XDignore.symbol.file</compilerArgument>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.4.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <mainClass>org.lockss.laaws.mdq.server.LaawsMdqApp</mainClass>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.9.1</version>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>src/gen/java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-
-    <properties>
-        <java.version>1.8</java.version>
-        <jetty.version>9.3.7.v20160115</jetty.version>
-        <jersey.version>2.22.2</jersey.version>
-        <swagger.version>1.5.7</swagger.version>
-        <version.servlet-api>3.1.0</version.servlet-api>
-        <slf4j-version>1.7.18</slf4j-version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.jrelib>/usr/lib/jvm/default-java/jre/lib</java.jrelib>
-    </properties>
 </project>
