@@ -29,15 +29,14 @@ package org.lockss.laaws.mdq.api;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
-import javax.annotation.security.PermitAll;
-//import javax.annotation.security.RolesAllowed;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import org.lockss.laaws.mdq.api.factories.UrlApiServiceFactory;
 import org.lockss.laaws.mdq.model.OpenUrlParams;
-//import org.lockss.rs.auth.Roles;
+import org.lockss.rs.auth.Roles;
 
 @Path("/url")
 @Api(value = "/url")
@@ -59,9 +58,7 @@ public class UrlApi  {
   @GET
   @Path("/doi/{doi}")
   @Produces({"application/json"})
-  // TODO: Fix authentication and authorization.
-  //@RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
-  @PermitAll
+  @RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
   public Response getUrlDoi(
       @ApiParam(value = "The DOI for which the access URL is requested.",
       required = true) @PathParam("doi")
@@ -85,9 +82,7 @@ public class UrlApi  {
   @POST
   @Path("/openurl")
   @Produces({ "application/json" })
-  // TODO: Fix authentication and authorization.
-  //@RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
-  @PermitAll
+  @RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
   public Response postOpenUrl(
       @ApiParam(value = "The OpenURL query parameters.", required = true)
       OpenUrlParams params, @Context SecurityContext securityContext)
