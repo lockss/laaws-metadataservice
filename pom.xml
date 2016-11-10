@@ -45,6 +45,13 @@ in this Software without prior written authorization from Stanford University.
     <version.resteasy>3.0.19.Final</version.resteasy>
   </properties>
 
+  <repositories>
+    <repository>
+      <id>JBoss repository</id>
+      <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+    </repository>
+  </repositories>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -127,14 +134,38 @@ in this Software without prior written authorization from Stanford University.
       <artifactId>jaxrs-cdi</artifactId>
     </dependency>
 
+    <!-- Clients -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-client</artifactId>
       <version>${version.resteasy}</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxb-provider</artifactId>
+      <version>${version.resteasy}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jackson2-provider</artifactId>
+      <version>${version.resteasy}</version>
+    </dependency>
 
-    <!-- logging -->
+    <dependency>
+      <groupId>xalan</groupId>
+      <artifactId>xalan</artifactId>
+      <version>2.7.1.jbossorg-2</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>xalan</groupId>
+      <artifactId>serializer</artifactId>
+      <version>2.7.1.jbossorg-2</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- Logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
