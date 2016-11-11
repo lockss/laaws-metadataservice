@@ -31,22 +31,28 @@ package org.lockss.laaws.mdq.server;
 import java.util.HashSet;
 //import java.util.List;
 import java.util.Set;
+import javax.annotation.Priority;
+import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.ext.Provider;
 //import javax.ws.rs.core.PathSegment;
 import org.lockss.rs.auth.AccessControlFilter;
 //import org.lockss.rs.auth.Roles;
 import org.lockss.util.Logger;
 
 /**
- * Finer-grained role authorization filter for this service.
+ * Access Control filter for this service.
  */
+@Provider
+@Priority(Priorities.AUTHENTICATION)
 public class Authorizer extends AccessControlFilter {
   private static final Logger log = Logger.getLogger(Authorizer.class);
 
   /**
    * Provides the names of the roles permissible for the user to be able to
-   * execute operations of this web service.
+   * execute operations of this web service when no javax.annotation.security
+   * annotations are specified for web service operations.
    * 
    * @param resourceInfo
    *          A ResourceInfo with information about the resource involved.
