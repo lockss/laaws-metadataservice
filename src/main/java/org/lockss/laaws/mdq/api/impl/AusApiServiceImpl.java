@@ -27,13 +27,11 @@
  */
 package org.lockss.laaws.mdq.api.impl;
 
-import java.net.URI;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriBuilder;
 import org.apache.log4j.Logger;
 import org.lockss.app.LockssApp;
 //import org.lockss.app.LockssDaemon;
@@ -63,6 +61,8 @@ public class AusApiServiceImpl extends AusApiService {
    * @param limit
    *          An Integer with the maximum number of AU metadata items to be
    *          returned.
+   * @param request
+   *          An HttpServletRequest providing access to the incoming request.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
@@ -74,7 +74,8 @@ public class AusApiServiceImpl extends AusApiService {
    */
   @Override
   public Response getAuAuid(String auid, Integer page, Integer limit,
-      SecurityContext securityContext) throws NotFoundException, ApiException {
+      HttpServletRequest request, SecurityContext securityContext)
+	  throws NotFoundException, ApiException {
     if (log.isDebugEnabled()) {
       log.debug("auid = " + auid);
       log.debug("page = " + page);
@@ -83,24 +84,8 @@ public class AusApiServiceImpl extends AusApiService {
 
     PageInfo pi = new PageInfo();
 
-    URI baseUri = UriBuilder.fromUri(System.getProperty("LAAWS_MDX_SERVER_HOST",
-	"http://localhost")).
-	port(Integer.getInteger(System.getProperty("LAAWS_MDX_SERVER_PORT"),
-	    8888)).
-	build();
-
-    String encodedAuId = null;
-
-    try {
-      encodedAuId = URLEncoder.encode(auid, "UTF-8");
-    } catch (Exception e) {
-      String message = "Cannot encode the auid = '" + auid + "'";
-      log.error(message, e);
-      throw new ApiException(1, message + ": " + e.getMessage());
-    }
-
-    String curLink = baseUri + "/aus/" + encodedAuId;
-    String nextLink = baseUri + "/aus/" + encodedAuId;
+    String curLink = request.getRequestURL().toString();
+    String nextLink = curLink;
 
     if (page != null) {
       curLink = curLink + "?page=" + page;

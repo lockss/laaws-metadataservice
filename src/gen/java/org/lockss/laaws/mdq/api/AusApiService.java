@@ -27,6 +27,7 @@
  */
 package org.lockss.laaws.mdq.api;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
@@ -45,6 +46,8 @@ public abstract class AusApiService {
    * @param limit
    *          An Integer with the maximum number of AU metadata items to be
    *          returned.
+   * @param request
+   *          An HttpServletRequest providing access to the incoming request.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
@@ -55,5 +58,6 @@ public abstract class AusApiService {
    *           if there are other problems.
    */
   public abstract Response getAuAuid(String auid, Integer page, Integer limit,
-      SecurityContext securityContext) throws NotFoundException, ApiException;
+      HttpServletRequest request, SecurityContext securityContext)
+	  throws NotFoundException, ApiException;
 }

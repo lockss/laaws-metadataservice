@@ -34,6 +34,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -62,6 +63,8 @@ public class AusApi  {
    * @param limit
    *          An Integer with the maximum number of AU metadata items to be
    *          returned.
+   * @param request
+   *          An HttpServletRequest providing access to the incoming request.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
@@ -97,8 +100,9 @@ public class AusApi  {
       defaultValue="1") @DefaultValue("1") @QueryParam("page") Integer page,
       @ApiParam(value = "The number of items per page", defaultValue="50")
       @DefaultValue("50") @QueryParam("limit") Integer limit,
+      @Context HttpServletRequest request,
       @Context SecurityContext securityContext)
 	  throws NotFoundException, ApiException {
-    return delegate.getAuAuid(auid,page,limit,securityContext);
+    return delegate.getAuAuid(auid,page,limit,request,securityContext);
   }
 }
