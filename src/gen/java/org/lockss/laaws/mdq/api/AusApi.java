@@ -28,22 +28,28 @@
 package org.lockss.laaws.mdq.api;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import org.lockss.laaws.mdq.api.factories.AuApiServiceFactory;
+import org.lockss.laaws.mdq.api.factories.AusApiServiceFactory;
+import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.rs.auth.Roles;
 
 /**
  * Provider of access to the metadata of an AU.
  */
-@Path("/au")
-@Api(value = "/au")
-public class AuApi  {
-  private final AuApiService delegate = AuApiServiceFactory.getAuApi();
+@Path("/aus")
+@Produces({ "application/json" })
+@Api(value = "/aus")
+public class AusApi  {
+  private final AusApiService delegate = AusApiServiceFactory.getAusApi();
 
   /**
    * Provides the full metadata stored for an AU given the AU identifier or a
@@ -68,6 +74,20 @@ public class AuApi  {
   @GET
   @Path("/{auid}")
   @Produces({ "application/json" })
+  @ApiOperation(value = "Get the metadata stored for an AU", notes =
+  "Get the full metadata stored for an AU given the AU identifier or a pageful of the metadata defined by the page index and size",
+  response = AuMetadataPageInfo.class,
+  authorizations = {@Authorization(value = "basicAuth")}, tags={ "aus", })
+  @ApiResponses(value = { 
+      @ApiResponse(code = 200, message = "The metadata of the specified AU",
+	  response = AuMetadataPageInfo.class),
+      @ApiResponse(code = 404, message = "AU not found",
+      response = AuMetadataPageInfo.class),
+      @ApiResponse(code = 500, message = "Internal server error",
+      response = AuMetadataPageInfo.class),
+      @ApiResponse(code = 503,
+      message = "Some or all of the system is not available",
+      response = AuMetadataPageInfo.class) })
   @RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
   public Response getAuAuid(
       @ApiParam(value =

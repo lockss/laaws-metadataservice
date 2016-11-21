@@ -25,31 +25,35 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.client;
+package org.lockss.laaws.mdq.api;
 
-import java.net.URLEncoder;
-import javax.ws.rs.client.WebTarget;
+import io.swagger.jaxrs.config.SwaggerContextService;
+import io.swagger.models.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 
-/**
- * Client for the getUrlDoi() operation.
- */
-public class GetUrlDoiClient extends BaseClient {
+@SuppressWarnings("serial")
+public class Bootstrap extends HttpServlet {
+  @Override
+  public void init(ServletConfig config) throws ServletException {
+    System.out.println("Bootstrap.init(): Invoked.");
+    Info info = new Info()
+      .title("LAAWS Metadata Service")
+      .description("API of Metadata Service for LAAWS")
+      .termsOfService("http://www.lockss.org/terms/")
+      .contact(new Contact()
+        .email("support@lockss.org"))
+      .license(new License()
+        .name("Modified BSD License")
+        .url("http://www.lockss.org/support/open-source-license/"));
 
-  public static void main(String[] args) throws Exception {
-    for (int i = 0; i < args.length; i++) {
-      System.out.println("arg[" + i + "] = " + args[i]);
-    }
+    ServletContext context = config.getServletContext();
+    Swagger swagger = new Swagger().info(info);
 
-    String encodedDoi = URLEncoder.encode(args[0], "UTF-8");
-    System.out.println("encodedDoi = '" + encodedDoi + "'");
-
-    if (args.length > 0) {
-      WebTarget webTarget =
-	  getWebTarget().path("urls").path("doi").path(encodedDoi);
-
-      System.out.println(webTarget.request().get(String.class));
-    } else {
-      System.err.println("ERROR: Missing command line argument with DOI");
-    }
+    new SwaggerContextService().withServletConfig(config)
+    .updateSwagger(swagger);
+    System.out.println("Bootstrap.init(): Done.");
   }
 }

@@ -27,13 +27,13 @@
  */
 package org.lockss.laaws.mdq.api.factories;
 
-import org.lockss.laaws.mdq.api.UrlApiService;
-import org.lockss.laaws.mdq.api.impl.UrlApiServiceImpl;
+import org.lockss.laaws.mdq.api.UrlsApiService;
+import org.lockss.laaws.mdq.api.impl.UrlsApiServiceImpl;
 
-public class UrlApiServiceFactory {
-    private final static UrlApiService service = new UrlApiServiceImpl();
+public class UrlsApiServiceFactory {
+    private final static UrlsApiService service = new UrlsApiServiceImpl();
 
-    public static UrlApiService getUrlApi() {
+    public static UrlsApiService getUrlsApi() {
         return service;
     }
 }

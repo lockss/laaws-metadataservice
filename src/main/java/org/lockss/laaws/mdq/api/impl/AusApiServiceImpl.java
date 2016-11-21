@@ -37,7 +37,9 @@ import javax.ws.rs.core.UriBuilder;
 import org.apache.log4j.Logger;
 import org.lockss.app.LockssApp;
 //import org.lockss.app.LockssDaemon;
-import org.lockss.laaws.mdq.api.*;
+import org.lockss.laaws.mdq.api.AusApiService;
+import org.lockss.laaws.mdq.api.ApiException;
+import org.lockss.laaws.mdq.api.NotFoundException;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.PageInfo;
@@ -47,8 +49,8 @@ import org.lockss.metadata.MetadataManager;
 /**
  * Implementation of the base provider of access to the metadata of an AU.
  */
-public class AuApiServiceImpl extends AuApiService {
-  private static Logger log = Logger.getLogger(AuApiServiceImpl.class);
+public class AusApiServiceImpl extends AusApiService {
+  private static Logger log = Logger.getLogger(AusApiServiceImpl.class);
 
   /**
    * Provides the full metadata stored for an AU given the AU identifier or a
@@ -97,8 +99,8 @@ public class AuApiServiceImpl extends AuApiService {
       throw new ApiException(1, message + ": " + e.getMessage());
     }
 
-    String curLink = baseUri + "/au/" + encodedAuId;
-    String nextLink = baseUri + "/au/" + encodedAuId;
+    String curLink = baseUri + "/aus/" + encodedAuId;
+    String nextLink = baseUri + "/aus/" + encodedAuId;
 
     if (page != null) {
       curLink = curLink + "?page=" + page;

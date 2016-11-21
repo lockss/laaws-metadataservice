@@ -25,44 +25,49 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.api;
+package org.lockss.laaws.mdq;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import org.lockss.laaws.mdq.model.OpenUrlParams;
-
-/**
- * Base provider of access to URLs.
- */
-public abstract class UrlApiService {
+public class StringUtil {
+  /**
+   * Check if the given array contains the given value (with case-insensitive
+   * comparison).
+   *
+   * @param array
+   *          The array
+   * @param value
+   *          The value to search
+   * @return true if the array contains the value
+   */
+  public static boolean containsIgnoreCase(String[] array, String value) {
+    for (String str : array) {
+      if (value == null && str == null) return true;
+      if (value != null && value.equalsIgnoreCase(str)) return true;
+    }
+    return false;
+  }
 
   /**
-   * Provides the access URL for a DOI given the DOI.
-   * 
-   * @param doi
-   *          A String with the DOI for which the access URL is requested.
-   * @param securityContext
-   *          A SecurityContext providing access to security related
-   *          information.
-   * @return a Response with any data that needs to be returned to the runtime.
-   * @throws ApiException
-   *           if there is a problem obtaining the URL.
+   * Join an array of strings with the given separator.
+   * <p>
+   * Note: This might be replaced by utility method from commons-lang or guava
+   * someday if one of those libraries is added as dependency.
+   * </p>
+   *
+   * @param array
+   *          The array of strings
+   * @param separator
+   *          The separator
+   * @return the resulting string
    */
-  public abstract Response getUrlDoi(String doi,
-      SecurityContext securityContext) throws ApiException;
+  public static String join(String[] array, String separator) {
+    int len = array.length;
+    if (len == 0) return "";
 
-  /**
-   * Provides the URL that results from performing an OpenURL query
-   * 
-   * @param params
-   *          An OpenUrlParams with the OpenURL query parameters.
-   * @param securityContext
-   *          A SecurityContext providing access to security related
-   *          information.
-   * @return a Response with any data that needs to be returned to the runtime.
-   * @throws ApiException
-   *           if there is a problem obtaining the URL.
-   */
-  public abstract Response postOpenUrl(OpenUrlParams params,
-      SecurityContext securityContext) throws ApiException;
+    StringBuilder out = new StringBuilder();
+    out.append(array[0]);
+    for (int i = 1; i < len; i++) {
+      out.append(separator).append(array[i]);
+    }
+    return out.toString();
+  }
 }

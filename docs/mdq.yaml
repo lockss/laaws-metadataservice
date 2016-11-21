@@ -24,9 +24,10 @@
 #
 swagger: '2.0'
 info:
-  description: Metadata Query for LAAWS
+  description: API of Metadata Service for LAAWS
   version: 1.0.0
-  title: LAAWS-Metadata Query
+  title: LAAWS Metadata Service API
+  termsOfService: http://www.lockss.org/terms/
   contact:
     name: 'LOCKSS Support'
     url: 'http://www.lockss.org/'
@@ -35,16 +36,18 @@ info:
     name: 'Modified BSD License'
     url: 'http://www.lockss.org/support/open-source-license/'
 host: 'laaws.lockss.org:443'
-basePath: /mdq
+basePath: /
 tags:
   - name: Default
     description: Default section
-  - name: au
+  - name: aus
     description: Tasks on AUs
-  - name: url
+  - name: urls
     description: Tasks that return URLs.
 schemes:
   - https
+produces:
+  - application/json
 securityDefinitions:
   basicAuth:
     type: basic
@@ -52,10 +55,10 @@ securityDefinitions:
 security:
   - basicAuth: []
 paths:
-  '/au/{auid}':
+  '/aus/{auid}':
     get:
       tags:
-        - au
+        - aus
       summary: Get the metadata stored for an AU
       description: Get the full metadata stored for an AU given the AU identifier or a pageful of the metadata defined by the page index and size
       operationId: getAuAuid
@@ -91,10 +94,10 @@ paths:
           description: Internal server error
         '503':
           description: Some or all of the system is not available
-  /url/openurl:
+  /urls/openurl:
     post:
       tags:
-        - url
+        - urls
       summary: Performs an OpenURL query.
       description: Provides the URL that results from performing an OpenURL query.
       operationId: postOpenUrl
@@ -113,10 +116,10 @@ paths:
           description: The data related to the performed OpenURL query.
           schema:
             $ref: '#/definitions/urlInfo'
-  '/url/doi/{doi}':
+  '/urls/doi/{doi}':
     get:
       tags:
-        - url
+        - urls
       summary: Gets the URL for a DOI.
       description: Provides the access URL for a DOI given the DOI.
       operationId: getUrlDoi

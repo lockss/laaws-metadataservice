@@ -28,20 +28,26 @@
 package org.lockss.laaws.mdq.api;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import org.lockss.laaws.mdq.api.factories.UrlApiServiceFactory;
+import org.lockss.laaws.mdq.api.factories.UrlsApiServiceFactory;
 import org.lockss.laaws.mdq.model.OpenUrlParams;
+import org.lockss.laaws.mdq.model.UrlInfo;
 import org.lockss.rs.auth.Roles;
 
-@Path("/url")
-@Api(value = "/url")
-public class UrlApi  {
-  private final UrlApiService delegate = UrlApiServiceFactory.getUrlApi();
+@Path("/urls")
+@Produces({ "application/json" })
+@Api(value = "/urls")
+public class UrlsApi  {
+  private final UrlsApiService delegate = UrlsApiServiceFactory.getUrlsApi();
 
   /**
    * Provides the access URL for a DOI given the DOI.
@@ -58,6 +64,14 @@ public class UrlApi  {
   @GET
   @Path("/doi/{doi}")
   @Produces({"application/json"})
+  @ApiOperation(value = "Gets the URL for a DOI.", notes =
+  "Provides the access URL for a DOI given the DOI.",
+  response = UrlInfo.class,
+  authorizations = {@Authorization(value = "basicAuth")}, tags={ "urls", })
+  @ApiResponses(value = { 
+      @ApiResponse(code = 200,
+	  message = "The access URL for the specified DOI.",
+	  response = UrlInfo.class) })
   @RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
   public Response getUrlDoi(
       @ApiParam(value = "The DOI for which the access URL is requested.",
@@ -82,6 +96,14 @@ public class UrlApi  {
   @POST
   @Path("/openurl")
   @Produces({ "application/json" })
+  @ApiOperation(value = "Performs an OpenURL query.", notes =
+  "Provides the URL that results from performing an OpenURL query.",
+  response = UrlInfo.class,
+  authorizations = {@Authorization(value = "basicAuth")}, tags={ "urls", })
+  @ApiResponses(value = { 
+      @ApiResponse(code = 200,
+	  message = "The data related to the performed OpenURL query.",
+	  response = UrlInfo.class) })
   @RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
   public Response postOpenUrl(
       @ApiParam(value = "The OpenURL query parameters.", required = true)

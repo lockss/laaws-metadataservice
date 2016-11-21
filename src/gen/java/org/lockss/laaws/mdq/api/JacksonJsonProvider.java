@@ -25,15 +25,21 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.api.factories;
+package org.lockss.laaws.mdq.api;
 
-import org.lockss.laaws.mdq.api.AuApiService;
-import org.lockss.laaws.mdq.api.impl.AuApiServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import io.swagger.util.Json;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.ext.Provider;
 
-public class AuApiServiceFactory {
-  private final static AuApiService service = new AuApiServiceImpl();
+@Provider
+@Produces({MediaType.APPLICATION_JSON})
+public class JacksonJsonProvider extends JacksonJaxbJsonProvider {
+    private static ObjectMapper commonMapper = Json.mapper();
 
-  public static AuApiService getAuApi() {
-    return service;
-  }
+    public JacksonJsonProvider() {
+        super.setMapper(commonMapper);
+    }
 }

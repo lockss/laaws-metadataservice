@@ -25,31 +25,35 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.client;
+package org.lockss.laaws.mdq.api;
 
-import java.net.URLEncoder;
-import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 
 /**
- * Client for the getUrlDoi() operation.
+ * Base provider of access to the metadata of an AU.
  */
-public class GetUrlDoiClient extends BaseClient {
-
-  public static void main(String[] args) throws Exception {
-    for (int i = 0; i < args.length; i++) {
-      System.out.println("arg[" + i + "] = " + args[i]);
-    }
-
-    String encodedDoi = URLEncoder.encode(args[0], "UTF-8");
-    System.out.println("encodedDoi = '" + encodedDoi + "'");
-
-    if (args.length > 0) {
-      WebTarget webTarget =
-	  getWebTarget().path("urls").path("doi").path(encodedDoi);
-
-      System.out.println(webTarget.request().get(String.class));
-    } else {
-      System.err.println("ERROR: Missing command line argument with DOI");
-    }
-  }
+public abstract class AusApiService {
+  /**
+   * Provides the full metadata stored for an AU given the AU identifier or a
+   * pageful of the metadata defined by the page index and size.
+   * 
+   * @param auid
+   *          A String with the AU identifier.
+   * @param page
+   *          An Integer with the index of the page to be returned.
+   * @param limit
+   *          An Integer with the maximum number of AU metadata items to be
+   *          returned.
+   * @param securityContext
+   *          A SecurityContext providing access to security related
+   *          information.
+   * @return a Response with any data that needs to be returned to the runtime.
+   * @throws NotFoundException
+   *           if the AU with the given identifier does not exist.
+   * @throws ApiException
+   *           if there are other problems.
+   */
+  public abstract Response getAuAuid(String auid, Integer page, Integer limit,
+      SecurityContext securityContext) throws NotFoundException, ApiException;
 }

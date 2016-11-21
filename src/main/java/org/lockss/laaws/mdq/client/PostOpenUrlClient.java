@@ -55,7 +55,7 @@ public class PostOpenUrlClient extends BaseClient {
     System.out.println("params = '" + params + "'");
 
     if (params.size() > 0) {
-      System.out.println(getWebTarget().path("url").path("openurl").request()
+      System.out.println(getWebTarget().path("urls").path("openurl").request()
 	  .post(Entity.entity(params, MediaType.APPLICATION_JSON_TYPE),
 	      String.class));
     } else {

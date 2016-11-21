@@ -44,7 +44,7 @@ public class GetAuAuidClient extends BaseClient {
     System.out.println("encodedAuId = '" + encodedAuId + "'");
 
     if (args.length > 0) {
-      WebTarget webTarget = getWebTarget().path("au").path(encodedAuId);
+      WebTarget webTarget = getWebTarget().path("aus").path(encodedAuId);
 
       if (args.length > 1) {
         webTarget = webTarget.queryParam(args[0], args[1]);

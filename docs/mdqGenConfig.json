@@ -32,6 +32,6 @@
   "apiPackage":"org.lockss.laaws.mdq.api",
   "invokerPackage":"org.lockss.laaws.mdq",
   "hideGenerationTimestamp": true,
-  "title": "Lockss Metadata Query"
+  "title": "LAAWS Metadata Service"
 }
 
