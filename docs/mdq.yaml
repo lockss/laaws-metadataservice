@@ -99,7 +99,7 @@ paths:
       tags:
         - urls
       summary: Performs an OpenURL query.
-      description: Provides the URL that results from performing an OpenURL query.
+      description: Provides the URLs that result from performing an OpenURL query.
       operationId: postOpenUrl
       consumes: []
       produces:
@@ -120,8 +120,8 @@ paths:
     get:
       tags:
         - urls
-      summary: Gets the URL for a DOI.
-      description: Provides the access URL for a DOI given the DOI.
+      summary: Gets the URLs for a DOI.
+      description: Provides the URLs for a DOI given the DOI.
       operationId: getUrlDoi
       consumes: []
       produces:
@@ -129,12 +129,12 @@ paths:
       parameters:
         - name: doi
           in: path
-          description: The DOI for which the access URL is requested.
+          description: The DOI for which the URLs are requested.
           required: true
           type: string
       responses:
         '200':
-          description: The access URL for the specified DOI.
+          description: The URLs for the specified DOI.
           schema:
             $ref: '#/definitions/urlInfo'
 definitions:
@@ -215,15 +215,17 @@ definitions:
     type: object
     required:
       - params
-      - url
+      - urls
     properties:
       params:
         type: object
-        description: The parameters that define a URL.
+        description: The parameters that define the resulting URLs.
         additionalProperties:
           type: string
           description: The value of the parameter for the parameter name.
-      url:
-        type: string
-        description: The URL.
-    description: The information related to a URL.
+      urls:
+        type: array
+        description: The URLs.
+        items:
+          type: string
+    description: The information related to a resulting list of URLs.

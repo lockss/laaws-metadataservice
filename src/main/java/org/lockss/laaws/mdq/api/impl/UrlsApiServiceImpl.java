@@ -27,12 +27,17 @@
  */
 package org.lockss.laaws.mdq.api.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import org.lockss.app.LockssDaemon;
 import org.lockss.daemon.OpenUrlResolver;
+import org.lockss.daemon.OpenUrlResolver.OpenUrlInfo;
 import org.lockss.laaws.mdq.api.ApiException;
 import org.lockss.laaws.mdq.api.UrlsApiService;
 import org.lockss.laaws.mdq.model.OpenUrlParams;
@@ -110,11 +115,33 @@ public class UrlsApiServiceImpl extends UrlsApiService {
    */
   private UrlInfo resolveOpenUrl(Map<String, String> params) {
     if (log.isDebugEnabled()) log.debug("params = " + params);
-    String url = new OpenUrlResolver(LockssDaemon.getLockssDaemon())
-	  .resolveOpenUrl(params).getResolvedUrl();
-    if (log.isDebugEnabled()) log.debug("url = " + url);
 
-    UrlInfo result = new UrlInfo(params, url);
+    // The unique URLs that result from performing the query.
+    Set<String> urls = new HashSet<String>();
+
+    // Make the query.
+    OpenUrlInfo openUrlInfo =
+	new OpenUrlResolver(LockssDaemon.getLockssDaemon())
+	.resolveOpenUrl(params);
+    if (log.isDebugEnabled()) log.debug("openUrlInfo = " + openUrlInfo);
+
+    // Loop through all the results.
+    Iterator<OpenUrlInfo> iterator = openUrlInfo.iterator();
+
+    while (iterator.hasNext()) {
+      OpenUrlInfo next = iterator.next();
+      if (log.isDebugEnabled()) log.debug("next = " + next);
+
+      String url = next.getResolvedUrl();
+      if (log.isDebugEnabled()) log.debug("url = " + url);
+
+      // Accumulate the resulting unique URLs.
+      urls.add(url);
+    }
+
+    if (log.isDebugEnabled()) log.debug("urls = " + urls);
+
+    UrlInfo result = new UrlInfo(params, new ArrayList<String>(urls));
     if (log.isDebugEnabled()) log.debug("result = " + result);
 
     return result;

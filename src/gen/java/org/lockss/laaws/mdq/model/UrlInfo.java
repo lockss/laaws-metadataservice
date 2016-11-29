@@ -29,28 +29,30 @@ package org.lockss.laaws.mdq.model;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * The information related to a URL.
+ * The information related to a resulting list of URLs.
  **/
-@ApiModel(description = "The information related to a URL.")
+@ApiModel(description = "The information related to a resulting list of URLs.")
 public class UrlInfo {
   private Map<String, String> params = new HashMap<String, String>();
-  private String url = null;
+  private List<String> urls = new ArrayList<String>();
 
-  public UrlInfo(Map<String, String> params, String url) {
+  public UrlInfo(Map<String, String> params, List<String> urls) {
     this.params = params;
-    this.url = url;
+    this.urls = urls;
   }
 
   /**
-   * The parameters that define a URL.
+   * The parameters that define the resulting URLs.
    **/
   @ApiModelProperty(required = true,
-      value = "The parameters that define a URL.")
+      value = "The parameters that define the resulting URLs.")
   public Map<String, String> getParams() {
     return params;
   }
@@ -59,14 +61,15 @@ public class UrlInfo {
   }
 
   /**
-   * The URL.
-  **/
-  @ApiModelProperty(required = true, value = "The URL.")
-  public String getUrl() {
-    return url;
+   * The URLs.
+   **/
+  @ApiModelProperty(required = true, value = "The URLs.")
+  public List<String> getUrls() {
+    return urls;
   }
-  public void setUrl(String url) {
-    this.url = url;
+
+  public void setUrls(List<String> urls) {
+    this.urls = urls;
   }
 
   @Override
@@ -79,12 +82,12 @@ public class UrlInfo {
     }
     UrlInfo urlInfo = (UrlInfo) o;
     return Objects.equals(params, urlInfo.params) &&
-        Objects.equals(url, urlInfo.url);
+	Objects.equals(this.urls, urlInfo.urls);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(params, url);
+    return Objects.hash(params, urls);
   }
 
   @Override
@@ -93,7 +96,7 @@ public class UrlInfo {
     sb.append("class UrlInfo {\n");
     
     sb.append("    params: ").append(toIndentedString(params)).append("\n");
-    sb.append("    url: ").append(toIndentedString(url)).append("\n");
+    sb.append("    urls: ").append(toIndentedString(urls)).append("\n");
     sb.append("}");
     return sb.toString();
   }

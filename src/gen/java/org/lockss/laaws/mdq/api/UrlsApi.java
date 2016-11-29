@@ -50,31 +50,31 @@ public class UrlsApi  {
   private final UrlsApiService delegate = UrlsApiServiceFactory.getUrlsApi();
 
   /**
-   * Provides the access URL for a DOI given the DOI.
+   * Provides the URLs for a DOI given the DOI.
    * 
    * @param doi
-   *          A String with the DOI for which the access URL is requested.
+   *          A String with the DOI for which the URLs are requested.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
    * @return a Response with any data that needs to be returned to the runtime.
    * @throws ApiException
-   *           if there is a problem obtaining the URL.
+   *           if there is a problem obtaining the URLs.
    */
   @GET
   @Path("/doi/{doi}")
   @Produces({"application/json"})
-  @ApiOperation(value = "Gets the URL for a DOI.", notes =
-  "Provides the access URL for a DOI given the DOI.",
+  @ApiOperation(value = "Gets the URLs for a DOI.", notes =
+  "Provides the URLs for a DOI given the DOI.",
   response = UrlInfo.class,
   authorizations = {@Authorization(value = "basicAuth")}, tags={ "urls", })
   @ApiResponses(value = { 
       @ApiResponse(code = 200,
-	  message = "The access URL for the specified DOI.",
+	  message = "The URLs for the specified DOI.",
 	  response = UrlInfo.class) })
   @RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
   public Response getUrlDoi(
-      @ApiParam(value = "The DOI for which the access URL is requested.",
+      @ApiParam(value = "The DOI for which the URLs are requested.",
       required = true) @PathParam("doi")
       String doi, @Context SecurityContext securityContext)
 	  throws ApiException {
@@ -82,7 +82,7 @@ public class UrlsApi  {
   }
 
   /**
-   * Provides the URL that results from performing an OpenURL query
+   * Provides the URLs that result from performing an OpenURL query
    * 
    * @param params
    *          An OpenUrlParams with the OpenURL query parameters.
@@ -91,13 +91,13 @@ public class UrlsApi  {
    *          information.
    * @return a Response with any data that needs to be returned to the runtime.
    * @throws ApiException
-   *           if there is a problem obtaining the URL.
+   *           if there is a problem obtaining the URLs.
    */
   @POST
   @Path("/openurl")
   @Produces({ "application/json" })
   @ApiOperation(value = "Performs an OpenURL query.", notes =
-  "Provides the URL that results from performing an OpenURL query.",
+  "Provides the URLs that result from performing an OpenURL query.",
   response = UrlInfo.class,
   authorizations = {@Authorization(value = "basicAuth")}, tags={ "urls", })
   @ApiResponses(value = { 

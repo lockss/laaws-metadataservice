@@ -37,22 +37,22 @@ import org.lockss.laaws.mdq.model.OpenUrlParams;
 public abstract class UrlsApiService {
 
   /**
-   * Provides the access URL for a DOI given the DOI.
+   * Provides the URLs for a DOI given the DOI.
    * 
    * @param doi
-   *          A String with the DOI for which the access URL is requested.
+   *          A String with the DOI for which the URLs are requested.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
    * @return a Response with any data that needs to be returned to the runtime.
    * @throws ApiException
-   *           if there is a problem obtaining the URL.
+   *           if there is a problem obtaining the URLs.
    */
   public abstract Response getUrlDoi(String doi,
       SecurityContext securityContext) throws ApiException;
 
   /**
-   * Provides the URL that results from performing an OpenURL query
+   * Provides the URLs that result from performing an OpenURL query
    * 
    * @param params
    *          An OpenUrlParams with the OpenURL query parameters.
@@ -61,7 +61,7 @@ public abstract class UrlsApiService {
    *          information.
    * @return a Response with any data that needs to be returned to the runtime.
    * @throws ApiException
-   *           if there is a problem obtaining the URL.
+   *           if there is a problem obtaining the URLs.
    */
   public abstract Response postOpenUrl(OpenUrlParams params,
       SecurityContext securityContext) throws ApiException;
