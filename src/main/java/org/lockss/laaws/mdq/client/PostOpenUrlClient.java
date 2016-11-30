@@ -30,6 +30,7 @@ package org.lockss.laaws.mdq.client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import org.lockss.laaws.mdq.model.OpenUrlParams;
+import org.lockss.laaws.mdq.model.UrlInfo;
 
 /**
  * Client for the postOpenUrl() operation.
@@ -55,9 +56,10 @@ public class PostOpenUrlClient extends BaseClient {
     System.out.println("params = '" + params + "'");
 
     if (params.size() > 0) {
-      System.out.println(getWebTarget().path("urls").path("openurl").request()
+      UrlInfo result = getWebTarget().path("urls").path("openurl").request()
 	  .post(Entity.entity(params, MediaType.APPLICATION_JSON_TYPE),
-	      String.class));
+	      UrlInfo.class);
+      System.out.println("result = " + result);
     } else {
       System.err.println("ERROR: Missing command line argument(s) "
 	  + "with OpenURL query parameter(s)");

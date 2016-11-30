@@ -28,7 +28,7 @@
 package org.lockss.laaws.mdq.client;
 
 import java.net.URLEncoder;
-import javax.ws.rs.client.WebTarget;
+import org.lockss.laaws.mdq.model.UrlInfo;
 
 /**
  * Client for the getUrlDoi() operation.
@@ -44,10 +44,9 @@ public class GetUrlDoiClient extends BaseClient {
     System.out.println("encodedDoi = '" + encodedDoi + "'");
 
     if (args.length > 0) {
-      WebTarget webTarget =
-	  getWebTarget().path("urls").path("doi").path(encodedDoi);
-
-      System.out.println(webTarget.request().get(String.class));
+      UrlInfo result = getWebTarget().path("urls").path("doi").path(encodedDoi)
+	  .request().get(UrlInfo.class);
+      System.out.println("result = " + result);
     } else {
       System.err.println("ERROR: Missing command line argument with DOI");
     }

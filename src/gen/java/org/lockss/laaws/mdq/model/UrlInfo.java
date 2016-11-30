@@ -43,6 +43,22 @@ public class UrlInfo {
   private Map<String, String> params = new HashMap<String, String>();
   private List<String> urls = new ArrayList<String>();
 
+  /**
+   * Default constructor.
+   */
+  public UrlInfo() {
+
+  }
+
+  /**
+   * Full constructor.
+   * 
+   * @param params
+   *          A Map<String, String> with the query parameters that define the
+   *          resulting URLs.
+   * @param urls
+   *          A List<String> with the URLs.
+   */
   public UrlInfo(Map<String, String> params, List<String> urls) {
     this.params = params;
     this.urls = urls;

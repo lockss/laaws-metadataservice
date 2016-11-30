@@ -47,6 +47,19 @@ public class ItemMetadata   {
   private Map<String, Map<String, String>> mapMap =
       new HashMap<String, Map<String, String>>();
 
+  /**
+   * Default constructor.
+   */
+  public ItemMetadata() {
+
+  }
+
+  /**
+   * Full constructor.
+   * 
+   * @param itemMd
+   *          An ItemMetadataDetail with the item metadata.
+   */
   public ItemMetadata(ItemMetadataDetail itemMd) {
     scalarMap = itemMd.getScalarMap();
     listMap = itemMd.getListMap();

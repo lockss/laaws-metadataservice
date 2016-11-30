@@ -29,6 +29,7 @@ package org.lockss.laaws.mdq.client;
 
 import java.net.URLEncoder;
 import javax.ws.rs.client.WebTarget;
+import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 
 /**
  * Client for the getAuAuid() operation.
@@ -54,7 +55,9 @@ public class GetAuAuidClient extends BaseClient {
         }
       }
 
-      System.out.println(webTarget.request().get(String.class));
+      AuMetadataPageInfo result =
+	  webTarget.request().get(AuMetadataPageInfo.class);
+      System.out.println("result = " + result);
     } else {
       System.err.println("ERROR: Missing command line argument with auId");
     }
