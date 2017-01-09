@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
 all rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -38,6 +38,11 @@ run `initBuild`
 ### Build and run:
 `./runLaawsMdq`
 
+This will listen to port 8888. To use, for example, port 8889, instead, either
+edit the value of $service_port in ./runLaawsMdq or run:
+
+`./runLaawsMdq 8889`
+
 The log is at ./laawsmdq.log
 
 ### Stop:
@@ -45,3 +50,19 @@ The log is at ./laawsmdq.log
 
 ### API is documented at:
 #### localhost:8888/docs/
+
+### Getting Archival Unit contents from a web service, not the repository
+In ./lockss.opt add the following option:
+
+org.lockss.openUrlResolver.urlCacheFromWs=true
+
+To specify the properties of the web service used to get an indication of
+wheter a URL is cached or not, in ./lockss.opt add the following options with
+the appropriate values:
+
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.addressLocation=http://localhost:8081/ws/ContentService?wsdl
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.password=the-correct-password
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.serviceName=ContentServiceImplService
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.targetNameSpace=http://content.ws.lockss.org/
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.timeoutValue=600
+org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.userName=the-correct-user
