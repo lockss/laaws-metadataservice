@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,7 +27,6 @@
  */
 package org.lockss.laaws.mdq.api.impl;
 
-import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
@@ -41,7 +40,6 @@ import org.lockss.laaws.mdq.api.NotFoundException;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.PageInfo;
-import org.lockss.metadata.ItemMetadataDetail;
 import org.lockss.metadata.MetadataManager;
 
 /**
@@ -49,6 +47,39 @@ import org.lockss.metadata.MetadataManager;
  */
 public class AusApiServiceImpl extends AusApiService {
   private static Logger log = Logger.getLogger(AusApiServiceImpl.class);
+
+  /**
+   * Deletes the metadata stored for an AU given the AU identifier.
+   * 
+   * @param auid
+   *          A String with the AU identifier.
+   * @param securityContext
+   *          A SecurityContext providing access to security related
+   *          information.
+   * @return a Response with any data that needs to be returned to the runtime.
+   * @throws NotFoundException
+   *           if the AU with the given identifier does not exist.
+   */
+  @Override
+  public Response deleteAuAuid(String auid, SecurityContext securityContext)
+      throws NotFoundException {
+    if (log.isDebugEnabled()) log.debug("auid = " + auid);
+
+    try {
+      Integer count = getMetadataManager().deleteAuMetadataItems(auid);
+      if (log.isDebugEnabled()) log.debug("count = " + count);
+
+      return Response.ok().entity(count).build();
+    } catch (IllegalArgumentException iae) {
+      String message = "No Archival Unit found for auid = '" + auid + "'";
+      log.error(message);
+      return Response.status(404).entity(message).type("text/plain").build();
+    } catch (Exception e) {
+      String message = "Cannot deleteAuAuid() for auid = '" + auid + "'";
+      log.error(message, e);
+      throw new NotFoundException(3, message + ": " + e.getMessage());
+    }
+  }
 
   /**
    * Provides the full metadata stored for an AU given the AU identifier or a
@@ -114,23 +145,12 @@ public class AusApiServiceImpl extends AusApiService {
     result.setPageInfo(pi);
 
     try {
-//      List<ItemMetadataDetail> itemDetails = LockssDaemon.getLockssDaemon()
+//      List<ItemMetadata> items = LockssDaemon.getLockssDaemon()
 //	  .getMetadataManager().getAuMetadataDetail(auid, page, limit);
-      List<ItemMetadataDetail> itemDetails = ((MetadataManager)LockssApp
-	  .getManager(MetadataManager.getManagerKey()))
-	  .getAuMetadataDetail(auid, page, limit);
-      if (log.isDebugEnabled()) {
-	log.debug("itemDetails.size() = " + itemDetails.size());
-	log.debug("itemDetails = " + itemDetails);
-      }
-
-      List<ItemMetadata> items = new ArrayList<ItemMetadata>();
-
-      for (ItemMetadataDetail itemDetail : itemDetails) {
-	items.add(new ItemMetadata(itemDetail));
-      }
-
+      List<ItemMetadata> items =
+	  getMetadataManager().getAuMetadataDetail(auid, page, limit);
       if (log.isDebugEnabled()) log.debug("items = " + items);
+
       result.setItems(items);
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid = '" + auid + "'";
@@ -145,5 +165,43 @@ public class AusApiServiceImpl extends AusApiService {
     if (log.isDebugEnabled()) log.debug("result = " + result);
 
     return Response.ok().entity(result).build();
+  }
+
+  /**
+   * Stores the metadata for an item belonging to an AU.
+   * 
+   * @param item
+   *          An ItemMetadata with the AU item metadata.
+   * @return a Response with any data that needs to be returned to the runtime.
+   * @throws ApiException
+   *           if there are problems.
+   */
+  @Override
+  public Response postAuItem(ItemMetadata item,
+      SecurityContext securityContext) throws ApiException {
+    if (log.isDebugEnabled()) log.debug("item = " + item);
+
+    Long mdItemSeq = null;
+
+    try {
+      mdItemSeq = getMetadataManager().storeAuItemMetadata(item);
+      if (log.isDebugEnabled()) log.debug("mdItemSeq = " + mdItemSeq);
+    } catch (Exception e) {
+      String message = "Cannot postAuItem() for item = '" + item + "'";
+      log.error(message, e);
+      throw new ApiException(1, message + ": " + e.getMessage());
+    }
+
+    return Response.ok().entity(mdItemSeq).build();
+  }
+
+  /**
+   * Provides the metadata manager.
+   * 
+   * @return a MetadataManager with the metadata manager.
+   */
+  private MetadataManager getMetadataManager() {
+    return (MetadataManager)LockssApp.getManager(MetadataManager
+	.getManagerKey());
   }
 }

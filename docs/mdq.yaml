@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+# Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
 # all rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -55,7 +55,64 @@ securityDefinitions:
 security:
   - basicAuth: []
 paths:
+  '/aus':
+    post:
+      tags:
+        - aus
+      summary: Store the metadata for an AU item
+      description: Store the metadata for an item belonging to an AU
+      operationId: postAuItem
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - name: 'item'
+          in: body
+          description: The metadata of the AU item to be stored
+          required: true
+          schema:
+            $ref: '#/definitions/itemMetadata'
+      responses:
+        '200':
+          description: The key under which the metadata of the AU item has been stored
+          schema:
+            type: integer
+            format: int64
+        '500':
+          description: Internal server error
+        '503':
+          description: Some or all of the system is not available
   '/aus/{auid}':
+    delete:
+      tags:
+        - aus
+      summary: Delete the metadata stored for an AU
+      description: Delete the metadata stored for an AU given the AU identifier
+      operationId: deleteAuAuid
+      consumes: []
+      produces: 
+        - application/json
+      parameters:
+        - name: auid
+          in: path
+          description: The identifier of the AU for which the metadata is to be deleted
+          required: true
+          type: string
+      responses:
+        '200':
+          description: The number of deleted AU metadata items
+          schema:
+            type: integer
+        '401':
+          description: Unauthorized request
+        '403':
+          description: Forbidden request
+        '404':
+          description: AU not found
+        '500':
+          description: Internal server error
+        '503':
+          description: Some or all of the system is not available
     get:
       tags:
         - aus

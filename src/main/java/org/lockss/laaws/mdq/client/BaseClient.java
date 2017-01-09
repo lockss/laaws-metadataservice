@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -40,7 +40,7 @@ public class BaseClient {
   private static final String userName = "lockss-u";
   private static final String password = "lockss-p";
 
-  private static final String baseUri = "http://localhost:8888";
+  private static final String baseUri = "http://localhost:8889";
 
   protected static WebTarget getWebTarget() {
     Client client = ClientBuilder.newClient();

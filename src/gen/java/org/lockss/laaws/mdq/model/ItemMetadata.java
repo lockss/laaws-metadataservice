@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Objects;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import org.lockss.metadata.ItemMetadataDetail;
 
 /**
  * The metadata generated for a single item.
@@ -52,18 +51,6 @@ public class ItemMetadata   {
    */
   public ItemMetadata() {
 
-  }
-
-  /**
-   * Full constructor.
-   * 
-   * @param itemMd
-   *          An ItemMetadataDetail with the item metadata.
-   */
-  public ItemMetadata(ItemMetadataDetail itemMd) {
-    scalarMap = itemMd.getScalarMap();
-    listMap = itemMd.getListMap();
-    mapMap = itemMd.getMapMap();
   }
 
   /**

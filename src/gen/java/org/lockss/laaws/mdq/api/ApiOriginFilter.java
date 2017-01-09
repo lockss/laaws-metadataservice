@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36,7 +36,7 @@ public class ApiOriginFilter implements javax.servlet.Filter {
             FilterChain chain) throws IOException, ServletException {
         HttpServletResponse res = (HttpServletResponse) response;
         res.addHeader("Access-Control-Allow-Origin", "*");
-        res.addHeader("Access-Control-Allow-Methods", "GET, POST");
+        res.addHeader("Access-Control-Allow-Methods", "GET, POST, DELETE");
         res.addHeader("Access-Control-Allow-Headers", "Content-Type");
         chain.doFilter(request, response);
     }
