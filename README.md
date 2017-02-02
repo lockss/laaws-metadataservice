@@ -51,7 +51,7 @@ The log is at ./laawsmdq.log
 ### API is documented at:
 #### localhost:8888/docs/
 
-### Getting Archival Unit contents from a web service, not the repository
+### Getting Archival Unit information from a web service, not the repository
 In ./lockss.opt add the following option:
 
 org.lockss.openUrlResolver.urlCacheFromWs=true
