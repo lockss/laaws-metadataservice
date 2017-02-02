@@ -35,6 +35,7 @@ PROP_URL_LIST="common.xml lockss.txt lockss.opt"
 PROP_ARGS=`echo " " $PROP_URL_LIST | sed 's/ [ ]*/ -p /g'`
 sed "s/CONF_FILES_PLACEHOLDER/$PROP_ARGS/g" template-ejb-jar.xml > src/main/webapp/WEB-INF/ejb-jar.xml
 mvn clean package
+sleep 120
 java -Dswarm.http.port=$service_port -jar target/laaws-metadata-service-swarm.jar > logs/laawsmdq.log 2>&1 &
 echo $! > dpid
 tail -f logs/laawsmdq.log
