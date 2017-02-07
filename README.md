@@ -27,7 +27,7 @@ in this Software without prior written authorization from Stanford University.
 The wrapper around the Metadata Query Service.
 
 ### Clone the repo
-`git clone --recursive https://github.com/lockss/laaws-mdq.git`
+`git clone --recursive ssh://git@gitlab.lockss.org/laaws/laaws-metadataservice.git`
 
 ### Create the Eclipse project (if so desired)
 File -> Import... -> Maven -> Existing Maven Projects
