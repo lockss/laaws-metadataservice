@@ -35,7 +35,20 @@ File -> Import... -> Maven -> Existing Maven Projects
 ### Build and install the required LOCKSS daemon jar files:
 run `initBuild`
 
-### Build and run:
+### Build the web service:
+`./buildLaawsMdq`
+
+This will use port 8888 during the build. To use, for example, port 8889,
+instead, either edit the value of $service_port in ./buildLaawsMdq or run:
+
+`./buildLaawsMdq 8889`
+
+The result of the build is a so-called "uber JAR" file which includes the
+project code plus all its dependencies and which is located at
+
+`./target/laaws-metadata-service-swarm.jar`
+
+### Run the web service:
 `./runLaawsMdq`
 
 This will listen to port 8888. To use, for example, port 8889, instead, either
@@ -43,9 +56,17 @@ edit the value of $service_port in ./runLaawsMdq or run:
 
 `./runLaawsMdq 8889`
 
-The log is at ./laawsmdq.log
+The log is at ./logs/laawsmdq.log
 
-### Stop:
+### Build and run the web service:
+`./buildAndRunLaawsMdq`
+
+This will use port 8888 for both steps. To use, for example, port 8889, instead,
+either edit the value of $service_port in ./buildAndRunLaawsMdq or run:
+
+`./buildAndRunLaawsMdq 8889`
+
+### Stop the web service:
 `./stopLaawsMdq`
 
 ### API is documented at:
