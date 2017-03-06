@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+# Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
 # all rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,8 +29,8 @@
 ##org.lockss.metadataDbManager.derby.streamErrorFile=/tmp/derby.log
 #org.lockss.metadataDbManager.derby.streamErrorLogseveritylevel=0
 #org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.EmbeddedDataSource
-#org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.ClientDataSource
-#org.lockss.metadataDbManager.datasource.password=goodPassword
+org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.ClientDataSource
+org.lockss.metadataDbManager.datasource.password=goodPassword
 ##org.lockss.metadataDbManager.datasource.createDatabase=create
 #org.lockss.metadataDbManager.datasource.databaseName=db/MetadataDbManager
 ##org.lockss.metadataDbManager.datasource.portNumber=1527
