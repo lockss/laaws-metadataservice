@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -38,7 +38,7 @@ public class GetAuAuidClient extends BaseClient {
 
   public static void main(String[] args) throws Exception {
     for (int i = 0; i < args.length; i++) {
-      System.out.println("arg[" + i + "] = " + args[i]);
+      System.out.println("args[" + i + "] = " + args[i]);
     }
 
     String encodedAuId = URLEncoder.encode(args[0], "UTF-8");

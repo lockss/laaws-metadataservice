@@ -27,40 +27,102 @@
  */
 package org.lockss.laaws.mdq.api.impl;
 
-//import java.io.File;
+//import static io.restassured.RestAssured.given;
+//import static org.hamcrest.Matchers.is;
+//import io.restassured.builder.RequestSpecBuilder;
+//import io.restassured.http.ContentType;
+import java.io.File;
+import java.net.URL;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+//import org.jboss.shrinkwrap.api.asset.EmptyAsset;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.wildfly.swarm.spi.api.JARArchive;
-//import org.jboss.shrinkwrap.resolver.api.maven.archive.importer.MavenImporter;
+//import org.lockss.rs.auth.AccessControlFilter;
 
 @RunWith(Arquillian.class)
 public class GetAuAuidTest {
+  @ArquillianResource
+  private URL url;
 
-  @Deployment
-  public static Archive<?> createDeployment() throws Exception {
-    System.out.println("GetAuAuidTest.createDeployment() invoked");
-    JARArchive archive = ShrinkWrap.create(JARArchive.class);
-//    JARArchive archive = ShrinkWrap.create(MavenImporter.class)
-//    .loadPomFromFile("pom.xml").importBuildOutput().as(JARArchive.class);
+  @Deployment(testable = false)
+  public static WebArchive createDeployment() throws Exception {
+    String cwd = new File(".").getCanonicalPath();
+    System.out.println("cwd = " + cwd);
+    WebArchive wa = ShrinkWrap.create(WebArchive.class);
 
-//    JARArchive archive = ShrinkWrap.createFromZipFile(JARArchive.class,
-//	new File("target/laaws-metadata-service-swarm.jar"));
-//    JARArchive archive = ShrinkWrap.create(JARArchive.class)
-//	.merge(ShrinkWrap.createFromZipFile(JARArchive.class,
-//	    new File("target/laaws-metadata-service-swarm.jar")));
-
-    System.out.println("GetAuAuidTest.createDeployment() archive = "
-	+ archive.toString(true));
-    return archive;
+//    wa.addAsLibrary(new File("lockss-daemon/lib/lockss.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/xercesImpl-2.7.1.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/commons-collections-3.2.2.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/jakarta-oro-2.0.8.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/commons-lang3-3.4.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/derby.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/commons-httpclient-3.0-rc4.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/xstream-1.1.3.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/jetty-5.1.5L.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/commons-io-2.4.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/gettext-commons-0.9.6.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/htmlparser-1.6p.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/derbyclient.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/postgresql-jdbc4-9.1.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/mysql-connector-java-5.1.29-bin.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/castor-0.9.4.1-xml.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/commons-beanutils-1.9.2.jar"));
+//    wa.addAsLibrary(new File("lockss-daemon/lib/derbynet.jar"));
+//    wa.addPackages(true, "org.lockss.laaws.mdq.api"
+//	,"org.lockss.laaws.mdq.model"
+//	,"org.lockss.laaws.mdq.server"
+//	,"org.lockss.laaws.mdq.ejb"
+//	)
+//    .addClass(GetAuAuidTest.class)
+//    .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))
+//    //.addAsWebInfResource(new File("src/main/webapp/WEB-INF/jboss-deployment-structure.xml"))
+//    //.addAsWebInfResource(new File("src/main/webapp/WEB-INF/web.xml"))
+//    //.addAsManifestResource(new File("src/main/webapp/META-INF/MANIFEST.MF"))
+//    .addAsWebInfResource(new File("common.xml"), "classes/common.xml")
+//    .addAsWebInfResource(new File("lockss.txt"), "classes/lockss.txt")
+//    .addAsWebInfResource(new File("lockss.opt"), "classes/lockss.opt")
+//    .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
+//
+//    System.out.println("wa = " + wa.toString(true));
+    return wa;
   }
 
   @Test
-  public void test1() {
+  public void test1() throws Exception {
     System.out.println("GetAuAuidTest.test1() invoked");
+//    RequestSpecBuilder reqSpecBuilder = new RequestSpecBuilder();
+//    reqSpecBuilder.setBaseUri(url.toURI());
+//    given(reqSpecBuilder.build())
+//            .when().get("/aus/noAuth")
+//            .then()
+//            .contentType(ContentType.JSON)
+//            .statusCode(401)
+//            .body("message", is(AccessControlFilter.noAuthorizationHeader));
+//
+//    reqSpecBuilder = new RequestSpecBuilder();
+//    reqSpecBuilder.setBaseUri(url.toURI());
+//    given(reqSpecBuilder.build())
+//    .auth().preemptive().basic("username", "password")
+//    .when().get("/aus/badAuth")
+//    .then()
+//    .contentType(ContentType.JSON)
+//    .statusCode(401)
+//    .body("message", is(AccessControlFilter.badCredentials));
+//
+//    reqSpecBuilder = new RequestSpecBuilder();
+//    reqSpecBuilder.setBaseUri(url.toURI());
+//    given(reqSpecBuilder.build())
+//    .auth().preemptive().basic("lockss-u", "lockss-p")
+//    .when().get("/aus/noAU")
+//    .then()
+//    .contentType(ContentType.JSON)
+//    .statusCode(404)
+//    .body("message", is(AccessControlFilter.badCredentials));
+
     System.out.println("GetAuAuidTest.test1() done");
   }
 }
