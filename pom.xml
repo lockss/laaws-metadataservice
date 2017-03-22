@@ -36,7 +36,7 @@ in this Software without prior written authorization from Stanford University.
   <packaging>war</packaging>
 
   <properties>
-    <version.wildfly.swarm>2016.10.0</version.wildfly.swarm>
+    <version.wildfly.swarm>2017.3.2</version.wildfly.swarm>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <failOnMissingWebXml>false</failOnMissingWebXml>
@@ -73,7 +73,12 @@ in this Software without prior written authorization from Stanford University.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-    </dependencies>
+      <dependency>
+        <groupId>io.rest-assured</groupId>
+        <artifactId>rest-assured</artifactId>
+        <version>3.0.1</version>
+        <scope>test</scope>
+      </dependency>   </dependencies>
   </dependencyManagement>
 
   <build>
@@ -134,10 +139,16 @@ in this Software without prior written authorization from Stanford University.
       <artifactId>jaxrs</artifactId>
     </dependency><dependency>
       <groupId>org.wildfly.swarm</groupId>
-      <artifactId>undertow</artifactId>
+      <artifactId>swagger-webapp</artifactId>
     </dependency><dependency>
       <groupId>org.wildfly.swarm</groupId>
+      <artifactId>swagger</artifactId>
+    </dependency><dependency>
+    <groupId>org.wildfly.swarm</groupId>
       <artifactId>jaxrs-cdi</artifactId>
+    </dependency><dependency>
+      <groupId>org.wildfly.swarm</groupId>
+      <artifactId>jaxrs-jsonp</artifactId>
     </dependency><dependency>
       <groupId>org.wildfly.swarm</groupId>
       <artifactId>arquillian</artifactId>
@@ -161,18 +172,17 @@ in this Software without prior written authorization from Stanford University.
       <groupId>org.jboss.shrinkwrap.resolver</groupId>
       <artifactId>shrinkwrap-resolver-api-maven-archive</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
     <!-- Clients -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-client</artifactId>
       <version>${version.resteasy}</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxb-provider</artifactId>
-      <version>${version.resteasy}</version>
     </dependency>
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
@@ -192,24 +202,15 @@ in this Software without prior written authorization from Stanford University.
       <version>2.7.1.jbossorg-2</version>
       <scope>runtime</scope>
     </dependency>
-
-    <dependency>
-      <groupId>io.swagger</groupId>
-      <artifactId>swagger-jersey2-jaxrs</artifactId>
-      <scope>compile</scope>
-      <version>${swagger-core-version}</version>
-    </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>${logback-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-core</artifactId>
       <version>${logback-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>

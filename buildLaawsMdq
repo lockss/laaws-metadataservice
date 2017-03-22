@@ -35,10 +35,10 @@ fi
 #### Comment out this block to get the configuration from a Configuration REST
 #### web service instead of local files.
 ####
-#PROP_URL_LIST="common.xml lockss.txt lockss.opt"
+PROP_URL_LIST="common.xml lockss.txt lockss.opt"
 #
 ## NB leading space meaningful here
-#PROP_ARGS=`echo " " $PROP_URL_LIST | sed 's/ [ ]*/ -p /g'`
+PROP_ARGS=`echo " " $PROP_URL_LIST | sed 's/ [ ]*/ -p /g'`
 ####
 #### End local files configuration setup.
 ####
@@ -49,7 +49,7 @@ fi
 #### Comment out this block to get the configuration from local files instead of
 #### a Configuration REST web service.
 ####
-PROP_ARGS=""
+#PROP_ARGS=""
 ####
 #### End REST web service configuration setup.
 ####
