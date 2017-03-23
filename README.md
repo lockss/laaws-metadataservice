@@ -70,7 +70,9 @@ either edit the value of $service_port in ./buildAndRunLaawsMdq or run:
 `./stopLaawsMdq`
 
 ### API is documented at:
-#### localhost:8888/docs/
+#### localhost:8888/swagger-ui/
+
+Type`http://localhost:8888/swagger.json` in the swagger instance to view the docs and test against running server.
 
 ### Getting Archival Unit information from a web service, not the repository
 In ./lockss.opt add the following option:
