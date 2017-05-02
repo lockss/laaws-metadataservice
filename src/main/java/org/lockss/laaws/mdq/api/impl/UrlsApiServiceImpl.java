@@ -135,8 +135,10 @@ public class UrlsApiServiceImpl extends UrlsApiService {
       String url = next.getResolvedUrl();
       if (log.isDebugEnabled()) log.debug("url = " + url);
 
-      // Accumulate the resulting unique URLs.
-      urls.add(url);
+      if (url != null && !"null".equalsIgnoreCase(url)) {
+	// Accumulate the resulting unique URLs.
+	urls.add(url);
+      }
     }
 
     if (log.isDebugEnabled()) log.debug("urls = " + urls);
