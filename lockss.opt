@@ -53,4 +53,5 @@ org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.serviceName=ContentServi
 org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.targetNameSpace=http://content.ws.lockss.org/
 org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.timeoutValue=600
 org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.userName=lockss-u
-org.lockss.ui.port=8082
+
+org.lockss.ui.port=8084

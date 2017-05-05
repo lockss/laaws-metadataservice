@@ -65,6 +65,12 @@ public class LaawsMdqApp extends LockssDaemon {
       // start metadata manager after pluggin manager and database manager.
       new ManagerDesc(MetadataManager.getManagerKey(),
 	  "org.lockss.metadata.MetadataManager"),
+      // NOTE: Any managers that are needed to decide whether a servlet is to be
+      // enabled or not (through ServletDescr.isEnabled()) need to appear before
+      // the AdminServletManager on the next line.
+      new ManagerDesc(SERVLET_MANAGER,
+	  "org.lockss.servlet.AdminServletManager"),
+      new ManagerDesc(PROXY_MANAGER, "org.lockss.proxy.ProxyManager")
   };
 
   public static void main( String[] args ) {
