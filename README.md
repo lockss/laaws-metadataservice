@@ -41,7 +41,7 @@ run `initBuild`
 This will use port 8888 during the build. To use, for example, port 8889,
 instead, either edit the value of $service_port in ./buildLaawsMdq or run:
 
-`./buildLaawsMdq 8889`
+`./buildLaawsMdq -Dswarm.http.port=8889`
 
 The result of the build is a so-called "uber JAR" file which includes the
 project code plus all its dependencies and which is located at
@@ -54,7 +54,7 @@ project code plus all its dependencies and which is located at
 This will listen to port 8888. To use, for example, port 8889, instead, either
 edit the value of $service_port in ./runLaawsMdq or run:
 
-`./runLaawsMdq 8889`
+`./runLaawsMdq -Dswarm.http.port=8889`
 
 The log is at ./logs/laawsmdq.log
 
@@ -64,7 +64,7 @@ The log is at ./logs/laawsmdq.log
 This will use port 8888 for both steps. To use, for example, port 8889, instead,
 either edit the value of $service_port in ./buildAndRunLaawsMdq or run:
 
-`./buildAndRunLaawsMdq 8889`
+`./buildAndRunLaawsMdq -Dswarm.http.port=8889`
 
 ### Stop the web service:
 `./stopLaawsMdq`
@@ -72,7 +72,8 @@ either edit the value of $service_port in ./buildAndRunLaawsMdq or run:
 ### API is documented at:
 #### localhost:8888/swagger-ui/
 
-Type`http://localhost:8888/swagger.json` in the swagger instance to view the docs and test against running server.
+Type`http://localhost:8888/swagger.json` in the swagger instance to view
+the docs and test against running server.
 
 ### Getting Archival Unit information from a web service, not the repository
 In ./lockss.opt add the following option:

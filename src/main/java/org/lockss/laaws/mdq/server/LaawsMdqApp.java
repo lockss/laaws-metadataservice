@@ -33,8 +33,6 @@ import org.apache.commons.lang3.SystemUtils;
 import org.lockss.app.LockssDaemon;
 import org.lockss.config.CurrentConfig;
 import org.lockss.daemon.ResourceUnavailableException;
-import org.lockss.metadata.MetadataDbManager;
-import org.lockss.metadata.MetadataManager;
 import org.lockss.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,11 +58,14 @@ public class LaawsMdqApp extends LockssDaemon {
       // start plugin manager after generic services
       new ManagerDesc(PLUGIN_MANAGER, "org.lockss.plugin.PluginManager"),
       // start database manager before any manager that uses it.
-      new ManagerDesc(MetadataDbManager.getManagerKey(),
+      new ManagerDesc(METADATA_DB_MANAGER,
 	  "org.lockss.metadata.MetadataDbManager"),
       // start metadata manager after pluggin manager and database manager.
-      new ManagerDesc(MetadataManager.getManagerKey(),
+      new ManagerDesc(METADATA_MANAGER,
 	  "org.lockss.metadata.MetadataManager"),
+      // Start the COUNTER reports manager.
+      new ManagerDesc(COUNTER_REPORTS_MANAGER,
+	  "org.lockss.exporter.counter.CounterReportsManager"),
       // NOTE: Any managers that are needed to decide whether a servlet is to be
       // enabled or not (through ServletDescr.isEnabled()) need to appear before
       // the AdminServletManager on the next line.

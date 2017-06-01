@@ -32,8 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import org.apache.log4j.Logger;
-import org.lockss.app.LockssApp;
-//import org.lockss.app.LockssDaemon;
+import org.lockss.app.LockssDaemon;
 import org.lockss.laaws.mdq.api.AusApiService;
 import org.lockss.laaws.mdq.api.ApiException;
 import org.lockss.laaws.mdq.api.NotFoundException;
@@ -201,7 +200,6 @@ public class AusApiServiceImpl extends AusApiService {
    * @return a MetadataManager with the metadata manager.
    */
   private MetadataManager getMetadataManager() {
-    return (MetadataManager)LockssApp.getManager(MetadataManager
-	.getManagerKey());
+    return LockssDaemon.getLockssDaemon().getMetadataManager();
   }
 }
