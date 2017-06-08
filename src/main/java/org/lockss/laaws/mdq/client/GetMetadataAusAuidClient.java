@@ -27,42 +27,53 @@
  */
 package org.lockss.laaws.mdq.client;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import org.lockss.laaws.mdq.model.OpenUrlParams;
-import org.lockss.laaws.mdq.model.UrlInfo;
+import java.net.URLEncoder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 
 /**
- * Client for the postOpenUrl() operation.
+ * Client for the getMetadataAusAuid() operation.
  */
-public class PostOpenUrlClient extends BaseClient {
+public class GetMetadataAusAuidClient extends BaseClient {
 
   public static void main(String[] args) throws Exception {
     for (int i = 0; i < args.length; i++) {
       System.out.println("args[" + i + "] = " + args[i]);
     }
 
-    OpenUrlParams params = new OpenUrlParams();
+    if (args.length < 1) {
+      System.err.println("ERROR: Missing command line argument with the "
+	  + "identifier of the Archival Unit for which its metadata is "
+	  + "requested.");
+    }
 
-    for (int i = 0; i < args.length; i++) {
-      int sepLoc = args[i].trim().indexOf("=");
+    String encodedAuId = URLEncoder.encode(args[0], "UTF-8");
+    System.out.println("encodedAuId = '" + encodedAuId + "'");
 
-      if (sepLoc > 0 && sepLoc < args[i].length() - 1) {
-	params.put(args[i].substring(0, sepLoc),
-	    args[i].substring(sepLoc + 1));
+    WebTarget webTarget = getWebTarget().path("metadata/aus").path(encodedAuId);
+
+    if (args.length > 1) {
+      webTarget = webTarget.queryParam(args[0], args[1]);
+
+      if (args.length > 3) {
+	webTarget = webTarget.queryParam(args[2], args[3]);
       }
     }
 
-    System.out.println("params = '" + params + "'");
+    System.out.println("webTarget.getUri() = " + webTarget.getUri());
 
-    if (params.size() > 0) {
-      UrlInfo result = getWebTarget().path("urls").path("openurl").request()
-	  .post(Entity.entity(params, MediaType.APPLICATION_JSON_TYPE),
-	      UrlInfo.class);
+    Response response = webTarget.request().get();
+    int status = response.getStatus();
+    System.out.println("status = " + status);
+    System.out.println("statusInfo = " + response.getStatusInfo());
+
+    if (status == 200) {
+      AuMetadataPageInfo result = response.readEntity(AuMetadataPageInfo.class);
       System.out.println("result = " + result);
     } else {
-      System.err.println("ERROR: Missing command line argument(s) "
-	  + "with OpenURL query parameter(s)");
+      Object result = response.readEntity(Object.class);
+      System.out.println("result = " + result);
     }
   }
 }

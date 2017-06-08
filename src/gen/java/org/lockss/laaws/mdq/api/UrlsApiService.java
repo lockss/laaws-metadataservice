@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,9 +27,9 @@
  */
 package org.lockss.laaws.mdq.api;
 
+import java.util.List;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import org.lockss.laaws.mdq.model.OpenUrlParams;
 
 /**
  * Base provider of access to URLs.
@@ -37,32 +37,32 @@ import org.lockss.laaws.mdq.model.OpenUrlParams;
 public abstract class UrlsApiService {
 
   /**
-   * Provides the URLs for a DOI given the DOI.
+   * Provides the URL for a DOI given the DOI.
    * 
    * @param doi
-   *          A String with the DOI for which the URLs are requested.
+   *          A String with the DOI for which the URL is requested.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
    * @return a Response with any data that needs to be returned to the runtime.
    * @throws ApiException
-   *           if there is a problem obtaining the URLs.
+   *           if there is a problem obtaining the URL.
    */
-  public abstract Response getUrlDoi(String doi,
+  public abstract Response getUrlsDoi(String doi,
       SecurityContext securityContext) throws ApiException;
 
   /**
-   * Provides the URLs that result from performing an OpenURL query
+   * Provides the URL that results from performing an OpenURL query
    * 
    * @param params
-   *          An OpenUrlParams with the OpenURL query parameters.
+   *          A List<String> with the OpenURL query parameters.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
    * @return a Response with any data that needs to be returned to the runtime.
    * @throws ApiException
-   *           if there is a problem obtaining the URLs.
+   *           if there is a problem obtaining the URL.
    */
-  public abstract Response postOpenUrl(OpenUrlParams params,
+  public abstract Response getUrlsOpenUrl(List<String> params,
       SecurityContext securityContext) throws ApiException;
 }

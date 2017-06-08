@@ -27,39 +27,44 @@
  */
 package org.lockss.laaws.mdq.client;
 
-import java.net.URLEncoder;
 import javax.ws.rs.client.WebTarget;
-import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
+import javax.ws.rs.core.Response;
+import org.lockss.laaws.mdq.model.UrlInfo;
 
 /**
- * Client for the getAuAuid() operation.
+ * Client for the getUrlsOpenUrl() operation.
  */
-public class GetAuAuidClient extends BaseClient {
+public class GetUrlsOpenUrlClient extends BaseClient {
 
   public static void main(String[] args) throws Exception {
     for (int i = 0; i < args.length; i++) {
       System.out.println("args[" + i + "] = " + args[i]);
     }
 
-    String encodedAuId = URLEncoder.encode(args[0], "UTF-8");
-    System.out.println("encodedAuId = '" + encodedAuId + "'");
+    if (args.length < 1) {
+      System.err.println("ERROR: Missing command line argument(s) with OpenURL "
+	  + "query parameter(s)");
+    }
 
-    if (args.length > 0) {
-      WebTarget webTarget = getWebTarget().path("aus").path(encodedAuId);
+    WebTarget webTarget = getWebTarget().path("urls/openurl");
 
-      if (args.length > 1) {
-        webTarget = webTarget.queryParam(args[0], args[1]);
+    for (int i = 0; i < args.length; i++) {
+      webTarget = webTarget.queryParam("params", args[i]);
+    }
 
-        if (args.length > 3) {
-          webTarget = webTarget.queryParam(args[2], args[3]);
-        }
-      }
+    System.out.println("webTarget.getUri() = " + webTarget.getUri());
 
-      AuMetadataPageInfo result =
-	  webTarget.request().get(AuMetadataPageInfo.class);
+    Response response = webTarget.request().get();
+    int status = response.getStatus();
+    System.out.println("status = " + status);
+    System.out.println("statusInfo = " + response.getStatusInfo());
+
+    if (status == 200) {
+      UrlInfo result = response.readEntity(UrlInfo.class);
       System.out.println("result = " + result);
     } else {
-      System.err.println("ERROR: Missing command line argument with auId");
+      Object result = response.readEntity(Object.class);
+      System.out.println("result = " + result);
     }
   }
 }

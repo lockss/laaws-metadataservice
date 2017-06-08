@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,82 +33,84 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import org.lockss.laaws.mdq.api.factories.UrlsApiServiceFactory;
-import org.lockss.laaws.mdq.model.OpenUrlParams;
 import org.lockss.laaws.mdq.model.UrlInfo;
 import org.lockss.rs.auth.Roles;
 
 @Path("/urls")
+@Consumes({ "application/json" })
 @Produces({ "application/json" })
 @Api(value = "/urls")
 public class UrlsApi  {
   private final UrlsApiService delegate = UrlsApiServiceFactory.getUrlsApi();
 
   /**
-   * Provides the URLs for a DOI given the DOI.
+   * Provides the URL for a DOI given the DOI.
    * 
    * @param doi
-   *          A String with the DOI for which the URLs are requested.
+   *          A String with the DOI for which the URL is requested.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
    * @return a Response with any data that needs to be returned to the runtime.
    * @throws ApiException
-   *           if there is a problem obtaining the URLs.
+   *           if there is a problem obtaining the URL.
    */
   @GET
   @Path("/doi/{doi}")
-  @Produces({"application/json"})
-  @ApiOperation(value = "Gets the URLs for a DOI.", notes =
-  "Provides the URLs for a DOI given the DOI.",
+  @Consumes({ "application/json" })
+  @Produces({ "application/json" })
+  @ApiOperation(value = "Gets the URL for a DOI", notes =
+  "Provides the URL for a DOI given the DOI",
   response = UrlInfo.class,
   authorizations = {@Authorization(value = "basicAuth")}, tags={ "urls", })
   @ApiResponses(value = { 
-      @ApiResponse(code = 200,
-	  message = "The URLs for the specified DOI.",
+      @ApiResponse(code = 200, message = "The URL for the specified DOI",
 	  response = UrlInfo.class) })
   @RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
-  public Response getUrlDoi(
-      @ApiParam(value = "The DOI for which the URLs are requested.",
+  public Response getUrlsDoi(
+      @ApiParam(value = "The DOI for which the URL is requested.",
       required = true) @PathParam("doi")
       String doi, @Context SecurityContext securityContext)
 	  throws ApiException {
-    return delegate.getUrlDoi(doi, securityContext);
+    return delegate.getUrlsDoi(doi, securityContext);
   }
 
   /**
-   * Provides the URLs that result from performing an OpenURL query
+   * Provides the URL that results from performing an OpenURL query
    * 
    * @param params
-   *          An OpenUrlParams with the OpenURL query parameters.
+   *          A List<String> with the OpenURL query parameters.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
    * @return a Response with any data that needs to be returned to the runtime.
    * @throws ApiException
-   *           if there is a problem obtaining the URLs.
+   *           if there is a problem obtaining the URL.
    */
-  @POST
+  @GET
   @Path("/openurl")
+  @Consumes({ "application/json" })
   @Produces({ "application/json" })
-  @ApiOperation(value = "Performs an OpenURL query.", notes =
-  "Provides the URLs that result from performing an OpenURL query.",
+  @ApiOperation(value = "Performs an OpenURL query", notes =
+  "Provides the URL that results from performing an OpenURL query. With query parameters inline",
   response = UrlInfo.class,
   authorizations = {@Authorization(value = "basicAuth")}, tags={ "urls", })
   @ApiResponses(value = { 
       @ApiResponse(code = 200,
-	  message = "The data related to the performed OpenURL query.",
+	  message = "The data related to the performed OpenURL query",
 	  response = UrlInfo.class) })
   @RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
-  public Response postOpenUrl(
+  public Response getUrlsOpenUrl(
       @ApiParam(value = "The OpenURL query parameters.", required = true)
-      OpenUrlParams params, @Context SecurityContext securityContext)
-	  throws ApiException {
-    return delegate.postOpenUrl(params, securityContext);
+      @QueryParam("params") List<String> params,
+      @Context SecurityContext securityContext) throws ApiException {
+    return delegate.getUrlsOpenUrl(params, securityContext);
   }
 }

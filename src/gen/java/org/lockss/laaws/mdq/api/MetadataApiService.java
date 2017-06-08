@@ -35,7 +35,7 @@ import org.lockss.laaws.mdq.model.ItemMetadata;
 /**
  * Base provider of access to the metadata of an AU.
  */
-public abstract class AusApiService {
+public abstract class MetadataApiService {
   /**
    * Deletes the metadata stored for an AU given the AU identifier.
    * 
@@ -47,9 +47,11 @@ public abstract class AusApiService {
    * @return a Response with any data that needs to be returned to the runtime.
    * @throws NotFoundException
    *           if the AU with the given identifier does not exist.
+   * @throws ApiException
+   *           if there are other problems.
    */
-  public abstract Response deleteAuAuid(String auid,
-      SecurityContext securityContext) throws NotFoundException;
+  public abstract Response deleteMetadataAusAuid(String auid,
+      SecurityContext securityContext) throws NotFoundException, ApiException;
 
   /**
    * Provides the full metadata stored for an AU given the AU identifier or a
@@ -73,9 +75,9 @@ public abstract class AusApiService {
    * @throws ApiException
    *           if there are other problems.
    */
-  public abstract Response getAuAuid(String auid, Integer page, Integer limit,
-      HttpServletRequest request, SecurityContext securityContext)
-	  throws NotFoundException, ApiException;
+  public abstract Response getMetadataAusAuid(String auid, Integer page,
+      Integer limit, HttpServletRequest request,
+      SecurityContext securityContext) throws NotFoundException, ApiException;
 
   /**
    * Stores the metadata for an item belonging to an AU.
@@ -86,6 +88,6 @@ public abstract class AusApiService {
    * @throws ApiException
    *           if there are problems.
    */
-  public abstract Response postAuItem(ItemMetadata item,
+  public abstract Response postMetadataAusItem(ItemMetadata item,
       SecurityContext securityContext) throws ApiException;
 }

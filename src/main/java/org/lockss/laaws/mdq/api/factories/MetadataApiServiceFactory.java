@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,13 +27,14 @@
  */
 package org.lockss.laaws.mdq.api.factories;
 
-import org.lockss.laaws.mdq.api.AusApiService;
-import org.lockss.laaws.mdq.api.impl.AusApiServiceImpl;
+import org.lockss.laaws.mdq.api.MetadataApiService;
+import org.lockss.laaws.mdq.api.impl.MetadataApiServiceImpl;
 
-public class AusApiServiceFactory {
-  private final static AusApiService service = new AusApiServiceImpl();
+public class MetadataApiServiceFactory {
+  private final static MetadataApiService service =
+      new MetadataApiServiceImpl();
 
-  public static AusApiService getAusApi() {
+  public static MetadataApiService getMetadataApi() {
     return service;
   }
 }

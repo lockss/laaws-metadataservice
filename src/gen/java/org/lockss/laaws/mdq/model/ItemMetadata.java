@@ -37,7 +37,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * The metadata generated for a single item.
  **/
-@ApiModel(description = "The metadata generated for a single item.")
+@ApiModel(description = "The metadata generated for a single item")
 public class ItemMetadata   {
   private Map<String, String> scalarMap = new HashMap<String, String>();
   private Map<String, List<String>> listMap =
@@ -58,8 +58,7 @@ public class ItemMetadata   {
    * 
    * @return scalarMap
    **/
-  @ApiModelProperty(value =
-      "The map of scalar metadata elements for this item.")
+  @ApiModelProperty(value = "The map of scalar metadata elements for this item")
   public Map<String, String> getScalarMap() {
     return scalarMap;
   }
@@ -73,8 +72,7 @@ public class ItemMetadata   {
    * 
    * @return listMap
    **/
-  @ApiModelProperty(value =
-      "The map of listed metadata elements for this item.")
+  @ApiModelProperty(value = "The map of listed metadata elements for this item")
   public Map<String, List<String>> getListMap() {
     return listMap;
   }
@@ -88,8 +86,7 @@ public class ItemMetadata   {
    * 
    * @return mapMap
    **/
-  @ApiModelProperty(value =
-      "The map of mapped metadata elements for this item.")
+  @ApiModelProperty(value = "The map of mapped metadata elements for this item")
   public Map<String, Map<String, String>> getMapMap() {
     return mapMap;
   }

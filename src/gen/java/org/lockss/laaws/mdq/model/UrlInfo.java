@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -38,7 +38,7 @@ import java.util.Objects;
 /**
  * The information related to a resulting list of URLs.
  **/
-@ApiModel(description = "The information related to a resulting list of URLs.")
+@ApiModel(description = "The information related to a resulting list of URLs")
 public class UrlInfo {
   private Map<String, String> params = new HashMap<String, String>();
   private List<String> urls = new ArrayList<String>();
@@ -68,7 +68,7 @@ public class UrlInfo {
    * The parameters that define the resulting URLs.
    **/
   @ApiModelProperty(required = true,
-      value = "The parameters that define the resulting URLs.")
+      value = "The parameters that define the resulting URLs")
   public Map<String, String> getParams() {
     return params;
   }
@@ -79,7 +79,7 @@ public class UrlInfo {
   /**
    * The URLs.
    **/
-  @ApiModelProperty(required = true, value = "The URLs.")
+  @ApiModelProperty(required = true, value = "The URLs")
   public List<String> getUrls() {
     return urls;
   }

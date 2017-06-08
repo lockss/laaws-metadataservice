@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36,7 +36,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * The display page of AU metadata.
  */
-@ApiModel(description = "The display page of AU metadata.")
+@ApiModel(description = "The display page of AU metadata")
 public class AuMetadataPageInfo   {
   private List<ItemMetadata> items = new ArrayList<ItemMetadata>();
   private PageInfo pageInfo = null;
@@ -47,7 +47,7 @@ public class AuMetadataPageInfo   {
    * @return items
    **/
   @ApiModelProperty(required = true,
-      value = "The metadata for the AU items in the page.")
+      value = "The metadata for the AU items in the page")
   public List<ItemMetadata> getItems() {
     return items;
   }

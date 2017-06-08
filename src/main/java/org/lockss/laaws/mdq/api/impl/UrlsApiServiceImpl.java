@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.ws.rs.core.Response;
@@ -40,7 +41,6 @@ import org.lockss.daemon.OpenUrlResolver;
 import org.lockss.daemon.OpenUrlResolver.OpenUrlInfo;
 import org.lockss.laaws.mdq.api.ApiException;
 import org.lockss.laaws.mdq.api.UrlsApiService;
-import org.lockss.laaws.mdq.model.OpenUrlParams;
 import org.lockss.laaws.mdq.model.UrlInfo;
 import org.apache.log4j.Logger;
 
@@ -63,7 +63,7 @@ public class UrlsApiServiceImpl extends UrlsApiService {
    *           if there is a problem obtaining the URL.
    */
   @Override
-  public Response getUrlDoi(String doi, SecurityContext securityContext)
+  public Response getUrlsDoi(String doi, SecurityContext securityContext)
       throws ApiException {
     if (log.isDebugEnabled()) log.debug("doi = " + doi);
 
@@ -74,9 +74,9 @@ public class UrlsApiServiceImpl extends UrlsApiService {
 
       return Response.ok().entity(resolveOpenUrl(params)).build();
     } catch (Exception e) {
-      String message = "Cannot getUrlDoi() for doi = '" + doi + "'";
+      String message = "Cannot getUrlsDoi() for doi = '" + doi + "'";
       log.error(message, e);
-      throw new ApiException(1, message + ": " + e.getMessage());
+      return getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, message);
     }
   }
 
@@ -84,7 +84,7 @@ public class UrlsApiServiceImpl extends UrlsApiService {
    * Provides the URL that results from performing an OpenURL query
    * 
    * @param params
-   *          An OpenUrlParams with the OpenURL query parameters.
+   *          A List<String> with the OpenURL query parameters.
    * @param securityContext
    *          A SecurityContext providing access to security related
    *          information.
@@ -93,16 +93,28 @@ public class UrlsApiServiceImpl extends UrlsApiService {
    *           if there is a problem obtaining the URL.
    */
   @Override
-  public Response postOpenUrl(OpenUrlParams params,
+  public Response getUrlsOpenUrl(List<String> params,
       SecurityContext securityContext) throws ApiException {
     if (log.isDebugEnabled()) log.debug("params = " + params);
 
     try {
-      return Response.ok().entity(resolveOpenUrl(params)).build();
+      // Build the OpenURL query.
+      Map<String, String> openUrlParams = new HashMap<String,String>();
+
+      for (String param : params) {
+	int sepLoc = param.trim().indexOf("=");
+
+	if (sepLoc > 0 && sepLoc < param.length() - 1) {
+	  openUrlParams.put(param.substring(0, sepLoc),
+	      param.substring(sepLoc + 1));
+	}
+      }
+
+      return Response.ok().entity(resolveOpenUrl(openUrlParams)).build();
     } catch (Exception e) {
-      String message = "Cannot postOpenUrl() for params = '" + params + "'";
+      String message = "Cannot getUrlsOpenUrl() for params = '" + params + "'";
       log.error(message, e);
-      throw new ApiException(1, message + ": " + e.getMessage());
+      return getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, message);
     }
   }
 
@@ -147,5 +159,29 @@ public class UrlsApiServiceImpl extends UrlsApiService {
     if (log.isDebugEnabled()) log.debug("result = " + result);
 
     return result;
+  }
+
+  /**
+   * Provides the appropriate response in case of an error.
+   * 
+   * @param statusCode
+   *          A Response.Status with the error status code.
+   * @param message
+   *          A String with the error message.
+   * @return a Response with the error response.
+   */
+  private Response getErrorResponse(Response.Status status, String message) {
+    return Response.status(status).entity(toJsonMessage(message)).build();
+  }
+
+  /**
+   * Formats to JSON any message to be returned.
+   * 
+   * @param message
+   *          A String with the message to be formatted.
+   * @return a String with the JSON-formatted message.
+   */
+  private String toJsonMessage(String message) {
+    return "{\"message\":\"" + message + "\"}"; 
   }
 }

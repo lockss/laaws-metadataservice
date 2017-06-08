@@ -22,267 +22,273 @@
 # be used in advertising or otherwise to promote the sale, use or other dealings
 # in this Software without prior written authorization from Stanford University.
 #
-swagger: '2.0'
+swagger: "2.0"
 info:
-  description: API of Metadata Service for LAAWS
-  version: 1.0.0
-  title: LAAWS Metadata Service API
-  termsOfService: http://www.lockss.org/terms/
+  description: "API of Metadata Service for LAAWS"
+  version: "1.0.0"
+  title: "LAAWS Metadata Service API"
+  termsOfService: "http://www.lockss.org/terms/"
   contact:
-    name: 'LOCKSS Support'
-    url: 'http://www.lockss.org/'
-    email: 'support@lockss.org'
+    name: "LOCKSS Support"
+    url: "http://www.lockss.org/"
+    email: "support@lockss.org"
   license:
-    name: 'Modified BSD License'
-    url: 'http://www.lockss.org/support/open-source-license/'
-host: 'laaws.lockss.org:443'
-basePath: /
+    name: "Modified BSD License"
+    url: "http://www.lockss.org/support/open-source-license/"
+host: "laaws.lockss.org:443"
+basePath: "/"
 tags:
-  - name: Default
-    description: Default section
-  - name: aus
-    description: Tasks on AUs
-  - name: urls
-    description: Tasks that return URLs.
+- name: metadata
+  description: "Operations related to metadata"
+- name: urls
+  description: "Operations that return URLs"
 schemes:
-  - https
+- "https"
+consumes:
+- "application/json"
 produces:
-  - application/json
-securityDefinitions:
-  basicAuth:
-    type: basic
-    description: HTTP Basic Authentication. Works over `HTTP` and `HTTPS`
+- "application/json"
 security:
-  - basicAuth: []
+- basicAuth: []
 paths:
-  '/aus':
+  /metadata/aus:
     post:
       tags:
-        - aus
-      summary: Store the metadata for an AU item
-      description: Store the metadata for an item belonging to an AU
-      operationId: postAuItem
-      consumes: []
+      - "metadata"
+      summary: "Store the metadata for an AU item"
+      description: "Store the metadata for an item belonging to an AU"
+      operationId: "postMetadataAusItem"
+      consumes:
+      - "application/json"
       produces:
-        - application/json
+      - "application/json"
       parameters:
-        - name: 'item'
-          in: body
-          description: The metadata of the AU item to be stored
-          required: true
-          schema:
-            $ref: '#/definitions/itemMetadata'
+      - name: "item"
+        in: "body"
+        description: "The metadata of the AU item to be stored"
+        required: true
+        schema:
+          $ref: "#/definitions/itemMetadata"
       responses:
-        '200':
-          description: The key under which the metadata of the AU item has been stored
+        200:
+          description: "The key under which the metadata of the AU item has\
+            \ been stored"
           schema:
-            type: integer
-            format: int64
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-  '/aus/{auid}':
+            type: "integer"
+            format: "int64"
+        500:
+          description: "Internal server error"
+        503:
+          description: "Some or all of the system is not available"
+  /metadata/aus/{auid}:
+    get:
+      tags:
+      - "metadata"
+      summary: "Get the metadata stored for an AU"
+      description: "Get the full metadata stored for an AU given the AU\
+        \ identifier or a pageful of the metadata defined by the page index and\
+        \ size"
+      operationId: "getMetadataAusAuid"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "auid"
+        in: "path"
+        description: "The identifier of the AU for which the metadata is\
+          \ requested"
+        required: true
+        type: "string"
+      - name: "page"
+        in: "query"
+        required: false
+        type: "integer"
+        description: "The identifier of the page of metadata to be returned"
+        default: 1
+      - name: "limit"
+        in: "query"
+        required: false
+        type: "integer"
+        description: "The number of items per page"
+        default: 50
+      responses:
+        200:
+          description: "The metadata of the specified AU"
+          schema:
+            $ref: "#/definitions/auMetadataPageInfo"
+        404:
+          description: "AU not found"
+        500:
+          description: "Internal server error"
+        503:
+          description: "Some or all of the system is not available"
     delete:
       tags:
-        - aus
-      summary: Delete the metadata stored for an AU
-      description: Delete the metadata stored for an AU given the AU identifier
-      operationId: deleteAuAuid
-      consumes: []
-      produces: 
-        - application/json
-      parameters:
-        - name: auid
-          in: path
-          description: The identifier of the AU for which the metadata is to be deleted
-          required: true
-          type: string
-      responses:
-        '200':
-          description: The number of deleted AU metadata items
-          schema:
-            type: integer
-        '401':
-          description: Unauthorized request
-        '403':
-          description: Forbidden request
-        '404':
-          description: AU not found
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
-    get:
-      tags:
-        - aus
-      summary: Get the metadata stored for an AU
-      description: Get the full metadata stored for an AU given the AU identifier or a pageful of the metadata defined by the page index and size
-      operationId: getAuAuid
-      consumes: []
+      - "metadata"
+      summary: "Delete the metadata stored for an AU"
+      description: "Delete the metadata stored for an AU given the AU identifier"
+      operationId: "deleteMetadataAusAuid"
+      consumes:
+      - "application/json"
       produces:
-        - application/json
+      - "application/json"
       parameters:
-        - name: 'auid'
-          in: path
-          description: The identifier of the AU for which the metadata is requested
-          required: true
-          type: string
-        - name: 'page'
-          in: query
-          description: The identifier of the page of metadata to be returned
-          required: false
-          type: integer
-          default: 1
-        - name: 'limit'
-          in: query
-          description: The number of items per page
-          required: false
-          type: integer
-          default: 50
+      - name: "auid"
+        in: "path"
+        description: "The identifier of the AU for which the metadata is to be\
+          \ deleted"
+        required: true
+        type: "string"
       responses:
-        '200':
-          description: The metadata of the specified AU
+        200:
+          description: "The number of deleted AU metadata items"
           schema:
-            $ref: '#/definitions/auMetadataPageInfo'
-        '404':
-          description: AU not found
-        '500':
-          description: Internal server error
-        '503':
-          description: Some or all of the system is not available
+            type: "integer"
+        401:
+          description: "Unauthorized request"
+        403:
+          description: "Forbidden request"
+        404:
+          description: "AU not found"
+        500:
+          description: "Internal server error"
+        503:
+          description: "Some or all of the system is not available"
   /urls/openurl:
-    post:
-      tags:
-        - urls
-      summary: Performs an OpenURL query.
-      description: Provides the URLs that result from performing an OpenURL query.
-      operationId: postOpenUrl
-      consumes: []
-      produces:
-        - application/json
-      parameters:
-        - name: params
-          in: body
-          description: The OpenURL parameters.
-          required: true
-          schema:
-            $ref: '#/definitions/openUrlParams'
-      responses:
-        '200':
-          description: The data related to the performed OpenURL query.
-          schema:
-            $ref: '#/definitions/urlInfo'
-  '/urls/doi/{doi}':
     get:
       tags:
-        - urls
-      summary: Gets the URLs for a DOI.
-      description: Provides the URLs for a DOI given the DOI.
-      operationId: getUrlDoi
-      consumes: []
+      - "urls"
+      summary: "Performs an OpenURL query"
+      description: "Provides the URL that results from performing an OpenURL\
+        \ query. With query parameters inline"
+      operationId: "getUrlsOpenUrl"
+      consumes:
+      - "application/json"
       produces:
-        - application/json
+      - "application/json"
       parameters:
-        - name: doi
-          in: path
-          description: The DOI for which the URLs are requested.
-          required: true
-          type: string
+      - name: "params"
+        in: "query"
+        description: "The OpenURL parameters"
+        required: true
+        type: "array"
+        items:
+          type: "string"
       responses:
-        '200':
-          description: The URLs for the specified DOI.
+        200:
+          description: "The data related to the performed OpenURL query"
           schema:
-            $ref: '#/definitions/urlInfo'
+            $ref: "#/definitions/urlInfo"
+  /urls/doi/{doi}:
+    get:
+      tags:
+      - "urls"
+      summary: "Gets the URL for a DOI"
+      description: "Provides the URL for a DOI given the DOI"
+      operationId: "getUrlsDoi"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "doi"
+        in: "path"
+        required: true
+        type: "string"
+        description: "The DOI for which the URL is requested"
+      responses:
+        200:
+          description: "The URL for the specified DOI"
+          schema:
+            $ref: "#/definitions/urlInfo"
+securityDefinitions:
+  basicAuth:
+    description: "HTTP Basic Authentication. Works over `HTTP` and `HTTPS`"
+    type: "basic"
 definitions:
   auMetadataPageInfo:
-    type: object
+    type: "object"
     required:
-      - items
-      - pageInfo
+    - "items"
+    - "pageInfo"
     properties:
       items:
-        type: array
-        description: The metadata for the AU items in the page.
+        type: "array"
+        description: "The metadata for the AU items in the page"
         items:
-          $ref: '#/definitions/itemMetadata'
+          $ref: "#/definitions/itemMetadata"
       pageInfo:
-        $ref: '#/definitions/pageInfo'
-    description: The display page of AU metadata.
+        $ref: "#/definitions/pageInfo"
+    description: "The display page of AU metadata"
   itemMetadata:
-    type: object
+    type: "object"
     properties:
       scalarMap:
-        type: object
-        description: The map of scalar metadata elements for this item.
+        type: "object"
+        description: "The map of scalar metadata elements for this item"
         additionalProperties:
-          type: string
-          description: The scalar value of the metadata for the key.
+          type: "string"
+          description: "The scalar value of the metadata for the key"
       listMap:
-        type: object
-        description: The map of listed metadata elements for this item.
+        type: "object"
+        description: "The map of listed metadata elements for this item"
         additionalProperties:
-          type: array
-          description: The list value of the metadata for the key.
+          type: "array"
+          description: "The list value of the metadata for the key"
           items:
-            type: string
+            type: "string"
       mapMap:
-        type: object
-        description: The map of mapped metadata elements for this item.
+        type: "object"
+        description: "The map of mapped metadata elements for this item"
         additionalProperties:
-          type: object
-          description: The map value of the metadata for the key.
+          type: "object"
+          description: "The map value of the metadata for the key"
           additionalProperties:
-            type: string
-    description: The metadata generated for a single item.
+            type: "string"
+    description: "The metadata generated for a single item"
   pageInfo:
-    type: object
+    type: "object"
     required:
-      - curLink
-      - currentPage
-      - resultsPerPage
-      - totalCount
+    - "curLink"
+    - "currentPage"
+    - "resultsPerPage"
+    - "totalCount"
     properties:
       totalCount:
-        type: integer
-        format: int32
-        description: The total number of elements to be paginated.
+        type: "integer"
+        format: "int32"
+        description: "The total number of elements to be paginated"
       resultsPerPage:
-        type: integer
-        format: int32
-        description: The number of results per page.
+        type: "integer"
+        format: "int32"
+        description: "The number of results per page"
       currentPage:
-        type: integer
-        format: int32
-        description: The current page number.
+        type: "integer"
+        format: "int32"
+        description: "The current page number"
       curLink:
-        type: string
-        description: The link to the current page.
+        type: "string"
+        description: "The link to the current page"
       nextLink:
-        type: string
-        description: The link to the next page.
-    description: The information related to pagination of content.
-  openUrlParams:
-    type: object
-    description: The map of OpenURL query parameters.
-    additionalProperties:
-      type: string
-      description: The value of the parameter for the parameter name.
+        type: "string"
+        description: "The link to the next page"
+    description: "The information related to pagination of content"
   urlInfo:
-    type: object
+    type: "object"
     required:
-      - params
-      - urls
+    - "params"
+    - "urls"
     properties:
       params:
-        type: object
-        description: The parameters that define the resulting URLs.
+        type: "object"
+        description: "The parameters that define the resulting URLs"
         additionalProperties:
-          type: string
-          description: The value of the parameter for the parameter name.
+          type: "string"
+          description: "The value of the parameter for the parameter name"
       urls:
-        type: array
-        description: The URLs.
+        type: "array"
+        description: "The URLs"
         items:
-          type: string
-    description: The information related to a resulting list of URLs.
+          type: "string"
+    description: "The information related to a resulting list of URLs"

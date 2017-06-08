@@ -39,7 +39,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import org.lockss.laaws.mdq.api.factories.AusApiServiceFactory;
+import org.lockss.laaws.mdq.api.factories.MetadataApiServiceFactory;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.rs.auth.Roles;
@@ -47,11 +47,13 @@ import org.lockss.rs.auth.Roles;
 /**
  * Provider of access to the metadata of an AU.
  */
-@Path("/aus")
+@Path("/metadata")
+@Consumes({ "application/json" })
 @Produces({ "application/json" })
-@Api(value = "/aus")
-public class AusApi  {
-  private final AusApiService delegate = AusApiServiceFactory.getAusApi();
+@Api(value = "/metadata")
+public class MetadataApi  {
+  private final MetadataApiService delegate =
+      MetadataApiServiceFactory.getMetadataApi();
 
   /**
    * Deletes the metadata stored for an AU given the AU identifier.
@@ -64,14 +66,17 @@ public class AusApi  {
    * @return a Response with any data that needs to be returned to the runtime.
    * @throws NotFoundException
    *           if the AU with the given identifier does not exist.
+   * @throws ApiException
+   *           if there are other problems.
    */
   @DELETE
-  @Path("/{auid}")
+  @Path("/aus/{auid}")
+  @Consumes({"application/json"})
   @Produces({"application/json"})
   @ApiOperation(value = "Delete the metadata stored for an AU",
   notes = "Delete the metadata stored for an AU given the AU identifier",
   response = Integer.class,
-  authorizations = {@Authorization(value = "basicAuth")}, tags={ "aus", })
+  authorizations = {@Authorization(value = "basicAuth")}, tags={ "metadata", })
   @ApiResponses(value = { 
       @ApiResponse(code = 200, message = "The number of metadata items deleted",
 	  response = Integer.class),
@@ -87,12 +92,13 @@ public class AusApi  {
       message = "Some or all of the system is not available",
       response = Integer.class) })
   @RolesAllowed(Roles.ROLE_CONTENT_ADMIN) // Allow this role.
-  public Response deleteAuAuid(
+  public Response deleteMetadataAusAuid(
       @ApiParam(value =
       "The identifier of the AU for which the metadata is to be deleted",
       required=true) @PathParam("auid") String auid,
-      @Context SecurityContext securityContext) throws NotFoundException {
-    return delegate.deleteAuAuid(auid,securityContext);
+      @Context SecurityContext securityContext)
+	  throws NotFoundException, ApiException {
+    return delegate.deleteMetadataAusAuid(auid, securityContext);
   }
 
   /**
@@ -118,12 +124,13 @@ public class AusApi  {
    *           if there are other problems.
    */
   @GET
-  @Path("/{auid}")
+  @Path("/aus/{auid}")
+  @Consumes({ "application/json" })
   @Produces({ "application/json" })
   @ApiOperation(value = "Get the metadata stored for an AU", notes =
   "Get the full metadata stored for an AU given the AU identifier or a pageful of the metadata defined by the page index and size",
   response = AuMetadataPageInfo.class,
-  authorizations = {@Authorization(value = "basicAuth")}, tags={ "aus", })
+  authorizations = {@Authorization(value = "basicAuth")}, tags={ "metadata", })
   @ApiResponses(value = { 
       @ApiResponse(code = 200, message = "The metadata of the specified AU",
 	  response = AuMetadataPageInfo.class),
@@ -135,7 +142,7 @@ public class AusApi  {
       message = "Some or all of the system is not available",
       response = AuMetadataPageInfo.class) })
   @RolesAllowed(Roles.ROLE_ANY) // Allow any authenticated user.
-  public Response getAuAuid(
+  public Response getMetadataAusAuid(
       @ApiParam(value =
       "The identifier of the AU for which the metadata is requested",
       required=true) @PathParam("auid") String auid,
@@ -146,7 +153,8 @@ public class AusApi  {
       @Context HttpServletRequest request,
       @Context SecurityContext securityContext)
 	  throws NotFoundException, ApiException {
-    return delegate.getAuAuid(auid,page,limit,request,securityContext);
+    return delegate.getMetadataAusAuid(auid, page, limit, request,
+	securityContext);
   }
 
   /**
@@ -159,10 +167,12 @@ public class AusApi  {
    *           if there are problems.
    */
   @POST
+  @Path("/aus")
+  @Consumes({ "application/json" })
   @Produces({ "application/json" })
   @ApiOperation(value = "Store the metadata for an AU item", notes =
   "Store the metadata for an item belonging to an AU",
-  authorizations = {@Authorization(value = "basicAuth")}, tags={ "aus", })
+  authorizations = {@Authorization(value = "basicAuth")}, tags={ "metadata", })
   @ApiResponses(value = { 
       @ApiResponse(code = 200,
 	  message = "The key under which the metadata of the AU item has been stored",
@@ -173,10 +183,10 @@ public class AusApi  {
 	  message = "Some or all of the system is not available",
 	  response = Long.class) })
   @RolesAllowed(Roles.ROLE_CONTENT_ADMIN) // Allow any authenticated user.
-  public Response postAuItem(
+  public Response postMetadataAusItem(
       @ApiParam(value = "The metadata of the AU item to be stored",
       required=true) ItemMetadata item,
       @Context SecurityContext securityContext) throws ApiException {
-    return delegate.postAuItem(item,securityContext);
+    return delegate.postMetadataAusItem(item, securityContext);
   }
 }

@@ -33,8 +33,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import org.apache.log4j.Logger;
 import org.lockss.app.LockssDaemon;
-import org.lockss.laaws.mdq.api.AusApiService;
 import org.lockss.laaws.mdq.api.ApiException;
+import org.lockss.laaws.mdq.api.MetadataApiService;
 import org.lockss.laaws.mdq.api.NotFoundException;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
@@ -44,8 +44,8 @@ import org.lockss.metadata.MetadataManager;
 /**
  * Implementation of the base provider of access to the metadata of an AU.
  */
-public class AusApiServiceImpl extends AusApiService {
-  private static Logger log = Logger.getLogger(AusApiServiceImpl.class);
+public class MetadataApiServiceImpl extends MetadataApiService {
+  private static Logger log = Logger.getLogger(MetadataApiServiceImpl.class);
 
   /**
    * Deletes the metadata stored for an AU given the AU identifier.
@@ -60,8 +60,8 @@ public class AusApiServiceImpl extends AusApiService {
    *           if the AU with the given identifier does not exist.
    */
   @Override
-  public Response deleteAuAuid(String auid, SecurityContext securityContext)
-      throws NotFoundException {
+  public Response deleteMetadataAusAuid(String auid,
+      SecurityContext securityContext) throws NotFoundException {
     if (log.isDebugEnabled()) log.debug("auid = " + auid);
 
     try {
@@ -72,11 +72,12 @@ public class AusApiServiceImpl extends AusApiService {
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid = '" + auid + "'";
       log.error(message);
-      return Response.status(404).entity(message).type("text/plain").build();
+      return getErrorResponse(Response.Status.NOT_FOUND, message);
     } catch (Exception e) {
-      String message = "Cannot deleteAuAuid() for auid = '" + auid + "'";
+      String message =
+	  "Cannot deleteMetadataAusAuid() for auid = '" + auid + "'";
       log.error(message, e);
-      throw new NotFoundException(3, message + ": " + e.getMessage());
+      return getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, message);
     }
   }
 
@@ -103,7 +104,7 @@ public class AusApiServiceImpl extends AusApiService {
    *           if there are other problems.
    */
   @Override
-  public Response getAuAuid(String auid, Integer page, Integer limit,
+  public Response getMetadataAusAuid(String auid, Integer page, Integer limit,
       HttpServletRequest request, SecurityContext securityContext)
 	  throws NotFoundException, ApiException {
     if (log.isDebugEnabled()) {
@@ -112,58 +113,55 @@ public class AusApiServiceImpl extends AusApiService {
       log.debug("limit = " + limit);
     }
 
-    PageInfo pi = new PageInfo();
-
-    String curLink = request.getRequestURL().toString();
-    String nextLink = curLink;
-
-    if (page != null) {
-      curLink = curLink + "?page=" + page;
-      nextLink = nextLink + "?page=" + (page + 1);
-
-      if (limit != null) {
-	curLink = curLink + "&limit=" + limit;
-	nextLink = nextLink + "&limit=" + limit;
-      }
-    } else if (limit != null) {
-      curLink = curLink + "?limit=" + limit;
-      nextLink = nextLink + "?limit=" + limit;
-    }
-
-    if (log.isDebugEnabled()) {
-      log.debug("curLink = " + curLink);
-      log.debug("nextLink = " + nextLink);
-    }
-
-    pi.setCurLink(curLink);
-    pi.setNextLink(nextLink);
-    pi.setCurrentPage(page);
-    pi.setResultsPerPage(limit);
-
-    AuMetadataPageInfo result = new AuMetadataPageInfo();
-    result.setPageInfo(pi);
-
     try {
-//      List<ItemMetadata> items = LockssDaemon.getLockssDaemon()
-//	  .getMetadataManager().getAuMetadataDetail(auid, page, limit);
+      PageInfo pi = new PageInfo();
+
+      String curLink = request.getRequestURL().toString();
+      String nextLink = curLink;
+
+      if (page != null) {
+	curLink = curLink + "?page=" + page;
+	nextLink = nextLink + "?page=" + (page + 1);
+
+	if (limit != null) {
+	  curLink = curLink + "&limit=" + limit;
+	  nextLink = nextLink + "&limit=" + limit;
+	}
+      } else if (limit != null) {
+	curLink = curLink + "?limit=" + limit;
+	nextLink = nextLink + "?limit=" + limit;
+      }
+
+      if (log.isDebugEnabled()) {
+	log.debug("curLink = " + curLink);
+	log.debug("nextLink = " + nextLink);
+      }
+
+      pi.setCurLink(curLink);
+      pi.setNextLink(nextLink);
+      pi.setCurrentPage(page);
+      pi.setResultsPerPage(limit);
+
+      AuMetadataPageInfo result = new AuMetadataPageInfo();
+      result.setPageInfo(pi);
+
       List<ItemMetadata> items =
 	  getMetadataManager().getAuMetadataDetail(auid, page, limit);
       if (log.isDebugEnabled()) log.debug("items = " + items);
 
       result.setItems(items);
+      if (log.isDebugEnabled()) log.debug("result = " + result);
+
+      return Response.ok().entity(result).build();
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid = '" + auid + "'";
       log.error(message);
-      throw new NotFoundException(1, message);
+      return getErrorResponse(Response.Status.NOT_FOUND, message);
     } catch (Exception e) {
-      String message = "Cannot getAuAuid() for auid = '" + auid + "'";
+      String message = "Cannot getMetadataAusAuid() for auid = '" + auid + "'";
       log.error(message, e);
-      throw new NotFoundException(1, message + ": " + e.getMessage());
+      return getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, message);
     }
-
-    if (log.isDebugEnabled()) log.debug("result = " + result);
-
-    return Response.ok().entity(result).build();
   }
 
   /**
@@ -176,22 +174,20 @@ public class AusApiServiceImpl extends AusApiService {
    *           if there are problems.
    */
   @Override
-  public Response postAuItem(ItemMetadata item,
+  public Response postMetadataAusItem(ItemMetadata item,
       SecurityContext securityContext) throws ApiException {
     if (log.isDebugEnabled()) log.debug("item = " + item);
 
-    Long mdItemSeq = null;
-
     try {
-      mdItemSeq = getMetadataManager().storeAuItemMetadata(item);
+      Long mdItemSeq = getMetadataManager().storeAuItemMetadata(item);
       if (log.isDebugEnabled()) log.debug("mdItemSeq = " + mdItemSeq);
-    } catch (Exception e) {
-      String message = "Cannot postAuItem() for item = '" + item + "'";
-      log.error(message, e);
-      throw new ApiException(1, message + ": " + e.getMessage());
-    }
 
-    return Response.ok().entity(mdItemSeq).build();
+      return Response.ok().entity(mdItemSeq).build();
+    } catch (Exception e) {
+      String message = "Cannot postMetadataAusItem() for item = '" + item + "'";
+      log.error(message, e);
+      return getErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, message);
+    }
   }
 
   /**
@@ -201,5 +197,29 @@ public class AusApiServiceImpl extends AusApiService {
    */
   private MetadataManager getMetadataManager() {
     return LockssDaemon.getLockssDaemon().getMetadataManager();
+  }
+
+  /**
+   * Provides the appropriate response in case of an error.
+   * 
+   * @param statusCode
+   *          A Response.Status with the error status code.
+   * @param message
+   *          A String with the error message.
+   * @return a Response with the error response.
+   */
+  private Response getErrorResponse(Response.Status status, String message) {
+    return Response.status(status).entity(toJsonMessage(message)).build();
+  }
+
+  /**
+   * Formats to JSON any message to be returned.
+   * 
+   * @param message
+   *          A String with the message to be formatted.
+   * @return a String with the JSON-formatted message.
+   */
+  private String toJsonMessage(String message) {
+    return "{\"message\":\"" + message + "\"}"; 
   }
 }
