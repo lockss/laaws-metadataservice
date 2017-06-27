@@ -54,5 +54,5 @@ org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.targetNameSpace=http://c
 org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.timeoutValue=600
 org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.userName=lockss-u
 
-org.lockss.restAuth.authenticationType=basic
+#org.lockss.restAuth.authenticationType=basic
 org.lockss.ui.port=8084
