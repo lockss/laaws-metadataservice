@@ -46,21 +46,21 @@ org.lockss.metadataDbManager.datasource.password=goodPassword
 # Using MySQL
 #org.lockss.metadataDbManager.datasource.className=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
 
-org.lockss.plugin.urlCacheFromWs=true
+org.lockss.plugin.auContentFromWs=true
 #
 # The web service used to query the presence of a URL.
 #
 # Comment out the following line if a REST web service is used.
-org.lockss.plugin.urlCacheFromWs.isUrlCachedWs.addressLocation=http://localhost:8081/ws/ContentService?wsdl
-org.lockss.plugin.urlCacheFromWs.isUrlCachedWs.password=lockss-p
+org.lockss.plugin.auContentFromWs.urlArtifactWs.addressLocation=http://localhost:8081/ws/ContentService?wsdl
+org.lockss.plugin.auContentFromWs.urlArtifactWs.password=lockss-p
 # Comment out the following line if a REST web service is used.
-org.lockss.plugin.urlCacheFromWs.isUrlCachedWs.serviceName=ContentServiceImplService
+org.lockss.plugin.auContentFromWs.urlArtifactWs.serviceName=ContentServiceImplService
 # Comment out the following line if a REST web service is used.
-org.lockss.plugin.urlCacheFromWs.isUrlCachedWs.targetNameSpace=http://content.ws.lockss.org/
-org.lockss.plugin.urlCacheFromWs.isUrlCachedWs.timeoutValue=600
-org.lockss.plugin.urlCacheFromWs.isUrlCachedWs.userName=lockss-u
+org.lockss.plugin.auContentFromWs.urlArtifactWs.targetNameSpace=http://content.ws.lockss.org/
+org.lockss.plugin.auContentFromWs.urlArtifactWs.timeoutValue=600
+org.lockss.plugin.auContentFromWs.urlArtifactWs.userName=lockss-u
 # Comment out the following line if a REST web service is NOT used.
-#org.lockss.plugin.urlCacheFromWs.isUrlCachedWs.restServiceLocation=http://localhost:8086/repos/demorepo/artifacts?committed=false&uri={uri}
+#org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation=http://localhost:8086/repos/demorepo/artifacts?committed=false&uri={uri}
 
 #org.lockss.restAuth.authenticationType=basic
 org.lockss.ui.port=8084
