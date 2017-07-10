@@ -31,6 +31,7 @@ import java.net.URLEncoder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import org.lockss.laaws.mdq.model.UrlInfo;
+import org.springframework.web.util.UriUtils;
 
 /**
  * Client for the getUrlsDoi() operation.
@@ -47,13 +48,17 @@ public class GetUrlsDoiClient extends BaseClient {
 	  + "for which the URL is requested.");
     }
 
+    String encodePathSegment = UriUtils.encode(args[0], "UTF-8");
+    System.out.println("encodePathSegment = '" + encodePathSegment + "'");
     String encodedDoi = URLEncoder.encode(args[0], "UTF-8");
     System.out.println("encodedDoi = '" + encodedDoi + "'");
 
     WebTarget webTarget = getWebTarget().path("urls/doi").path(encodedDoi);
     System.out.println("webTarget.getUri() = " + webTarget.getUri());
 
-    Response response = webTarget.request().get();
+    Response response =
+	webTarget.request().header("Content-Type", "application/json").get();
+
     int status = response.getStatus();
     System.out.println("status = " + status);
     System.out.println("statusInfo = " + response.getStatusInfo());

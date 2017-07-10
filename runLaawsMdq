@@ -28,17 +28,43 @@ else
     ARGS=$@
 fi
 
+####
+#### Begin local files configuration setup.
+####
+#### Comment out this block to get the configuration from a Configuration REST
+#### web service instead of local files.
+####
+PROP_URL_LIST="config/common.xml config/lockss.txt config/lockss.opt"
+#
+## NB leading space meaningful here
+PROP_ARGS=`echo " " $PROP_URL_LIST | sed 's/ [ ]*/ -p /g'`
+####
+#### End local files configuration setup.
+####
+
+####
+#### Begin REST web service configuration setup.
+####
+#### Comment out this block to get the configuration from local files instead of
+#### a Configuration REST web service.
+####
+#PROP_ARGS=""
+####
+#### End REST web service configuration setup.
+####
+
 log_dir=logs
 
 if [ ! -d "$log_dir" ]; then
 	mkdir $log_dir
 fi
 
-log_file=$log_dir/laawsmdq.log
-touch $log_file
+#log_file=$log_dir/laawsmdq.log
+#touch $log_file
 
-uber_jar=target/laaws-metadata-service-swarm.jar
+uber_jar=target/laaws-metadata-service-0.0.1-SNAPSHOT.jar
 
-java ${ARGS} -jar $uber_jar > $log_file 2>&1 &
-echo $! > dpid
-tail -f $log_file
+java ${ARGS} -jar $uber_jar ${PROP_ARGS}
+#echo $! > dpid
+#tail -f $log_file
+#mvn spring-boot:run ${ARGS} ${PROP_ARGS}

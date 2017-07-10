@@ -31,6 +31,8 @@
   "apiPackage":"org.lockss.laaws.mdq.api",
   "invokerPackage":"org.lockss.laaws.mdq",
   "hideGenerationTimestamp": true,
-  "title": "LAAWS Metadata Service"
+  "dateLibrary":"java8",
+  "title": "LAAWS Metadata Service",
+  "java8": true,
+  "library":"spring-boot"
 }
-

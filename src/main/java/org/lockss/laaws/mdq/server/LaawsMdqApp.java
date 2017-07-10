@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Startup code.
  */
+//@Component
 public class LaawsMdqApp extends LockssDaemon {
   public static final String USE_REST_WEB_SERVICE = "Use REST Web Service";
   private static final Logger log = LoggerFactory.getLogger(LaawsMdqApp.class);

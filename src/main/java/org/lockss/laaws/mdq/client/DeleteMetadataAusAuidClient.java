@@ -28,7 +28,6 @@
 package org.lockss.laaws.mdq.client;
 
 import java.net.URLEncoder;
-
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 

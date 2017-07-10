@@ -54,7 +54,9 @@ public class GetUrlsOpenUrlClient extends BaseClient {
 
     System.out.println("webTarget.getUri() = " + webTarget.getUri());
 
-    Response response = webTarget.request().get();
+    Response response =
+	webTarget.request().header("Content-Type", "application/json").get();
+
     int status = response.getStatus();
     System.out.println("status = " + status);
     System.out.println("statusInfo = " + response.getStatusInfo());

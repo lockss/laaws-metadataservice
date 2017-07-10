@@ -30,8 +30,8 @@ package org.lockss.laaws.mdq.client;
 import java.net.URLEncoder;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 
 /**
@@ -41,8 +41,7 @@ public class UnauthenticatedClient {
 
   public static void main(String[] args) throws Exception {
     Client client = ClientBuilder.newClient();
-    ResteasyWebTarget webTarget =
-	(ResteasyWebTarget)client.target("http://localhost:8889");
+    WebTarget webTarget = client.target("http://localhost:8889");
 
     String encodedAuId = URLEncoder.encode("non-existent", "UTF-8");
     System.out.println("encodedAuId = '" + encodedAuId + "'");
@@ -50,7 +49,9 @@ public class UnauthenticatedClient {
     webTarget = webTarget.path("metadata/aus").path(encodedAuId);
     System.out.println("webTarget.getUri() = " + webTarget.getUri());
 
-    Response response = webTarget.request().get();
+    Response response =
+	webTarget.request().header("Content-Type", "application/json").get();
+
     int status = response.getStatus();
     System.out.println("status = " + status);
     System.out.println("statusInfo = " + response.getStatusInfo());
