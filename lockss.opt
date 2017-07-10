@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+# Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
 # all rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,28 +29,38 @@
 ##org.lockss.metadataDbManager.derby.streamErrorFile=/tmp/derby.log
 #org.lockss.metadataDbManager.derby.streamErrorLogseveritylevel=0
 #org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.EmbeddedDataSource
-#org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.ClientDataSource
-#org.lockss.metadataDbManager.datasource.password=goodPassword
+org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.ClientDataSource
+org.lockss.metadataDbManager.datasource.password=goodPassword
 ##org.lockss.metadataDbManager.datasource.createDatabase=create
 #org.lockss.metadataDbManager.datasource.databaseName=db/MetadataDbManager
 ##org.lockss.metadataDbManager.datasource.portNumber=1527
 ##org.lockss.metadataDbManager.datasource.serverName=localhost
 ##org.lockss.metadataDbManager.datasource.user=LOCKSS
 # Using PostgreSQL.
-org.lockss.metadataDbManager.datasource.className=org.postgresql.ds.PGSimpleDataSource
-org.lockss.metadataDbManager.datasource.databaseName=MetadataDbManager
-org.lockss.metadataDbManager.datasource.password=dontCareItsADemo
-org.lockss.metadataDbManager.datasource.portNumber=5432
-org.lockss.metadataDbManager.datasource.serverName=postgres
-org.lockss.metadataDbManager.datasource.user=LOCKSS
+#org.lockss.metadataDbManager.datasource.className=org.postgresql.ds.PGSimpleDataSource
+##org.lockss.metadataDbManager.datasource.databaseName=MetadataDbManager
+##org.lockss.metadataDbManager.datasource.password=goodPassword
+#org.lockss.metadataDbManager.datasource.portNumber=5432
+##org.lockss.metadataDbManager.datasource.serverName=localhost
+##org.lockss.metadataDbManager.datasource.user=LOCKSS
 # Using MySQL
 #org.lockss.metadataDbManager.datasource.className=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
 
-org.lockss.openUrlResolver.urlCacheFromWs=true
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.addressLocation=http://lockss-daemon:8081/ws/ContentService?wsdl
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.password=lockss-p
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.serviceName=ContentServiceImplService
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.targetNameSpace=http://content.ws.lockss.org/
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.timeoutValue=600
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.userName=lockss-u
-org.lockss.ui.port=8082
+org.lockss.plugin.auContentFromWs=true
+#
+# The web service used to query the presence of a URL.
+#
+# Comment out the following line if a REST web service is used.
+org.lockss.plugin.auContentFromWs.urlArtifactWs.addressLocation=http://localhost:8081/ws/ContentService?wsdl
+org.lockss.plugin.auContentFromWs.urlArtifactWs.password=lockss-p
+# Comment out the following line if a REST web service is used.
+org.lockss.plugin.auContentFromWs.urlArtifactWs.serviceName=ContentServiceImplService
+# Comment out the following line if a REST web service is used.
+org.lockss.plugin.auContentFromWs.urlArtifactWs.targetNameSpace=http://content.ws.lockss.org/
+org.lockss.plugin.auContentFromWs.urlArtifactWs.timeoutValue=600
+org.lockss.plugin.auContentFromWs.urlArtifactWs.userName=lockss-u
+# Comment out the following line if a REST web service is NOT used.
+#org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation=http://localhost:8086/repos/demorepo/artifacts?committed=false&uri={uri}
+
+#org.lockss.restAuth.authenticationType=basic
+org.lockss.ui.port=8084
