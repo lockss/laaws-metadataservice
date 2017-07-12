@@ -29,19 +29,19 @@
 ##org.lockss.metadataDbManager.derby.streamErrorFile=/tmp/derby.log
 #org.lockss.metadataDbManager.derby.streamErrorLogseveritylevel=0
 #org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.EmbeddedDataSource
-org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.ClientDataSource
-org.lockss.metadataDbManager.datasource.password=goodPassword
+#org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.ClientDataSource
+#org.lockss.metadataDbManager.datasource.password=goodPassword
 ##org.lockss.metadataDbManager.datasource.createDatabase=create
 #org.lockss.metadataDbManager.datasource.databaseName=db/MetadataDbManager
 ##org.lockss.metadataDbManager.datasource.portNumber=1527
 ##org.lockss.metadataDbManager.datasource.serverName=localhost
 ##org.lockss.metadataDbManager.datasource.user=LOCKSS
 # Using PostgreSQL.
-#org.lockss.metadataDbManager.datasource.className=org.postgresql.ds.PGSimpleDataSource
+org.lockss.metadataDbManager.datasource.className=org.postgresql.ds.PGSimpleDataSource
 ##org.lockss.metadataDbManager.datasource.databaseName=MetadataDbManager
 ##org.lockss.metadataDbManager.datasource.password=goodPassword
-#org.lockss.metadataDbManager.datasource.portNumber=5432
-##org.lockss.metadataDbManager.datasource.serverName=localhost
+org.lockss.metadataDbManager.datasource.portNumber=5432
+org.lockss.metadataDbManager.datasource.serverName=laaws-metadata-pgsql
 ##org.lockss.metadataDbManager.datasource.user=LOCKSS
 # Using MySQL
 #org.lockss.metadataDbManager.datasource.className=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
@@ -60,7 +60,10 @@ org.lockss.plugin.auContentFromWs.urlArtifactWs.password=lockss-p
 org.lockss.plugin.auContentFromWs.urlArtifactWs.timeoutValue=600
 org.lockss.plugin.auContentFromWs.urlArtifactWs.userName=lockss-u
 # Comment out the following line if a REST web service is NOT used.
-org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation=http://repo:8080/repos/demorepo/artifacts?committed=false&uri={uri}
+org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation=http://laaws-repo:8080/repos/demorepo/artifacts?committed=false&uri={uri}
 
 #org.lockss.restAuth.authenticationType=basic
-org.lockss.ui.port=8084
+org.lockss.ui.port=88084
+
+org.lockss.log.IsUrlCachedClient.level=debug3
+
