@@ -39,7 +39,7 @@
 # Using PostgreSQL.
 org.lockss.metadataDbManager.datasource.className=org.postgresql.ds.PGSimpleDataSource
 ##org.lockss.metadataDbManager.datasource.databaseName=MetadataDbManager
-##org.lockss.metadataDbManager.datasource.password=goodPassword
+org.lockss.metadataDbManager.datasource.password=goodPassword
 org.lockss.metadataDbManager.datasource.portNumber=5432
 org.lockss.metadataDbManager.datasource.serverName=laaws-metadata-pgsql
 ##org.lockss.metadataDbManager.datasource.user=LOCKSS
