@@ -63,7 +63,7 @@ org.lockss.plugin.auContentFromWs.urlArtifactWs.userName=lockss-u
 org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation=http://laaws-repo:8080/repos/demorepo/artifacts?committed=false&uri={uri}
 
 #org.lockss.restAuth.authenticationType=basic
-org.lockss.ui.port=88084
+org.lockss.ui.port=18084
 
 org.lockss.log.IsUrlCachedClient.level=debug3
 
