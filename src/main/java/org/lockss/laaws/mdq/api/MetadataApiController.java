@@ -126,7 +126,6 @@ public class MetadataApiController implements MetadataApi {
       logger.debug("page = " + page);
       logger.debug("limit = " + limit);
     }
-    logger.error("auid = " + auid);
 
     try {
       PageInfo pi = new PageInfo();
