@@ -76,6 +76,10 @@ paths:
           schema:
             type: "integer"
             format: "int64"
+        401:
+          description: "Unauthorized request"
+        403:
+          description: "Forbidden request"
         500:
           description: "Internal server error"
         503:
@@ -117,6 +121,8 @@ paths:
           description: "The metadata of the specified AU"
           schema:
             $ref: "#/definitions/auMetadataPageInfo"
+        401:
+          description: "Unauthorized request"
         404:
           description: "AU not found"
         500:
@@ -180,6 +186,12 @@ paths:
           description: "The data related to the performed OpenURL query"
           schema:
             $ref: "#/definitions/urlInfo"
+        401:
+          description: "Unauthorized request"
+        500:
+          description: "Internal server error"
+        503:
+          description: "Some or all of the system is not available"
   /urls/doi/{doi}:
     get:
       tags:
@@ -202,6 +214,12 @@ paths:
           description: "The URL for the specified DOI"
           schema:
             $ref: "#/definitions/urlInfo"
+        401:
+          description: "Unauthorized request"
+        500:
+          description: "Internal server error"
+        503:
+          description: "Some or all of the system is not available"
 securityDefinitions:
   basicAuth:
     description: "HTTP Basic Authentication. Works over `HTTP` and `HTTPS`"
