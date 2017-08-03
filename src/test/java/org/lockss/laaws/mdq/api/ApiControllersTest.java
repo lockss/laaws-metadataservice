@@ -29,6 +29,8 @@ package org.lockss.laaws.mdq.api;
 
 import static org.junit.Assert.*;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
@@ -78,12 +80,15 @@ public class ApiControllersTest {
    */
   @Test
   public void runUnAuthenticatedTests() throws Exception {
-    if (logger.isDebugEnabled()) logger.debug("Invoked.");
+    if (logger.isDebugEnabled()) logger.debug("port = " + port);
 
     // Specify the command line parameters to be used for the tests.
+    List<String> cmdLineArgs = getCommandLineArguments();
+    cmdLineArgs.add("-p");
+    cmdLineArgs.add("config/apiControllerTestAuthOff.opt");
+
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
-    runner.run ( "-p", "config/common.xml", "-p", "config/lockss.txt",
-	"-p", "config/lockss.opt");
+    runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
 
     getSwaggerDocsTest();
     getMetadataAusAuidUnAuthenticatedTest();
@@ -103,12 +108,15 @@ public class ApiControllersTest {
    */
   @Test
   public void runAuthenticatedTests() throws Exception {
-    if (logger.isDebugEnabled()) logger.debug("Invoked.");
+    if (logger.isDebugEnabled()) logger.debug("port = " + port);
 
     // Specify the command line parameters to be used for the tests.
+    List<String> cmdLineArgs = getCommandLineArguments();
+    cmdLineArgs.add("-p");
+    cmdLineArgs.add("config/apiControllerTestAuthOn.opt");
+
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
-    runner.run ( "-p", "config/common.xml", "-p", "config/lockss.txt",
-	"-p", "config/lockss.opt", "-p", "config/testAuthOn.opt");
+    runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
 
     getSwaggerDocsTest();
     getMetadataAusAuidAuthenticatedTest();
@@ -118,6 +126,21 @@ public class ApiControllersTest {
     getUrlsOpenUrlAuthenticatedTest();
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
+  }
+
+  /**
+   * Provides the standard command line arguments to start the server.
+   * 
+   * @return a List<String> with the command line arguments.
+   */
+  private List<String> getCommandLineArguments() {
+    List<String> cmdLineArgs = new ArrayList<String>();
+    cmdLineArgs.add("-p");
+    cmdLineArgs.add("config/common.xml");
+    cmdLineArgs.add("-p");
+    cmdLineArgs.add("config/lockss.txt");
+
+    return cmdLineArgs;
   }
 
   /**
@@ -168,6 +191,25 @@ public class ApiControllersTest {
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
 
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    ResponseEntity<AuMetadataPageInfo> successResponse =
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
+	    HttpMethod.GET, new HttpEntity<String>(null, headers),
+	    AuMetadataPageInfo.class);
+
+    statusCode = successResponse.getStatusCode();
+    assertEquals(HttpStatus.OK, statusCode);
+
+    AuMetadataPageInfo result = successResponse.getBody();
+
+    assertEquals(0, result.getItems().size());
+    assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
+    assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
+    assertNull(result.getPageInfo().getTotalCount());
+
     getMetadataAusAuidCommonTest();
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
@@ -199,6 +241,25 @@ public class ApiControllersTest {
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
 
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    ResponseEntity<AuMetadataPageInfo> successResponse =
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
+	    HttpMethod.GET, new HttpEntity<String>(null, headers),
+	    AuMetadataPageInfo.class);
+
+    statusCode = successResponse.getStatusCode();
+    assertEquals(HttpStatus.OK, statusCode);
+
+    AuMetadataPageInfo result = successResponse.getBody();
+
+    assertEquals(50, result.getItems().size());
+    assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
+    assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
+    assertNull(result.getPageInfo().getTotalCount());
+
     getMetadataAusAuidCommonTest();
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
@@ -223,28 +284,9 @@ public class ApiControllersTest {
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    ResponseEntity<AuMetadataPageInfo> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
-	    HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    AuMetadataPageInfo.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    AuMetadataPageInfo result = successResponse.getBody();
-
-    assertEquals(0, result.getItems().size());
-    assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
-    assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
-    assertNull(result.getPageInfo().getTotalCount());
-
     uri = "/metadata/aus/non-existent";
 
-    headers = new HttpHeaders();
+    HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
@@ -297,6 +339,20 @@ public class ApiControllersTest {
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
 
+    headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    successResponse = new TestRestTemplate("lockss-u", "lockss-p")
+	.exchange(getTestUrl(uri), HttpMethod.DELETE,
+	    new HttpEntity<String>(null, headers), Integer.class);
+
+    statusCode = successResponse.getStatusCode();
+    assertEquals(HttpStatus.OK, statusCode);
+
+    Integer result = successResponse.getBody();
+    assertEquals(0, result.intValue());
+
     deleteMetadataAusAuidCommonTest();
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
@@ -341,6 +397,21 @@ public class ApiControllersTest {
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
 
+    headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    ResponseEntity<Integer> successResponse =
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
+	    HttpMethod.DELETE, new HttpEntity<String>(null, headers),
+	    Integer.class);
+
+    statusCode = successResponse.getStatusCode();
+    assertEquals(HttpStatus.OK, statusCode);
+
+    Integer result = successResponse.getBody();
+    assertEquals(67, result.intValue());
+
     deleteMetadataAusAuidCommonTest();
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
@@ -365,24 +436,9 @@ public class ApiControllersTest {
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    ResponseEntity<Integer> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
-	    HttpMethod.DELETE, new HttpEntity<String>(null, headers),
-	    Integer.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    Integer result = successResponse.getBody();
-    assertEquals(0, result.intValue());
-
     uri = "/metadata/aus/non-existent";
 
-    headers = new HttpHeaders();
+    HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
