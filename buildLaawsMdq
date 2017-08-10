@@ -29,16 +29,6 @@ cd build
 
 echo Copying source files...
 cp -r ../config .
-####
-#### Begin local files configuration setup.
-####
-#### Comment out this block to get the configuration from a Configuration REST
-#### web service instead of local files.
-####
-cp ../laaws-daemon/lib/lockss-plugins.jar .
-####
-#### End local files configuration setup.
-####
 cp ../pom.xml .
 cp -r ../poms .
 cp -r ../src .

@@ -27,12 +27,13 @@
  */
 package org.lockss.laaws.mdq.client;
 
-import java.net.URLEncoder;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriUtils;
 
 /**
  * Client for an unauthenticated user.
@@ -40,28 +41,30 @@ import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 public class UnauthenticatedClient {
 
   public static void main(String[] args) throws Exception {
-    Client client = ClientBuilder.newClient();
-    WebTarget webTarget = client.target("http://localhost:8889");
-
-    String encodedAuId = URLEncoder.encode("non-existent", "UTF-8");
-    System.out.println("encodedAuId = '" + encodedAuId + "'");
-
-    webTarget = webTarget.path("metadata/aus").path(encodedAuId);
-    System.out.println("webTarget.getUri() = " + webTarget.getUri());
-
-    Response response =
-	webTarget.request().header("Content-Type", "application/json").get();
-
-    int status = response.getStatus();
-    System.out.println("status = " + status);
-    System.out.println("statusInfo = " + response.getStatusInfo());
-
-    if (status == 200) {
-      AuMetadataPageInfo result = response.readEntity(AuMetadataPageInfo.class);
-      System.out.println("result = " + result);
-    } else {
-      Object result = response.readEntity(Object.class);
-      System.out.println("result = " + result);
+    for (int i = 0; i < args.length; i++) {
+      System.out.println("args[" + i + "] = " + args[i]);
     }
+
+    if (args.length < 1) {
+      System.err.println("ERROR: Missing command line argument with the "
+	  + "identifier of the Archival Unit for which its metadata is "
+	  + "requested.");
+    }
+
+    String url = BaseClient.baseUri + "/metadata/aus/"
+	+ UriUtils.encodePathSegment(args[0], "UTF-8");
+    System.out.println("url = " + url);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    ResponseEntity<AuMetadataPageInfo> response =
+	BaseClient.getRestTemplate().exchange(url, HttpMethod.GET,
+	    new HttpEntity<String>(null, headers), AuMetadataPageInfo.class);
+
+    int status = response.getStatusCodeValue();
+    System.out.println("status = " + status);
+    AuMetadataPageInfo result = response.getBody();
+    System.out.println("result = " + result);
   }
 }

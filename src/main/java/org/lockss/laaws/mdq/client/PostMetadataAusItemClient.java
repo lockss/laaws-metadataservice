@@ -27,11 +27,12 @@
  */
 package org.lockss.laaws.mdq.client;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import org.lockss.laaws.mdq.model.ItemMetadata;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Client for the postMetadataAusItem() operation.
@@ -48,26 +49,19 @@ public class PostMetadataAusItemClient extends BaseClient {
 	  + "metadata to be posted.");
     }
 
-    ItemMetadata metadata = new ItemMetadata();
+    ItemMetadata metadata =
+	new ObjectMapper().readValue(args[0], ItemMetadata.class);
     System.out.println("metadata = '" + metadata + "'");
 
-    WebTarget webTarget = getWebTarget().path("metadata/aus");
-    System.out.println("webTarget.getUri() = " + webTarget.getUri());
+    String url = baseUri + "/metadata/aus";
 
-    Response response = webTarget.request().header("Content-Type",
-	"application/json").post(Entity.entity(metadata,
-	    MediaType.APPLICATION_JSON_TYPE));
+    ResponseEntity<Long> response = getRestTemplate().exchange(url,
+	HttpMethod.POST, new HttpEntity<ItemMetadata>(metadata,
+	    getHttpHeaders()), Long.class);
 
-    int status = response.getStatus();
+    int status = response.getStatusCodeValue();
     System.out.println("status = " + status);
-    System.out.println("statusInfo = " + response.getStatusInfo());
-
-    if (status == 200) {
-      Long result = response.readEntity(Long.class);
-      System.out.println("result = " + result);
-    } else {
-      Object result = response.readEntity(Object.class);
-      System.out.println("result = " + result);
-    }
+    Long result = response.getBody();
+    System.out.println("result = " + result);
   }
 }

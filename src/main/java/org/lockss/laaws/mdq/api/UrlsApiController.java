@@ -27,6 +27,8 @@
  */
 package org.lockss.laaws.mdq.api;
 
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.MalformedParametersException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriUtils;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -72,14 +75,23 @@ public class UrlsApiController implements UrlsApi {
   public ResponseEntity<UrlInfo> getUrlsDoi(@PathVariable("doi") String doi) {
     if (logger.isDebugEnabled()) logger.debug("doi = " + doi);
 
+    String decodedDoi = null;
+
     try {
+      decodedDoi = UriUtils.decode(doi, "UTF-8");
+      if (logger.isDebugEnabled()) logger.debug("decodedDoi = " + decodedDoi);
+
       // Build an OpenURL query.
       Map<String, String> params = new HashMap<String,String>();
-      params.put("rft_id", "info:doi/" + doi);
+      params.put("rft_id", "info:doi/" + decodedDoi);
 
       return new ResponseEntity<UrlInfo>(resolveOpenUrl(params), HttpStatus.OK);
+    } catch (UnsupportedEncodingException uee) {
+      String message = "Cannot decode doi = '" + doi + "'";
+      logger.error(message, uee);
+      throw new MalformedParametersException(message);
     } catch (Exception e) {
-      String message = "Cannot getUrlsDoi() for doi = '" + doi + "'";
+      String message = "Cannot getUrlsDoi() for doi = '" + decodedDoi + "'";
       logger.error(message, e);
       throw new RuntimeException(message);
     }
@@ -110,16 +122,27 @@ public class UrlsApiController implements UrlsApi {
       Map<String, String> openUrlParams = new HashMap<String,String>();
 
       for (String param : params) {
-	int sepLoc = param.trim().indexOf("=");
+	String decodedParam = UriUtils.decode(param, "UTF-8");
+	if (logger.isDebugEnabled())
+	  logger.debug("decodedParam = " + decodedParam);
 
-	if (sepLoc > 0 && sepLoc < param.length() - 1) {
-	  openUrlParams.put(param.substring(0, sepLoc),
-	      param.substring(sepLoc + 1));
+	int sepLoc = decodedParam.trim().indexOf("=");
+
+	if (sepLoc > 0 && sepLoc < decodedParam.length() - 1) {
+	  openUrlParams.put(decodedParam.substring(0, sepLoc),
+	      decodedParam.substring(sepLoc + 1));
 	}
       }
 
+      if (logger.isDebugEnabled())
+	logger.debug("openUrlParams = " + openUrlParams);
+
       return new ResponseEntity<UrlInfo>(resolveOpenUrl(openUrlParams),
 	  HttpStatus.OK);
+    } catch (UnsupportedEncodingException uee) {
+      String message = "Cannot decode params = '" + params + "'";
+      logger.error(message, uee);
+      throw new MalformedParametersException(message);
     } catch (Exception e) {
       String message = "Cannot getUrlsOpenUrl() for params = '" + params + "'";
       logger.error(message, e);
@@ -168,6 +191,13 @@ public class UrlsApiController implements UrlsApi {
     if (logger.isDebugEnabled()) logger.debug("result = " + result);
 
     return result;
+  }
+
+  @ExceptionHandler(MalformedParametersException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorResponse badRequestExceptionHandler(
+      MalformedParametersException e) {
+    return new ErrorResponse(e.getMessage()); 	
   }
 
   @ExceptionHandler(RuntimeException.class)

@@ -28,12 +28,13 @@
 package org.lockss.laaws.mdq.api;
 
 import static org.junit.Assert.*;
-import java.net.URLEncoder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
+import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.UrlInfo;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
@@ -52,6 +53,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 /**
  * Test class for org.lockss.laaws.mdq.api.MetadataApiController and
@@ -168,14 +170,14 @@ public class ApiControllersTest {
   /**
    * Runs the getMetadataAusAuid()-related un-authenticated-specific tests.
    */
-  private void getMetadataAusAuidUnAuthenticatedTest() {
+  private void getMetadataAusAuidUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
 	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
 	+ "&volume_name~8";
 
-    String uri = "/metadata/aus/" + auid;
+    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
 
     ResponseEntity<AuMetadataPageInfo> errorResponse =
 	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.GET, null,
@@ -205,7 +207,7 @@ public class ApiControllersTest {
 
     AuMetadataPageInfo result = successResponse.getBody();
 
-    assertEquals(0, result.getItems().size());
+    assertEquals(1, result.getItems().size());
     assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
     assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
     assertNull(result.getPageInfo().getTotalCount());
@@ -218,14 +220,14 @@ public class ApiControllersTest {
   /**
    * Runs the getMetadataAusAuid()-related authenticated-specific tests.
    */
-  private void getMetadataAusAuidAuthenticatedTest() {
+  private void getMetadataAusAuidAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
 	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
 	+ "&volume_name~8";
 
-    String uri = "/metadata/aus/" + auid;
+    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
 
     ResponseEntity<AuMetadataPageInfo> errorResponse =
 	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.GET, null,
@@ -268,14 +270,14 @@ public class ApiControllersTest {
   /**
    * Runs the getMetadataAusAuid()-related authentication-independent tests.
    */
-  private void getMetadataAusAuidCommonTest() {
+  private void getMetadataAusAuidCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
 	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
 	+ "&volume_name~8";
 
-    String uri = "/metadata/aus/" + auid;
+    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
 
     ResponseEntity<AuMetadataPageInfo> errorResponse =
 	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
@@ -303,14 +305,14 @@ public class ApiControllersTest {
   /**
    * Runs the deleteMetadataAusAuid()-related un-authenticated-specific tests.
    */
-  private void deleteMetadataAusAuidUnAuthenticatedTest() {
+  private void deleteMetadataAusAuidUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
 	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
 	+ "&volume_name~8";
 
-    String uri = "/metadata/aus/" + auid;
+    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
 
     ResponseEntity<String> errorResponse = new TestRestTemplate()
 	.exchange(getTestUrl(uri), HttpMethod.DELETE, null, String.class);
@@ -328,6 +330,9 @@ public class ApiControllersTest {
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
 
+    Integer result = successResponse.getBody();
+    assertEquals(1, result.intValue());
+
     headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
@@ -338,6 +343,9 @@ public class ApiControllersTest {
 
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
+
+    result = successResponse.getBody();
+    assertEquals(0, result.intValue());
 
     headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
@@ -350,7 +358,7 @@ public class ApiControllersTest {
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
 
-    Integer result = successResponse.getBody();
+    result = successResponse.getBody();
     assertEquals(0, result.intValue());
 
     deleteMetadataAusAuidCommonTest();
@@ -361,14 +369,14 @@ public class ApiControllersTest {
   /**
    * Runs the deleteMetadataAusAuid()-related authenticated-specific tests.
    */
-  private void deleteMetadataAusAuidAuthenticatedTest() {
+  private void deleteMetadataAusAuidAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
 	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
 	+ "&volume_name~8";
 
-    String uri = "/metadata/aus/" + auid;
+    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
 
     ResponseEntity<String> errorResponse = new TestRestTemplate()
 	.exchange(getTestUrl(uri), HttpMethod.DELETE, null, String.class);
@@ -420,14 +428,14 @@ public class ApiControllersTest {
   /**
    * Runs the deleteMetadataAusAuid()-related authenticated-independent tests.
    */
-  private void deleteMetadataAusAuidCommonTest() {
+  private void deleteMetadataAusAuidCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
 	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
 	+ "&volume_name~8";
 
-    String uri = "/metadata/aus/" + auid;
+    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
 
     ResponseEntity<String> errorResponse =
 	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
@@ -455,7 +463,7 @@ public class ApiControllersTest {
   /**
    * Runs the postMetadataAusItem()-related un-authenticated-specific tests.
    */
-  private void postMetadataAusItemUnAuthenticatedTest() {
+  private void postMetadataAusItemUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String uri = "/metadata/aus";
@@ -499,7 +507,7 @@ public class ApiControllersTest {
   /**
    * Runs the postMetadataAusItem()-related authenticated-specific tests.
    */
-  private void postMetadataAusItemAuthenticatedTest() {
+  private void postMetadataAusItemAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String uri = "/metadata/aus";
@@ -543,7 +551,7 @@ public class ApiControllersTest {
   /**
    * Runs the postMetadataAusItem()-related authentication-independent tests.
    */
-  private void postMetadataAusItemCommonTest() {
+  private void postMetadataAusItemCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String uri = "/metadata/aus";
@@ -565,6 +573,49 @@ public class ApiControllersTest {
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, statusCode);
 
+    headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    String metadataJsonValue = "{\"scalarMap\":{\"date\":\"2016\"," 
+	+ "\"coverage\":\"fulltext\",\"volume\":\"8\","
+	+ "\"publication_name\":\"Africa Review\","
+	+ "\"publisher_name\":\"Taylor & Francis\","
+	+ "\"au_id\":\"org|lockss|plugin|taylorandfrancis|TaylorAndFrancis"
+	+ "Plugin&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&"
+	+ "journal_id~rafr20&volume_name~8\"," +
+	"\"provider_name\":\"Taylor & Francis\",\"fetch_time\":\"-1\"},"
+	+ "\"listMap\":{\"proprietary_id\":[\"rafr20\"]},"
+	+ "\"mapMap\":{\"issn\":{\"e_issn\":\"09744061\","
+	+ "\"p_issn\":\"09744053\"},\"url\":{\"SupplementaryMaterials\":"
+	+ "\"http://www.tandfonline.com/doi/suppl/10.1080/01436597.2015.1128816"
+	+ "\",\"FullTextHtml\":\"http://www.tandfonline.com/doi/full/10.1080/"
+	+ "01436597.2015.1128816\",\"Abstract\":\"http://www.tandfonline.com/"
+	+ "doi/abs/10.1080/01436597.2015.1128816\",\"PdfPlus\":"
+	+ "\"http://www.tandfonline.com/doi/pdfplus/10.1080/01436597.2015."
+	+ "1128816\",\"References\":\"http://www.tandfonline.com/doi/ref/10."
+	+ "1080/01436597.2015.1128816\",\"Access\":"
+	+ "\"http://www.tandfonline.com/doi/pdf/10.1080/01436597.2015.1128816\""
+	+ ",\"CitationRis\":\"http://www.tandfonline.com/action/"
+	+ "downloadCitation?doi=10.1080%2F01436597.2015.1128816&format=ris&"
+	+ "include=cit\",\"FullTextPdfFile\":\"http://www.tandfonline.com/doi/"
+	+ "pdf/10.1080/01436597.2015.1128816\",\"ArticleMetadata\":"
+	+ "\"http://www.tandfonline.com/action/downloadCitation?doi="
+	+ "10.1080%2F01436597.2015.1128816&format=ris&include=cit\"}}}";
+
+    ItemMetadata metadata =
+	new ObjectMapper().readValue(metadataJsonValue, ItemMetadata.class);
+
+    ResponseEntity<Long> successResponse =
+	new TestRestTemplate("lockss-u", "lockss-p")
+	.exchange(getTestUrl(uri), HttpMethod.POST,
+	    new HttpEntity<ItemMetadata>(metadata, headers), Long.class);
+
+    statusCode = successResponse.getStatusCode();
+    assertEquals(HttpStatus.OK, statusCode);
+
+    Long result = successResponse.getBody();
+    assertTrue(result.longValue() > 0);
+
     if (logger.isDebugEnabled()) logger.debug("Done.");
   }
 
@@ -575,8 +626,7 @@ public class ApiControllersTest {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String doi = "10.1080/09744053.2016.1193941";
-    String encodedDoi = URLEncoder.encode(doi, "UTF-8");
-    String uri = "/urls/doi/" + encodedDoi;
+    String uri = "/urls/doi/" + UriUtils.encode(doi, "UTF-8");
 
     ResponseEntity<UrlInfo> errorResponse =
 	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.GET, null,
@@ -603,8 +653,7 @@ public class ApiControllersTest {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String doi = "10.1080/09744053.2016.1193941";
-    String encodedDoi = URLEncoder.encode(doi, "UTF-8");
-    String uri = "/urls/doi/" + encodedDoi;
+    String uri = "/urls/doi/" + UriUtils.encode(doi, "UTF-8");
 
     ResponseEntity<UrlInfo> errorResponse =
 	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.GET, null,
@@ -631,9 +680,7 @@ public class ApiControllersTest {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String doi = "10.1080/09744053.2016.1193941";
-    String encodedDoi = URLEncoder.encode(doi, "UTF-8");
-    String uri = "/urls/doi/" + encodedDoi;
-    if (logger.isDebugEnabled()) logger.debug("uri=" + uri);
+    String uri = "/urls/doi/" + UriUtils.encode(doi, "UTF-8");
 
     ResponseEntity<UrlInfo> errorResponse =
 	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
@@ -656,13 +703,12 @@ public class ApiControllersTest {
 
     UrlInfo result = successResponse.getBody();
     assertEquals(1, result.getParams().size());
-    assertTrue(("info:doi/" + encodedDoi)
+    assertTrue(("info:doi/" + doi)
 	.startsWith(result.getParams().get("rft_id")));
     assertEquals(0, result.getUrls().size());
 
     doi = "non-existent";
-    encodedDoi = URLEncoder.encode(doi, "UTF-8");
-    uri = "/urls/doi/" + encodedDoi;
+    uri = "/urls/doi/" + UriUtils.encode(doi, "UTF-8");
 
     headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
@@ -677,7 +723,7 @@ public class ApiControllersTest {
 
     result = successResponse.getBody();
     assertEquals(1, result.getParams().size());
-    assertEquals("info:doi/" + encodedDoi, result.getParams().get("rft_id"));
+    assertEquals("info:doi/" + doi, result.getParams().get("rft_id"));
     assertEquals(0, result.getUrls().size());
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
@@ -686,7 +732,7 @@ public class ApiControllersTest {
   /**
    * Runs the getUrlsOpenUrl()-related un-authenticated-specific tests.
    */
-  private void getUrlsOpenUrlUnAuthenticatedTest() {
+  private void getUrlsOpenUrlUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String uri = "/urls/openurl";
@@ -712,7 +758,7 @@ public class ApiControllersTest {
   /**
    * Runs the getUrlsOpenUrl()-related authenticated-specific tests.
    */
-  private void getUrlsOpenUrlAuthenticatedTest() {
+  private void getUrlsOpenUrlAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String uri = "/urls/openurl";
@@ -738,7 +784,7 @@ public class ApiControllersTest {
   /**
    * Runs the getUrlsOpenUrl()-related authentication-independent tests.
    */
-  private void getUrlsOpenUrlCommonTest() {
+  private void getUrlsOpenUrlCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     String uri = "/urls/openurl";
@@ -765,7 +811,7 @@ public class ApiControllersTest {
 
     UriComponentsBuilder builder =
 	UriComponentsBuilder.fromHttpUrl(getTestUrl(uri))
-	.queryParam("params", param);
+	.queryParam("params", UriUtils.encodeQueryParam(param, "UTF-8"));
 
     headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
@@ -789,8 +835,9 @@ public class ApiControllersTest {
     String param3 = "rft.spage=156";
 
     builder = UriComponentsBuilder.fromHttpUrl(getTestUrl(uri))
-	.queryParam("params", param1).queryParam("params", param2)
-	.queryParam("params", param3);
+	.queryParam("params", UriUtils.encodeQueryParam(param1, "UTF-8"))
+	.queryParam("params", UriUtils.encodeQueryParam(param2, "UTF-8"))
+	.queryParam("params", UriUtils.encodeQueryParam(param3, "UTF-8"));
 
     headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);

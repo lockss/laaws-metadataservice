@@ -27,9 +27,12 @@
  */
 package org.lockss.laaws.mdq.client;
 
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
 import org.lockss.laaws.mdq.model.UrlInfo;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 /**
  * Client for the getUrlsOpenUrl() operation.
@@ -46,27 +49,21 @@ public class GetUrlsOpenUrlClient extends BaseClient {
 	  + "query parameter(s)");
     }
 
-    WebTarget webTarget = getWebTarget().path("urls/openurl");
+    String url = baseUri + "/urls/openurl";
+    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
 
     for (int i = 0; i < args.length; i++) {
-      webTarget = webTarget.queryParam("params", args[i]);
+      builder = builder.queryParam("params",
+	  UriUtils.encodeQueryParam(args[i], "UTF-8"));
     }
 
-    System.out.println("webTarget.getUri() = " + webTarget.getUri());
+    ResponseEntity<UrlInfo> response = getRestTemplate()
+	.exchange(builder.build().encode().toUri(), HttpMethod.GET,
+	    new HttpEntity<String>(null, getHttpHeaders()), UrlInfo.class);
 
-    Response response =
-	webTarget.request().header("Content-Type", "application/json").get();
-
-    int status = response.getStatus();
+    int status = response.getStatusCodeValue();
     System.out.println("status = " + status);
-    System.out.println("statusInfo = " + response.getStatusInfo());
-
-    if (status == 200) {
-      UrlInfo result = response.readEntity(UrlInfo.class);
-      System.out.println("result = " + result);
-    } else {
-      Object result = response.readEntity(Object.class);
-      System.out.println("result = " + result);
-    }
+    UrlInfo result = response.getBody();
+    System.out.println("result = " + result);
   }
 }

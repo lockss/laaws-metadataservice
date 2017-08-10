@@ -28,6 +28,8 @@
 package org.lockss.laaws.mdq.api;
 
 import io.swagger.annotations.ApiParam;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.MalformedParametersException;
 import java.security.AccessControlException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -43,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,6 +53,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriUtils;
 
 /**
  * Controller for access to the metadata of an AU.
@@ -75,24 +77,33 @@ public class MetadataApiController implements MetadataApi {
   @RequestMapping(value = "/metadata/aus/{auid}",
   produces = { "application/json" }, consumes = { "application/json" },
   method = RequestMethod.DELETE)
-  //@PreAuthorize("hasAuthority('userAdminRole')") 
   public ResponseEntity<Integer> deleteMetadataAusAuid(
       @PathVariable("auid") String auid) {
     if (logger.isDebugEnabled()) logger.debug("auid = " + auid);
 
     SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
 
+    String decodedAuId = null;
+
     try {
-      Integer count = getMetadataManager().deleteAuMetadataItems(auid);
+      decodedAuId = UriUtils.decode(auid, "UTF-8");
+      if (logger.isDebugEnabled()) logger.debug("decodedAuId = " + decodedAuId);
+
+      Integer count = getMetadataManager().deleteAuMetadataItems(decodedAuId);
       if (logger.isDebugEnabled()) logger.debug("count = " + count);
 
       return new ResponseEntity<Integer>(count, HttpStatus.OK);
+    } catch (UnsupportedEncodingException uee) {
+      String message = "Cannot decode auid = '" + auid + "'";
+      logger.error(message, uee);
+      throw new MalformedParametersException(message);
     } catch (IllegalArgumentException iae) {
-      String message = "No Archival Unit found for auid '" + auid + "'";
+      String message = "No Archival Unit found for auid '" + decodedAuId + "'";
       logger.error(message);
       throw new IllegalArgumentException(message);
     } catch (Exception e) {
-      String message = "Cannot deleteMetadataAusAuid() for auid '" + auid + "'";
+      String message =
+	  "Cannot deleteMetadataAusAuid() for auid '" + decodedAuId + "'";
       logger.error(message, e);
       throw new RuntimeException(message);
     }
@@ -127,7 +138,12 @@ public class MetadataApiController implements MetadataApi {
       logger.debug("limit = " + limit);
     }
 
+    String decodedAuId = null;
+
     try {
+      decodedAuId = UriUtils.decode(auid, "UTF-8");
+      if (logger.isDebugEnabled()) logger.debug("decodedAuId = " + decodedAuId);
+
       PageInfo pi = new PageInfo();
 
       String curLink = request.getRequestURL().toString();
@@ -160,19 +176,24 @@ public class MetadataApiController implements MetadataApi {
       result.setPageInfo(pi);
 
       List<ItemMetadata> items =
-	  getMetadataManager().getAuMetadataDetail(auid, page, limit);
+	  getMetadataManager().getAuMetadataDetail(decodedAuId, page, limit);
       if (logger.isDebugEnabled()) logger.debug("items = " + items);
 
       result.setItems(items);
       if (logger.isDebugEnabled()) logger.debug("result = " + result);
 
       return new ResponseEntity<AuMetadataPageInfo>(result, HttpStatus.OK);
+    } catch (UnsupportedEncodingException uee) {
+      String message = "Cannot decode auid = '" + auid + "'";
+      logger.error(message, uee);
+      throw new MalformedParametersException(message);
     } catch (IllegalArgumentException iae) {
-      String message = "No Archival Unit found for auid '" + auid + "'";
+      String message = "No Archival Unit found for auid '" + decodedAuId + "'";
       logger.error(message);
       throw new IllegalArgumentException(message);
     } catch (Exception e) {
-      String message = "Cannot getMetadataAusAuid() for auid '" + auid + "'";
+      String message =
+	  "Cannot getMetadataAusAuid() for auid '" + decodedAuId + "'";
       logger.error(message, e);
       throw new RuntimeException(message);
     }
@@ -213,6 +234,13 @@ public class MetadataApiController implements MetadataApi {
     return new ErrorResponse(e.getMessage()); 	
   }
 
+  @ExceptionHandler(MalformedParametersException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorResponse badRequestExceptionHandler(
+      MalformedParametersException e) {
+    return new ErrorResponse(e.getMessage()); 	
+  }
+
   @ExceptionHandler(IllegalArgumentException.class)
   @ResponseStatus(HttpStatus.NOT_FOUND)
   public ErrorResponse notFoundExceptionHandler(IllegalArgumentException e) {
@@ -233,45 +261,4 @@ public class MetadataApiController implements MetadataApi {
   private MetadataManager getMetadataManager() {
     return LockssDaemon.getLockssDaemon().getMetadataManager();
   }
-
-  //
-//  /**
-//   * Defines the JSON output format of error responses
-//   */
-//  public static class ErrorResponse {
-//    private String message;
-//
-//    public ErrorResponse(String message) {
-//      this.message = message;
-//    }
-//
-//    public String getMessage() {
-//      return message;
-//    }
-//  }
-
-//  /**
-//   * Provides the appropriate response in case of an error.
-//   * 
-//   * @param message
-//   *          A String with the error message.
-//   * @param statusCode
-//   *          An HttpStatus with the error status code.
-//   * @return a Response with the error response.
-//   */
-//  private ResponseEntity<Object> getErrorResponse(String message,
-//      HttpStatus status) {
-//    return new ResponseEntity<>(toJsonMessage(message), status);
-//  }
-//
-//  /**
-//   * Formats to JSON any message to be returned.
-//   * 
-//   * @param message
-//   *          A String with the message to be formatted.
-//   * @return a String with the JSON-formatted message.
-//   */
-//  private String toJsonMessage(String message) {
-//    return "{\"message\":\"" + message + "\"}"; 
-//  }
 }

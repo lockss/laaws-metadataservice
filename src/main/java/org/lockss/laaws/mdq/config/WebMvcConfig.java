@@ -25,40 +25,33 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.client;
+package org.lockss.laaws.mdq.config;
 
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.util.UriUtils;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
- * Client for the deleteMetadataAusAuid() operation.
+ * Spring MVC customization.
  */
-public class DeleteMetadataAusAuidClient extends BaseClient {
+@Configuration
+public class WebMvcConfig extends WebMvcConfigurationSupport {
 
-  public static void main(String[] args) throws Exception {
-    for (int i = 0; i < args.length; i++) {
-      System.out.println("args[" + i + "] = " + args[i]);
-    }
+  /**
+   * Avoids non-standard handling of URL patterns.
+   * 
+   * @return a RequestMappingHandlerMapping with the non-standard handling of
+   *         URL patterns turned off.
+   */
+  @Bean
+  public RequestMappingHandlerMapping requestMappingHandlerMapping() {
+      RequestMappingHandlerMapping requestMappingHandlerMapping =
+	  super.requestMappingHandlerMapping();
 
-    if (args.length < 1) {
-      System.err.println("ERROR: Missing command line argument with the "
-	  + "identifier of the of the Archival Unit for which its metadata is "
-	  + "to be deleted.");
-    }
+      requestMappingHandlerMapping.setUseSuffixPatternMatch(false);
+      requestMappingHandlerMapping.setUseTrailingSlashMatch(false);
 
-    String url = baseUri + "/metadata/aus/"
-	+ UriUtils.encodePathSegment(args[0], "UTF-8");
-    System.out.println("url = " + url);
-
-    ResponseEntity<Integer> response = getRestTemplate().exchange(url,
-	HttpMethod.DELETE, new HttpEntity<String>(null, getHttpHeaders()),
-	Integer.class);
-
-    int status = response.getStatusCodeValue();
-    System.out.println("status = " + status);
-    Integer result = response.getBody();
-    System.out.println("result = " + result);
+      return requestMappingHandlerMapping;
   }
 }

@@ -27,11 +27,12 @@
  */
 package org.lockss.laaws.mdq.client;
 
-import java.net.URLEncoder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 /**
  * Client for the getMetadataAusAuid() operation.
@@ -49,34 +50,28 @@ public class GetMetadataAusAuidClient extends BaseClient {
 	  + "requested.");
     }
 
-    String encodedAuId = URLEncoder.encode(args[0], "UTF-8");
-    System.out.println("encodedAuId = '" + encodedAuId + "'");
+    String url = baseUri + "/metadata/aus/"
+	+ UriUtils.encodePathSegment(args[0], "UTF-8");
+    System.out.println("url = " + url);
 
-    WebTarget webTarget = getWebTarget().path("metadata/aus").path(encodedAuId);
+    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
 
     if (args.length > 1) {
-      webTarget = webTarget.queryParam(args[1], args[2]);
+      builder = builder.queryParam(args[1], args[2]);
 
       if (args.length > 3) {
-	webTarget = webTarget.queryParam(args[3], args[4]);
+	builder = builder.queryParam(args[3], args[4]);
       }
     }
 
-    System.out.println("webTarget.getUri() = " + webTarget.getUri());
+    ResponseEntity<AuMetadataPageInfo> response = getRestTemplate()
+	.exchange(builder.build().encode().toUri(), HttpMethod.GET,
+	    new HttpEntity<String>(null, getHttpHeaders()),
+	    AuMetadataPageInfo.class);
 
-    Response response = webTarget.request().header("Content-Type",
-	MediaType.APPLICATION_JSON_TYPE).get();
-
-    int status = response.getStatus();
+    int status = response.getStatusCodeValue();
     System.out.println("status = " + status);
-    System.out.println("statusInfo = " + response.getStatusInfo());
-
-    if (status == 200) {
-      AuMetadataPageInfo result = response.readEntity(AuMetadataPageInfo.class);
-      System.out.println("result = " + result);
-    } else {
-      Object result = response.readEntity(Object.class);
-      System.out.println("result = " + result);
-    }
+    AuMetadataPageInfo result = response.getBody();
+    System.out.println("result = " + result);
   }
 }

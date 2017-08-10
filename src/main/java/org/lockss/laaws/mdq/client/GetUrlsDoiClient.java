@@ -27,10 +27,10 @@
  */
 package org.lockss.laaws.mdq.client;
 
-import java.net.URLEncoder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
 import org.lockss.laaws.mdq.model.UrlInfo;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriUtils;
 
 /**
@@ -48,27 +48,17 @@ public class GetUrlsDoiClient extends BaseClient {
 	  + "for which the URL is requested.");
     }
 
-    String encodePathSegment = UriUtils.encode(args[0], "UTF-8");
-    System.out.println("encodePathSegment = '" + encodePathSegment + "'");
-    String encodedDoi = URLEncoder.encode(args[0], "UTF-8");
-    System.out.println("encodedDoi = '" + encodedDoi + "'");
+    String url = baseUri + "/urls/doi/"
+	+ UriUtils.encodePathSegment(args[0], "UTF-8");
+    System.out.println("url = " + url);
 
-    WebTarget webTarget = getWebTarget().path("urls/doi").path(encodedDoi);
-    System.out.println("webTarget.getUri() = " + webTarget.getUri());
+    ResponseEntity<UrlInfo> response = getRestTemplate().exchange(url,
+	HttpMethod.GET, new HttpEntity<String>(null, getHttpHeaders()),
+	UrlInfo.class);
 
-    Response response =
-	webTarget.request().header("Content-Type", "application/json").get();
-
-    int status = response.getStatus();
+    int status = response.getStatusCodeValue();
     System.out.println("status = " + status);
-    System.out.println("statusInfo = " + response.getStatusInfo());
-
-    if (status == 200) {
-      UrlInfo result = response.readEntity(UrlInfo.class);
-      System.out.println("result = " + result);
-    } else {
-      Object result = response.readEntity(Object.class);
-      System.out.println("result = " + result);
-    }
+    UrlInfo result = response.getBody();
+    System.out.println("result = " + result);
   }
 }
