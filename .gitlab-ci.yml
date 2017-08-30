@@ -69,4 +69,4 @@ job1:
     - master
     tags:
     - docker
-    - mave
+    - maven
