@@ -64,13 +64,9 @@ before_script:
 
 job1:
     stage: build
-    script: 
-     - "initBuild"
-  only:
+    script: "mvn package -B"
+    only:
     - master
-  tags:
+    tags:
     - docker
-    - maven
-
-
-
+    - mave
