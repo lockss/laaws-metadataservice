@@ -44,7 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.util.UriUtils;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,6 +51,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriUtils;
 
 /**
  * Controller for access to URLs.
@@ -122,15 +122,11 @@ public class UrlsApiController implements UrlsApi {
       Map<String, String> openUrlParams = new HashMap<String,String>();
 
       for (String param : params) {
-	String decodedParam = UriUtils.decode(param, "UTF-8");
-	if (logger.isDebugEnabled())
-	  logger.debug("decodedParam = " + decodedParam);
+	int sepLoc = param.trim().indexOf("=");
 
-	int sepLoc = decodedParam.trim().indexOf("=");
-
-	if (sepLoc > 0 && sepLoc < decodedParam.length() - 1) {
-	  openUrlParams.put(decodedParam.substring(0, sepLoc),
-	      decodedParam.substring(sepLoc + 1));
+	if (sepLoc > 0 && sepLoc < param.length() - 1) {
+	  openUrlParams.put(param.substring(0, sepLoc),
+	      param.substring(sepLoc + 1));
 	}
       }
 
@@ -139,10 +135,6 @@ public class UrlsApiController implements UrlsApi {
 
       return new ResponseEntity<UrlInfo>(resolveOpenUrl(openUrlParams),
 	  HttpStatus.OK);
-    } catch (UnsupportedEncodingException uee) {
-      String message = "Cannot decode params = '" + params + "'";
-      logger.error(message, uee);
-      throw new MalformedParametersException(message);
     } catch (Exception e) {
       String message = "Cannot getUrlsOpenUrl() for params = '" + params + "'";
       logger.error(message, e);

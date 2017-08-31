@@ -27,10 +27,14 @@
  */
 package org.lockss.laaws.mdq.client;
 
+import java.net.URI;
+import java.util.Collections;
 import org.lockss.laaws.mdq.model.UrlInfo;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
 /**
@@ -48,11 +52,18 @@ public class GetUrlsDoiClient extends BaseClient {
 	  + "for which the URL is requested.");
     }
 
-    String url = baseUri + "/urls/doi/"
-	+ UriUtils.encodePathSegment(args[0], "UTF-8");
-    System.out.println("url = " + url);
+    String template = baseUri + "/urls/doi/{doi}";
 
-    ResponseEntity<UrlInfo> response = getRestTemplate().exchange(url,
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("doi",
+	    UriUtils.encodePathSegment(args[0], "UTF-8")));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    System.out.println("uri = " + uri);
+
+    ResponseEntity<UrlInfo> response = getRestTemplate().exchange(uri,
 	HttpMethod.GET, new HttpEntity<String>(null, getHttpHeaders()),
 	UrlInfo.class);
 

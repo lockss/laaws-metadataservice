@@ -35,6 +35,18 @@ File -> Import... -> Maven -> Existing Maven Projects
 ### Build and install the required LOCKSS daemon jar files:
 run `initBuild`
 
+### Specify the Repository REST web service
+This web service requires that an external Repository REST web service is
+running so as to provide an indication of whether a URL is cached or not.
+
+To specify the properties of such external REST web service, edit in
+config/lockss.txt the following options and specify the appropriate values:
+
+org.lockss.plugin.auContentFromWs.urlArtifactWs.password=the-correct-password
+org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation=http://localhost:the-correct-port/repos/demorepo/artifacts?committed=false&uri={uri}
+org.lockss.plugin.auContentFromWs.urlArtifactWs.timeoutValue=600
+org.lockss.plugin.auContentFromWs.urlArtifactWs.userName=the-correct-user
+
 ### Build the web service:
 `./buildLaawsMdq`
 
@@ -66,19 +78,3 @@ This will use port 49520. To use another port, edit the value of the
 
 ### Stop the web service:
 `./stopLaawsMdq`
-
-### Getting Archival Unit information from a web service, not the repository
-In ./lockss.opt add the following option:
-
-org.lockss.openUrlResolver.urlCacheFromWs=true
-
-To specify the properties of the web service used to get an indication of
-wheter a URL is cached or not, in ./lockss.opt add the following options with
-the appropriate values:
-
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.addressLocation=http://localhost:8081/ws/ContentService?wsdl
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.password=the-correct-password
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.serviceName=ContentServiceImplService
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.targetNameSpace=http://content.ws.lockss.org/
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.timeoutValue=600
-org.lockss.openUrlResolver.urlCacheFromWs.isUrlCachedWs.userName=the-correct-user

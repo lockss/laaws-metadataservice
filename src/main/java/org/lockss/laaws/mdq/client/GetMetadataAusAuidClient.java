@@ -27,12 +27,14 @@
  */
 package org.lockss.laaws.mdq.client;
 
+import java.net.URI;
+import java.util.Collections;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 
 /**
  * Client for the getMetadataAusAuid() operation.
@@ -50,11 +52,14 @@ public class GetMetadataAusAuidClient extends BaseClient {
 	  + "requested.");
     }
 
-    String url = baseUri + "/metadata/aus/"
-	+ UriUtils.encodePathSegment(args[0], "UTF-8");
-    System.out.println("url = " + url);
+    String template = baseUri + "/metadata/aus/{auid}";
 
-    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("auid", args[0]));
+
+    UriComponentsBuilder builder =
+	UriComponentsBuilder.newInstance().uriComponents(uriComponents);
 
     if (args.length > 1) {
       builder = builder.queryParam(args[1], args[2]);
@@ -64,10 +69,12 @@ public class GetMetadataAusAuidClient extends BaseClient {
       }
     }
 
+    URI uri = builder.build().encode().toUri();
+    System.out.println("uri = " + uri);
+
     ResponseEntity<AuMetadataPageInfo> response = getRestTemplate()
-	.exchange(builder.build().encode().toUri(), HttpMethod.GET,
-	    new HttpEntity<String>(null, getHttpHeaders()),
-	    AuMetadataPageInfo.class);
+	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null,
+	    getHttpHeaders()), AuMetadataPageInfo.class);
 
     int status = response.getStatusCodeValue();
     System.out.println("status = " + status);

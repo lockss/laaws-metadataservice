@@ -27,11 +27,12 @@
  */
 package org.lockss.laaws.mdq.client;
 
+import java.net.URI;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -53,9 +54,15 @@ public class PostMetadataAusItemClient extends BaseClient {
 	new ObjectMapper().readValue(args[0], ItemMetadata.class);
     System.out.println("metadata = '" + metadata + "'");
 
-    String url = baseUri + "/metadata/aus";
+    String template = baseUri + "/metadata/aus";
 
-    ResponseEntity<Long> response = getRestTemplate().exchange(url,
+    // Create the URI of the request to the REST service.
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(
+	UriComponentsBuilder.fromUriString(template).build())
+	.build().encode().toUri();
+    System.out.println("uri = " + uri);
+
+    ResponseEntity<Long> response = getRestTemplate().exchange(uri,
 	HttpMethod.POST, new HttpEntity<ItemMetadata>(metadata,
 	    getHttpHeaders()), Long.class);
 

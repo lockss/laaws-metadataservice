@@ -27,13 +27,16 @@
  */
 package org.lockss.laaws.mdq.client;
 
+import java.net.URI;
+import java.util.Collections;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.util.UriUtils;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Client for an unauthenticated user.
@@ -51,15 +54,21 @@ public class UnauthenticatedClient {
 	  + "requested.");
     }
 
-    String url = BaseClient.baseUri + "/metadata/aus/"
-	+ UriUtils.encodePathSegment(args[0], "UTF-8");
-    System.out.println("url = " + url);
+    String template = BaseClient.baseUri + "/metadata/aus/{auid}";
+
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("auid", args[0]));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    System.out.println("uri = " + uri);
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
 
     ResponseEntity<AuMetadataPageInfo> response =
-	BaseClient.getRestTemplate().exchange(url, HttpMethod.GET,
+	BaseClient.getRestTemplate().exchange(uri, HttpMethod.GET,
 	    new HttpEntity<String>(null, headers), AuMetadataPageInfo.class);
 
     int status = response.getStatusCodeValue();

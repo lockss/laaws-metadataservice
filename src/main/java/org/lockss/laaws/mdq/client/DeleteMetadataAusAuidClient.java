@@ -27,10 +27,13 @@
  */
 package org.lockss.laaws.mdq.client;
 
+import java.net.URI;
+import java.util.Collections;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.util.UriUtils;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Client for the deleteMetadataAusAuid() operation.
@@ -48,11 +51,17 @@ public class DeleteMetadataAusAuidClient extends BaseClient {
 	  + "to be deleted.");
     }
 
-    String url = baseUri + "/metadata/aus/"
-	+ UriUtils.encodePathSegment(args[0], "UTF-8");
-    System.out.println("url = " + url);
+    String template = baseUri + "/metadata/aus/{auid}";
 
-    ResponseEntity<Integer> response = getRestTemplate().exchange(url,
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("auid", args[0]));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    System.out.println("uri = " + uri);
+
+    ResponseEntity<Integer> response = getRestTemplate().exchange(uri,
 	HttpMethod.DELETE, new HttpEntity<String>(null, getHttpHeaders()),
 	Integer.class);
 

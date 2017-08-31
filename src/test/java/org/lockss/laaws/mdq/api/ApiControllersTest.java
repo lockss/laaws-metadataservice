@@ -29,13 +29,21 @@ package org.lockss.laaws.mdq.api;
 
 import static org.junit.Assert.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.UrlInfo;
+import org.lockss.laaws.rs.model.ArtifactPage;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +60,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
@@ -74,6 +84,14 @@ public class ApiControllersTest {
   @Autowired
   ApplicationContext appCtx;
 
+  private boolean isRestRepositoryServiceAvailable = false;
+
+  String goodAuid = "org|lockss|plugin|pensoft|oai|PensoftOaiPlugin"
+      + "&au_oai_date~2014&au_oai_set~biorisk"
+      + "&base_url~http%3A%2F%2Fbiorisk%2Epensoft%2Enet%2F";
+
+  String goodDoi = "10.3897/biorisk.9.6105";
+
   /**
    * Runs the tests with authentication turned off.
    * 
@@ -91,6 +109,8 @@ public class ApiControllersTest {
 
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
+
+    checkRepositoryService("config/lockss.txt");
 
     getSwaggerDocsTest();
     getMetadataAusAuidUnAuthenticatedTest();
@@ -120,6 +140,8 @@ public class ApiControllersTest {
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
 
+    checkRepositoryService("config/lockss.txt");
+
     getSwaggerDocsTest();
     getMetadataAusAuidAuthenticatedTest();
     deleteMetadataAusAuidAuthenticatedTest();
@@ -141,6 +163,8 @@ public class ApiControllersTest {
     cmdLineArgs.add("config/common.xml");
     cmdLineArgs.add("-p");
     cmdLineArgs.add("config/lockss.txt");
+    cmdLineArgs.add("-p");
+    cmdLineArgs.add("config/lockss.opt");
 
     return cmdLineArgs;
   }
@@ -155,7 +179,7 @@ public class ApiControllersTest {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
     ResponseEntity<String> successResponse = new TestRestTemplate().exchange(
-	getTestUrl("/v2/api-docs"), HttpMethod.GET, null, String.class);
+	getTestUrlTemplate("/v2/api-docs"), HttpMethod.GET, null, String.class);
 
     HttpStatus statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
@@ -173,22 +197,25 @@ public class ApiControllersTest {
   private void getMetadataAusAuidUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
-	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
-	+ "&volume_name~8";
+    String template = getTestUrlTemplate("/metadata/aus/{auid}");
 
-    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("auid", goodAuid));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
     ResponseEntity<AuMetadataPageInfo> errorResponse =
-	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.GET, null,
+	new TestRestTemplate().exchange(uri, HttpMethod.GET, null,
 	    AuMetadataPageInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.GET, null,
-	    AuMetadataPageInfo.class);
+	.exchange(uri, HttpMethod.GET, null, AuMetadataPageInfo.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
@@ -198,7 +225,7 @@ public class ApiControllersTest {
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     ResponseEntity<AuMetadataPageInfo> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
 	    HttpMethod.GET, new HttpEntity<String>(null, headers),
 	    AuMetadataPageInfo.class);
 
@@ -223,22 +250,25 @@ public class ApiControllersTest {
   private void getMetadataAusAuidAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
-	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
-	+ "&volume_name~8";
+    String template = getTestUrlTemplate("/metadata/aus/{auid}");
 
-    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("auid", goodAuid));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
     ResponseEntity<AuMetadataPageInfo> errorResponse =
-	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.GET, null,
+	new TestRestTemplate().exchange(uri, HttpMethod.GET, null,
 	    AuMetadataPageInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.GET, null,
-	    AuMetadataPageInfo.class);
+	.exchange(uri, HttpMethod.GET, null, AuMetadataPageInfo.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
@@ -248,7 +278,7 @@ public class ApiControllersTest {
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     ResponseEntity<AuMetadataPageInfo> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
 	    HttpMethod.GET, new HttpEntity<String>(null, headers),
 	    AuMetadataPageInfo.class);
 
@@ -257,7 +287,7 @@ public class ApiControllersTest {
 
     AuMetadataPageInfo result = successResponse.getBody();
 
-    assertEquals(50, result.getItems().size());
+    assertEquals(1, result.getItems().size());
     assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
     assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
     assertNull(result.getPageInfo().getTotalCount());
@@ -273,28 +303,32 @@ public class ApiControllersTest {
   private void getMetadataAusAuidCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
-	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
-	+ "&volume_name~8";
+    String template = getTestUrlTemplate("/metadata/aus/{auid}");
 
-    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("auid", goodAuid));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
     ResponseEntity<AuMetadataPageInfo> errorResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
 	    HttpMethod.GET, null, AuMetadataPageInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
 
-    uri = "/metadata/aus/non-existent";
+    String badUrl = getTestUrlTemplate("/metadata/aus/non-existent");
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     errorResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(getTestUrl(uri), HttpMethod.GET,
-	    new HttpEntity<String>(null, headers), AuMetadataPageInfo.class);
+	.exchange(badUrl, HttpMethod.GET, new HttpEntity<String>(null, headers),
+	    AuMetadataPageInfo.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.NOT_FOUND, statusCode);
@@ -308,14 +342,18 @@ public class ApiControllersTest {
   private void deleteMetadataAusAuidUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
-	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
-	+ "&volume_name~8";
+    String template = getTestUrlTemplate("/metadata/aus/{auid}");
 
-    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("auid", goodAuid));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
     ResponseEntity<String> errorResponse = new TestRestTemplate()
-	.exchange(getTestUrl(uri), HttpMethod.DELETE, null, String.class);
+	.exchange(uri, HttpMethod.DELETE, null, String.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
@@ -324,7 +362,7 @@ public class ApiControllersTest {
     headers.setContentType(MediaType.APPLICATION_JSON);
 
     ResponseEntity<Integer> successResponse =
-	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.DELETE,
+	new TestRestTemplate().exchange(uri, HttpMethod.DELETE,
 	    new HttpEntity<String>(null, headers), Integer.class);
 
     statusCode = successResponse.getStatusCode();
@@ -338,8 +376,8 @@ public class ApiControllersTest {
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     successResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.DELETE,
-	    new HttpEntity<String>(null, headers), Integer.class);
+	.exchange(uri, HttpMethod.DELETE, new HttpEntity<String>(null, headers),
+	    Integer.class);
 
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
@@ -352,8 +390,8 @@ public class ApiControllersTest {
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     successResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(getTestUrl(uri), HttpMethod.DELETE,
-	    new HttpEntity<String>(null, headers), Integer.class);
+	.exchange(uri, HttpMethod.DELETE, new HttpEntity<String>(null, headers),
+	    Integer.class);
 
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
@@ -372,14 +410,18 @@ public class ApiControllersTest {
   private void deleteMetadataAusAuidAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
-	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
-	+ "&volume_name~8";
+    String template = getTestUrlTemplate("/metadata/aus/{auid}");
 
-    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("auid", goodAuid));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
     ResponseEntity<String> errorResponse = new TestRestTemplate()
-	.exchange(getTestUrl(uri), HttpMethod.DELETE, null, String.class);
+	.exchange(uri, HttpMethod.DELETE, null, String.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
@@ -387,9 +429,8 @@ public class ApiControllersTest {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
 
-    errorResponse =
-	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.DELETE,
-	    new HttpEntity<String>(null, headers), String.class);
+    errorResponse = new TestRestTemplate().exchange(uri, HttpMethod.DELETE,
+	new HttpEntity<String>(null, headers), String.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
@@ -399,8 +440,8 @@ public class ApiControllersTest {
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.DELETE,
-	    new HttpEntity<String>(null, headers), String.class);
+	.exchange(uri, HttpMethod.DELETE, new HttpEntity<String>(null, headers),
+	    String.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
@@ -410,7 +451,7 @@ public class ApiControllersTest {
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     ResponseEntity<Integer> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
 	    HttpMethod.DELETE, new HttpEntity<String>(null, headers),
 	    Integer.class);
 
@@ -418,7 +459,7 @@ public class ApiControllersTest {
     assertEquals(HttpStatus.OK, statusCode);
 
     Integer result = successResponse.getBody();
-    assertEquals(67, result.intValue());
+    assertEquals(1, result.intValue());
 
     deleteMetadataAusAuidCommonTest();
 
@@ -431,27 +472,31 @@ public class ApiControllersTest {
   private void deleteMetadataAusAuidCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String auid = "org|lockss|plugin|taylorandfrancis|TaylorAndFrancisPlugin"
-	+ "&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&journal_id~rafr20"
-	+ "&volume_name~8";
+    String template = getTestUrlTemplate("/metadata/aus/{auid}");
 
-    String uri = "/metadata/aus/" + UriUtils.encodePathSegment(auid, "UTF-8");
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("auid", goodAuid));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
     ResponseEntity<String> errorResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
 	    HttpMethod.DELETE, null, String.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
 
-    uri = "/metadata/aus/non-existent";
+    String badUrl = getTestUrlTemplate("/metadata/aus/non-existent");
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     errorResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(getTestUrl(uri), HttpMethod.DELETE,
+	.exchange(badUrl, HttpMethod.DELETE,
 	    new HttpEntity<String>(null, headers), String.class);
 
     statusCode = errorResponse.getStatusCode();
@@ -466,16 +511,16 @@ public class ApiControllersTest {
   private void postMetadataAusItemUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String uri = "/metadata/aus";
+    String url = getTestUrlTemplate("/metadata/aus");
 
     ResponseEntity<String> errorResponse = new TestRestTemplate()
-	.exchange(getTestUrl(uri), HttpMethod.POST, null, String.class);
+	.exchange(url, HttpMethod.POST, null, String.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.POST, null, String.class);
+	.exchange(url, HttpMethod.POST, null, String.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
@@ -483,8 +528,8 @@ public class ApiControllersTest {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
 
-    errorResponse = new TestRestTemplate().exchange(getTestUrl(uri),
-	HttpMethod.POST, new HttpEntity<String>(null, headers), String.class);
+    errorResponse = new TestRestTemplate().exchange(url, HttpMethod.POST,
+	new HttpEntity<String>(null, headers), String.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, statusCode);
@@ -493,8 +538,8 @@ public class ApiControllersTest {
     headers.setContentType(MediaType.APPLICATION_JSON);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.POST,
-	    new HttpEntity<String>(null, headers), String.class);
+	.exchange(url, HttpMethod.POST, new HttpEntity<String>(null, headers),
+	    String.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, statusCode);
@@ -510,16 +555,16 @@ public class ApiControllersTest {
   private void postMetadataAusItemAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String uri = "/metadata/aus";
+    String url = getTestUrlTemplate("/metadata/aus");
 
     ResponseEntity<String> errorResponse = new TestRestTemplate()
-	.exchange(getTestUrl(uri), HttpMethod.POST, null, String.class);
+	.exchange(url, HttpMethod.POST, null, String.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.POST, null, String.class);
+	.exchange(url, HttpMethod.POST, null, String.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
@@ -527,8 +572,8 @@ public class ApiControllersTest {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
 
-    errorResponse = new TestRestTemplate().exchange(getTestUrl(uri),
-	HttpMethod.POST, new HttpEntity<String>(null, headers), String.class);
+    errorResponse = new TestRestTemplate().exchange(url, HttpMethod.POST,
+	new HttpEntity<String>(null, headers), String.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
@@ -537,8 +582,8 @@ public class ApiControllersTest {
     headers.setContentType(MediaType.APPLICATION_JSON);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.POST,
-	    new HttpEntity<String>(null, headers), String.class);
+	.exchange(url, HttpMethod.POST, new HttpEntity<String>(null, headers),
+	    String.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
@@ -554,11 +599,11 @@ public class ApiControllersTest {
   private void postMetadataAusItemCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String uri = "/metadata/aus";
+    String url = getTestUrlTemplate("/metadata/aus");
 
     ResponseEntity<String> errorResponse =
 	new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(getTestUrl(uri), HttpMethod.POST, null, String.class);
+	.exchange(url, HttpMethod.POST, null, String.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
@@ -567,8 +612,8 @@ public class ApiControllersTest {
     headers.setContentType(MediaType.APPLICATION_JSON);
 
     errorResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(getTestUrl(uri), HttpMethod.POST,
-	    new HttpEntity<String>(null, headers), String.class);
+	.exchange(url, HttpMethod.POST, new HttpEntity<String>(null, headers),
+	    String.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, statusCode);
@@ -576,39 +621,34 @@ public class ApiControllersTest {
     headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
 
-    String metadataJsonValue = "{\"scalarMap\":{\"date\":\"2016\"," 
-	+ "\"coverage\":\"fulltext\",\"volume\":\"8\","
-	+ "\"publication_name\":\"Africa Review\","
-	+ "\"publisher_name\":\"Taylor & Francis\","
-	+ "\"au_id\":\"org|lockss|plugin|taylorandfrancis|TaylorAndFrancis"
-	+ "Plugin&base_url~http%3A%2F%2Fwww%2Etandfonline%2Ecom%2F&"
-	+ "journal_id~rafr20&volume_name~8\"," +
-	"\"provider_name\":\"Taylor & Francis\",\"fetch_time\":\"-1\"},"
-	+ "\"listMap\":{\"proprietary_id\":[\"rafr20\"]},"
-	+ "\"mapMap\":{\"issn\":{\"e_issn\":\"09744061\","
-	+ "\"p_issn\":\"09744053\"},\"url\":{\"SupplementaryMaterials\":"
-	+ "\"http://www.tandfonline.com/doi/suppl/10.1080/01436597.2015.1128816"
-	+ "\",\"FullTextHtml\":\"http://www.tandfonline.com/doi/full/10.1080/"
-	+ "01436597.2015.1128816\",\"Abstract\":\"http://www.tandfonline.com/"
-	+ "doi/abs/10.1080/01436597.2015.1128816\",\"PdfPlus\":"
-	+ "\"http://www.tandfonline.com/doi/pdfplus/10.1080/01436597.2015."
-	+ "1128816\",\"References\":\"http://www.tandfonline.com/doi/ref/10."
-	+ "1080/01436597.2015.1128816\",\"Access\":"
-	+ "\"http://www.tandfonline.com/doi/pdf/10.1080/01436597.2015.1128816\""
-	+ ",\"CitationRis\":\"http://www.tandfonline.com/action/"
-	+ "downloadCitation?doi=10.1080%2F01436597.2015.1128816&format=ris&"
-	+ "include=cit\",\"FullTextPdfFile\":\"http://www.tandfonline.com/doi/"
-	+ "pdf/10.1080/01436597.2015.1128816\",\"ArticleMetadata\":"
-	+ "\"http://www.tandfonline.com/action/downloadCitation?doi="
-	+ "10.1080%2F01436597.2015.1128816&format=ris&include=cit\"}}}";
+    String metadataJsonValue = "{\"scalarMap\":{\"date\":\"2014-10-06\"," 
+	+ "\"coverage\":\"fulltext\",\"volume\":\"9\","
+	+ "\"publication_name\":\"BioRisk Volume 2014\","
+	+ "\"publisher_name\":\"Pensoft Publishers\",\"start_page\":\"1\","
+	+ "\"au_id\":\"org|lockss|plugin|pensoft|oai|PensoftOaiPlugin"
+	+ "&au_oai_date~2014&au_oai_set~biorisk"
+	+ "&base_url~http%3A%2F%2Fbiorisk%2Epensoft%2Enet%2F\","
+	+ "\"provider_name\":\"Pensoft Publishers\",\"fetch_time\":\"-1\","
+	+ "\"item_title\":\"China in the anthropocene: Culprit, victim or "
+	+ "last best hope for a global ecological civilisation?\","
+	+ "\"doi\":\"10.3897/biorisk.9.6105\"},"
+	+ "\"listMap\":{\"proprietary_id\":[]},"
+	+ "\"mapMap\":{\"issn\":{\"e_issn\":\"13132652\","
+	+ "\"p_issn\":\"13132652\"},\"url\":{\"Abstract\":"
+	+ "\"http://biorisk.pensoft.net/articles.php?id=1904\",\"Access\":"
+	+ "\"http://biorisk.pensoft.net/articles.php?id=1904\""
+	+ ",\"FullTextPdfFile\":\"http://biorisk.pensoft.net/lib/ajax_srv/"
+	+ "article_elements_srv.php?action=download_pdf&item_id=1904\""
+	+ ",\"ArticleMetadata\":\"http://biorisk.pensoft.net/"
+	+ "articles.php?id=1904\"}}}";
 
     ItemMetadata metadata =
 	new ObjectMapper().readValue(metadataJsonValue, ItemMetadata.class);
 
     ResponseEntity<Long> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(getTestUrl(uri), HttpMethod.POST,
-	    new HttpEntity<ItemMetadata>(metadata, headers), Long.class);
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(url,
+	    HttpMethod.POST, new HttpEntity<ItemMetadata>(metadata, headers),
+	    Long.class);
 
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
@@ -625,18 +665,39 @@ public class ApiControllersTest {
   private void getUrlsDoiUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String doi = "10.1080/09744053.2016.1193941";
-    String uri = "/urls/doi/" + UriUtils.encode(doi, "UTF-8");
+    String template = getTestUrlTemplate("/urls/doi/{doi}");
 
-    ResponseEntity<UrlInfo> errorResponse =
-	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.GET, null,
-	    UrlInfo.class);
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("doi", goodDoi));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+
+    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(uri,
+	HttpMethod.GET, null, UrlInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
+    assertEquals(HttpStatus.NOT_FOUND, statusCode);
+
+    // Create the URI of the request to the REST service.
+    uriComponents = UriComponentsBuilder.fromUriString(template).build()
+	.expand(Collections.singletonMap("doi",
+	    UriUtils.encodePathSegment(goodDoi, "UTF-8")));
+
+    uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+
+    errorResponse = new TestRestTemplate().exchange(uri, HttpMethod.GET, null,
+	UrlInfo.class);
+
+    statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.GET, null, UrlInfo.class);
+	.exchange(uri, HttpMethod.GET, null, UrlInfo.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
@@ -652,21 +713,48 @@ public class ApiControllersTest {
   private void getUrlsDoiAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String doi = "10.1080/09744053.2016.1193941";
-    String uri = "/urls/doi/" + UriUtils.encode(doi, "UTF-8");
+    String template = getTestUrlTemplate("/urls/doi/{doi}");
 
-    ResponseEntity<UrlInfo> errorResponse =
-	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.GET, null,
-	    UrlInfo.class);
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("doi", goodDoi));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+
+    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(uri,
+	HttpMethod.GET, null, UrlInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.GET, null, UrlInfo.class);
+	.exchange(uri, HttpMethod.GET, null, UrlInfo.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
+
+    errorResponse = new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
+	HttpMethod.GET, null, UrlInfo.class);
+
+    statusCode = errorResponse.getStatusCode();
+    assertEquals(HttpStatus.NOT_FOUND, statusCode);
+
+    // Create the URI of the request to the REST service.
+    uriComponents = UriComponentsBuilder.fromUriString(template).build()
+	.expand(Collections.singletonMap("doi",
+	    UriUtils.encodePathSegment(goodDoi, "UTF-8")));
+
+    uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+
+    errorResponse = new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
+	HttpMethod.GET, null, UrlInfo.class);
+
+    statusCode = errorResponse.getStatusCode();
+    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
 
     getUrlsDoiCommonTest();
 
@@ -679,51 +767,56 @@ public class ApiControllersTest {
   private void getUrlsDoiCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String doi = "10.1080/09744053.2016.1193941";
-    String uri = "/urls/doi/" + UriUtils.encode(doi, "UTF-8");
+    String template = getTestUrlTemplate("/urls/doi/{doi}");
 
-    ResponseEntity<UrlInfo> errorResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
-	    HttpMethod.GET, null, UrlInfo.class);
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("doi",
+	    UriUtils.encodePathSegment(goodDoi, "UTF-8")));
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     ResponseEntity<UrlInfo> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
 	    HttpMethod.GET, new HttpEntity<String>(null, headers),
 	    UrlInfo.class);
 
-    statusCode = successResponse.getStatusCode();
+    HttpStatus statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
 
     UrlInfo result = successResponse.getBody();
     assertEquals(1, result.getParams().size());
-    assertTrue(("info:doi/" + doi)
+    assertTrue(("info:doi/" + goodDoi)
 	.startsWith(result.getParams().get("rft_id")));
-    assertEquals(0, result.getUrls().size());
 
-    doi = "non-existent";
-    uri = "/urls/doi/" + UriUtils.encode(doi, "UTF-8");
+    if (isRestRepositoryServiceAvailable) {
+      assertEquals(1, result.getUrls().size());
+    } else {
+      assertEquals(0, result.getUrls().size());
+    }
+
+    String badUrl = getTestUrlTemplate("/urls/doi/non-existent");
 
     headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     successResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(getTestUrl(uri), HttpMethod.GET,
-	    new HttpEntity<String>(null, headers), UrlInfo.class);
+	.exchange(badUrl, HttpMethod.GET, new HttpEntity<String>(null, headers),
+	    UrlInfo.class);
 
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
 
     result = successResponse.getBody();
     assertEquals(1, result.getParams().size());
-    assertEquals("info:doi/" + doi, result.getParams().get("rft_id"));
+    assertEquals("info:doi/non-existent", result.getParams().get("rft_id"));
     assertEquals(0, result.getUrls().size());
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
@@ -735,17 +828,16 @@ public class ApiControllersTest {
   private void getUrlsOpenUrlUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String uri = "/urls/openurl";
+    String url = getTestUrlTemplate("/urls/openurl");
 
-    ResponseEntity<UrlInfo> errorResponse =
-	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.GET, null,
-	    UrlInfo.class);
+    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(url,
+	HttpMethod.GET, null, UrlInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.GET, null, UrlInfo.class);
+	.exchange(url, HttpMethod.GET, null, UrlInfo.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
@@ -761,17 +853,16 @@ public class ApiControllersTest {
   private void getUrlsOpenUrlAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String uri = "/urls/openurl";
+    String url = getTestUrlTemplate("/urls/openurl");
 
-    ResponseEntity<UrlInfo> errorResponse =
-	new TestRestTemplate().exchange(getTestUrl(uri), HttpMethod.GET, null,
-	    UrlInfo.class);
+    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(url,
+	HttpMethod.GET, null, UrlInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(getTestUrl(uri), HttpMethod.GET, null, UrlInfo.class);
+	.exchange(url, HttpMethod.GET, null, UrlInfo.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
@@ -787,10 +878,10 @@ public class ApiControllersTest {
   private void getUrlsOpenUrlCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String uri = "/urls/openurl";
+    String template = getTestUrlTemplate("/urls/openurl");
 
     ResponseEntity<UrlInfo> errorResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(getTestUrl(uri),
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(template,
 	    HttpMethod.GET, null, UrlInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
@@ -801,26 +892,27 @@ public class ApiControllersTest {
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     errorResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(getTestUrl(uri), HttpMethod.GET,
+	.exchange(template, HttpMethod.GET,
 	    new HttpEntity<String>(null, headers), UrlInfo.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.BAD_REQUEST, statusCode);
 
-    String param = "rft_id=info:doi/10.1080/09744053.2016.1193941";
+    String param = "rft_id=info:doi/" + goodDoi;
 
-    UriComponentsBuilder builder =
-	UriComponentsBuilder.fromHttpUrl(getTestUrl(uri))
-	.queryParam("params", UriUtils.encodeQueryParam(param, "UTF-8"));
+    // Create the URI of the request to the REST service.
+    URI uri = UriComponentsBuilder.fromHttpUrl(template)
+	.queryParam("params", param).build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
     headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     ResponseEntity<UrlInfo> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(builder.build().encode().toUri(), HttpMethod.GET,
-	    new HttpEntity<String>(null, headers), UrlInfo.class);
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
+	    HttpMethod.GET, new HttpEntity<String>(null, headers),
+	    UrlInfo.class);
 
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
@@ -828,24 +920,29 @@ public class ApiControllersTest {
     UrlInfo result = successResponse.getBody();
     assertEquals(1, result.getParams().size());
     assertEquals(param, "rft_id=" + result.getParams().get("rft_id"));
-    assertEquals(0, result.getUrls().size());
 
-    String param1 = "rft.issn=0974-4053";
-    String param2 = "rft.volume=8";
-    String param3 = "rft.spage=156";
+    if (isRestRepositoryServiceAvailable) {
+      assertEquals(1, result.getUrls().size());
+    } else {
+      assertEquals(0, result.getUrls().size());
+    }
 
-    builder = UriComponentsBuilder.fromHttpUrl(getTestUrl(uri))
-	.queryParam("params", UriUtils.encodeQueryParam(param1, "UTF-8"))
-	.queryParam("params", UriUtils.encodeQueryParam(param2, "UTF-8"))
-	.queryParam("params", UriUtils.encodeQueryParam(param3, "UTF-8"));
+    String param1 = "rft.issn=1313-2652";
+    String param2 = "rft.volume=9";
+    String param3 = "rft.spage=1";
+
+    uri = UriComponentsBuilder.fromHttpUrl(template)
+	.queryParam("params", param1).queryParam("params", param2)
+	.queryParam("params", param3).build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
     headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     successResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(builder.build().encode().toUri(), HttpMethod.GET,
-	    new HttpEntity<String>(null, headers), UrlInfo.class);
+	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null, headers),
+	    UrlInfo.class);
 
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
@@ -855,19 +952,75 @@ public class ApiControllersTest {
     assertEquals(param1, "rft.issn=" + result.getParams().get("rft.issn"));
     assertEquals(param2, "rft.volume=" + result.getParams().get("rft.volume"));
     assertEquals(param3, "rft.spage=" + result.getParams().get("rft.spage"));
-    assertEquals(0, result.getUrls().size());
+    assertEquals(1, result.getUrls().size());
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
   }
 
+  public void checkRepositoryService(String fileName) {
+    FileInputStream is = null;
+    String restServiceLocation = null;
+
+    try {
+      File file = new File(fileName);
+      is = new FileInputStream(file);
+      Properties properties = new Properties();
+      properties.load(is);
+
+      restServiceLocation = properties.getProperty("org.lockss.plugin"
+	  + ".auContentFromWs.urlArtifactWs.restServiceLocation");
+      if (logger.isDebugEnabled())
+	logger.debug("restServiceLocation = " + restServiceLocation);
+    } catch (FileNotFoundException fnfe) {
+      fnfe.printStackTrace();
+    } catch (IOException ioe) {
+      ioe.printStackTrace();
+    } finally {
+      try {
+	is.close();
+      } catch (IOException ioe) {
+      }
+    }
+
+    // Initialize the request to the REST service.
+    RestTemplate restTemplate = new RestTemplate();
+
+    // Initialize the request headers.
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents =
+	UriComponentsBuilder.fromUriString(restServiceLocation).build()
+	.expand(Collections.singletonMap("uri", ""));
+
+    URI uri = UriComponentsBuilder.newInstance()
+	.uriComponents(uriComponents).build().encode().toUri();
+    if (logger.isDebugEnabled())
+	logger.debug("Making request to '" + uri + "'...");
+
+    // Make the request to the REST service and get its response.
+    try {
+      restTemplate.exchange(uri, HttpMethod.GET,
+	  new HttpEntity<String>(null, headers), ArtifactPage.class);
+      isRestRepositoryServiceAvailable = true;
+    } catch (Exception e) {
+    }
+
+    if (logger.isDebugEnabled())
+      logger.debug("isRestRepositoryServiceAvailable = "
+	  + isRestRepositoryServiceAvailable);
+  }
+
   /**
-   * Provides the URL to be tested.
+   * Provides the URL template to be tested.
    * 
-   * @param uri
-   *          A String with the URI of the URL to be tested.
-   * @return a String with the URL to be tested.
+   * @param pathAndQueryParams
+   *          A String with the path and query parameters of the URL template to
+   *          be tested.
+   * @return a String with the URL template to be tested.
    */
-  private String getTestUrl(String uri) {
-    return "http://localhost:" + port + uri;
+  private String getTestUrlTemplate(String pathAndQueryParams) {
+    return "http://localhost:" + port + pathAndQueryParams;
   }
 }

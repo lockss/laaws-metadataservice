@@ -28,8 +28,6 @@
 package org.lockss.laaws.mdq.api;
 
 import io.swagger.annotations.ApiParam;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.MalformedParametersException;
 import java.security.AccessControlException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -53,7 +51,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.UriUtils;
 
 /**
  * Controller for access to the metadata of an AU.
@@ -83,27 +80,17 @@ public class MetadataApiController implements MetadataApi {
 
     SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
 
-    String decodedAuId = null;
-
     try {
-      decodedAuId = UriUtils.decode(auid, "UTF-8");
-      if (logger.isDebugEnabled()) logger.debug("decodedAuId = " + decodedAuId);
-
-      Integer count = getMetadataManager().deleteAuMetadataItems(decodedAuId);
+      Integer count = getMetadataManager().deleteAuMetadataItems(auid);
       if (logger.isDebugEnabled()) logger.debug("count = " + count);
 
       return new ResponseEntity<Integer>(count, HttpStatus.OK);
-    } catch (UnsupportedEncodingException uee) {
-      String message = "Cannot decode auid = '" + auid + "'";
-      logger.error(message, uee);
-      throw new MalformedParametersException(message);
     } catch (IllegalArgumentException iae) {
-      String message = "No Archival Unit found for auid '" + decodedAuId + "'";
+      String message = "No Archival Unit found for auid '" + auid + "'";
       logger.error(message);
       throw new IllegalArgumentException(message);
     } catch (Exception e) {
-      String message =
-	  "Cannot deleteMetadataAusAuid() for auid '" + decodedAuId + "'";
+      String message = "Cannot deleteMetadataAusAuid() for auid '" + auid + "'";
       logger.error(message, e);
       throw new RuntimeException(message);
     }
@@ -138,12 +125,7 @@ public class MetadataApiController implements MetadataApi {
       logger.debug("limit = " + limit);
     }
 
-    String decodedAuId = null;
-
     try {
-      decodedAuId = UriUtils.decode(auid, "UTF-8");
-      if (logger.isDebugEnabled()) logger.debug("decodedAuId = " + decodedAuId);
-
       PageInfo pi = new PageInfo();
 
       String curLink = request.getRequestURL().toString();
@@ -176,24 +158,19 @@ public class MetadataApiController implements MetadataApi {
       result.setPageInfo(pi);
 
       List<ItemMetadata> items =
-	  getMetadataManager().getAuMetadataDetail(decodedAuId, page, limit);
+	  getMetadataManager().getAuMetadataDetail(auid, page, limit);
       if (logger.isDebugEnabled()) logger.debug("items = " + items);
 
       result.setItems(items);
       if (logger.isDebugEnabled()) logger.debug("result = " + result);
 
       return new ResponseEntity<AuMetadataPageInfo>(result, HttpStatus.OK);
-    } catch (UnsupportedEncodingException uee) {
-      String message = "Cannot decode auid = '" + auid + "'";
-      logger.error(message, uee);
-      throw new MalformedParametersException(message);
     } catch (IllegalArgumentException iae) {
-      String message = "No Archival Unit found for auid '" + decodedAuId + "'";
+      String message = "No Archival Unit found for auid '" + auid + "'";
       logger.error(message);
       throw new IllegalArgumentException(message);
     } catch (Exception e) {
-      String message =
-	  "Cannot getMetadataAusAuid() for auid '" + decodedAuId + "'";
+      String message = "Cannot getMetadataAusAuid() for auid '" + auid + "'";
       logger.error(message, e);
       throw new RuntimeException(message);
     }
@@ -231,13 +208,6 @@ public class MetadataApiController implements MetadataApi {
   @ExceptionHandler(AccessControlException.class)
   @ResponseStatus(HttpStatus.FORBIDDEN)
   public ErrorResponse authorizationExceptionHandler(AccessControlException e) {
-    return new ErrorResponse(e.getMessage()); 	
-  }
-
-  @ExceptionHandler(MalformedParametersException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public ErrorResponse badRequestExceptionHandler(
-      MalformedParametersException e) {
     return new ErrorResponse(e.getMessage()); 	
   }
 

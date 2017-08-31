@@ -27,12 +27,12 @@
  */
 package org.lockss.laaws.mdq.client;
 
+import java.net.URI;
 import org.lockss.laaws.mdq.model.UrlInfo;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 
 /**
  * Client for the getUrlsOpenUrl() operation.
@@ -53,13 +53,15 @@ public class GetUrlsOpenUrlClient extends BaseClient {
     UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
 
     for (int i = 0; i < args.length; i++) {
-      builder = builder.queryParam("params",
-	  UriUtils.encodeQueryParam(args[i], "UTF-8"));
+      builder = builder.queryParam("params", args[i]);
     }
 
-    ResponseEntity<UrlInfo> response = getRestTemplate()
-	.exchange(builder.build().encode().toUri(), HttpMethod.GET,
-	    new HttpEntity<String>(null, getHttpHeaders()), UrlInfo.class);
+    URI uri = builder.build().encode().toUri();
+    System.out.println("uri = " + uri);
+
+    ResponseEntity<UrlInfo> response = getRestTemplate().exchange(uri,
+	HttpMethod.GET, new HttpEntity<String>(null, getHttpHeaders()),
+	UrlInfo.class);
 
     int status = response.getStatusCodeValue();
     System.out.println("status = " + status);
