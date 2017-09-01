@@ -992,7 +992,7 @@ public class ApiControllersTest {
     // Create the URI of the request to the REST service.
     UriComponents uriComponents =
 	UriComponentsBuilder.fromUriString(restServiceLocation).build()
-	.expand(Collections.singletonMap("uri", ""));
+	.expand(Collections.singletonMap("uri", "someUri"));
 
     URI uri = UriComponentsBuilder.newInstance()
 	.uriComponents(uriComponents).build().encode().toUri();
@@ -1001,10 +1001,16 @@ public class ApiControllersTest {
 
     // Make the request to the REST service and get its response.
     try {
-      restTemplate.exchange(uri, HttpMethod.GET,
-	  new HttpEntity<String>(null, headers), ArtifactPage.class);
-      isRestRepositoryServiceAvailable = true;
+      ResponseEntity<ArtifactPage> result = restTemplate.exchange(uri,
+	  HttpMethod.GET, new HttpEntity<String>(null, headers),
+	  ArtifactPage.class);
+
+      int statusCode = result.getStatusCodeValue();
+      if (logger.isDebugEnabled()) logger.debug("statusCode = " + statusCode);
+
+      isRestRepositoryServiceAvailable = statusCode == 200;
     } catch (Exception e) {
+      if (logger.isDebugEnabled()) logger.debug("No repository service.");
     }
 
     if (logger.isDebugEnabled())
