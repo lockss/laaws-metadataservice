@@ -111,14 +111,14 @@ in this Software without prior written authorization from Stanford University.
 
     <!-- LOCKSS daemon -->
     <dependency>
-      <groupId>org.lockss</groupId>
-      <artifactId>lockss</artifactId>
-      <version>2017</version>
+      <groupId>org.lockss.laaws</groupId>
+      <artifactId>laaws-daemon</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>org.lockss</groupId>
-      <artifactId>lockss-plugins</artifactId>
-      <version>2017</version>
+      <groupId>org.lockss.laaws</groupId>
+      <artifactId>laaws-plugins</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.antlr</groupId>
@@ -375,6 +375,13 @@ in this Software without prior written authorization from Stanford University.
       <groupId>fastutil</groupId>
       <artifactId>fastutil</artifactId>
       <version>5.0.7</version>
+    </dependency>
+    <dependency>
+      <groupId>org.lockss.laaws</groupId>
+      <artifactId>lockss-core</artifactId>
+      <type>test-jar</type>
+      <version>1.0.0-SNAPSHOT</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

@@ -27,23 +27,29 @@
  */
 package org.lockss.laaws.mdq.api;
 
-import static org.junit.Assert.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.lockss.config.ConfigManager;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.UrlInfo;
 import org.lockss.laaws.rs.model.ArtifactPage;
+import org.lockss.test.LockssTestCase4;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +66,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.FileSystemUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -71,7 +78,7 @@ import org.springframework.web.util.UriUtils;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ApiControllersTest {
+public class ApiControllersTest extends LockssTestCase4 {
   private static final Logger logger =
       LoggerFactory.getLogger(ApiControllersTest.class);
 
@@ -84,13 +91,172 @@ public class ApiControllersTest {
   @Autowired
   ApplicationContext appCtx;
 
-  private boolean isRestRepositoryServiceAvailable = false;
+  // The path to the configuration file with the platform disk space location
+  // definition.
+  private String platformDiskSpaceConfigPath = null;
 
-  String goodAuid = "org|lockss|plugin|pensoft|oai|PensoftOaiPlugin"
+  // The indication of whether the external REST Repository service is
+  // available.
+  private static boolean isRestRepositoryServiceAvailable = false;
+
+  // The identifier of an AU that exists in the test database.
+  private String goodAuid = "org|lockss|plugin|pensoft|oai|PensoftOaiPlugin"
       + "&au_oai_date~2014&au_oai_set~biorisk"
       + "&base_url~http%3A%2F%2Fbiorisk%2Epensoft%2Enet%2F";
 
-  String goodDoi = "10.3897/biorisk.9.6105";
+  // A DOI that exists in the test database.
+  private String goodDoi = "10.3897/biorisk.9.6105";
+
+  /**
+   * Set up code to be run before all tests.
+   */
+  @BeforeClass
+  public static void setUpBeforeAllTests() throws IOException {
+    // Populate the indication of whether the external REST Repository service
+    // is available.
+    isRestRepositoryServiceAvailable = checkExternalRestService(
+	"org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation",
+	new File("config/lockss.txt"),
+	Collections.singletonMap("uri", "someDummyUri"));
+  }
+
+  /**
+   * Provides the indication of whether an external REST service is available.
+   * 
+   * @param propertyName
+   *          A String with the name of the configuration property with the REST
+   *          service location template.
+   * @param configFile
+   *          A File with the configuration file containing the configuration
+   *          property value.
+   * @param uriMap
+   *          A Map<String, String> with the map of values to be interpolated in
+   *          the REST service location template.
+   * @return a boolean with <code>true</code> if the external REST service is
+   *         available, <code> false</code> otherwise.
+   */
+  private static boolean checkExternalRestService(String propertyName,
+      File configFile, Map<String, String> uriMap) throws IOException {
+    if (logger.isDebugEnabled()) {
+      logger.debug("propertyName = " + propertyName);
+      logger.debug("configFile = " + configFile.getAbsolutePath());
+      logger.debug("uriMap = " + uriMap);
+    }
+
+    boolean isServiceAvailable = false;
+    FileInputStream is = null;
+    String restServiceLocation = null;
+
+    // Get the REST service location.
+    try {
+      is = new FileInputStream(configFile);
+      Properties properties = new Properties();
+      properties.load(is);
+      restServiceLocation = properties.getProperty(propertyName);
+      if (logger.isDebugEnabled())
+	logger.debug("restServiceLocation = " + restServiceLocation);
+    } finally {
+      try {
+	is.close();
+      } catch (IOException ioe) {
+      }
+    }
+
+    // Initialize the request to the REST service.
+    RestTemplate restTemplate = new RestTemplate();
+
+    // Initialize the request headers.
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder
+	.fromUriString(restServiceLocation).build().expand(uriMap);
+
+    URI uri = UriComponentsBuilder.newInstance()
+	.uriComponents(uriComponents).build().encode().toUri();
+    if (logger.isDebugEnabled())
+	logger.debug("Making request to '" + uri + "'...");
+
+    // Make the request to the REST service and get its response.
+    try {
+      ResponseEntity<ArtifactPage> result = restTemplate.exchange(uri,
+	  HttpMethod.GET, new HttpEntity<String>(null, headers),
+	  ArtifactPage.class);
+
+      int statusCode = result.getStatusCodeValue();
+      if (logger.isDebugEnabled())
+	logger.debug("Done: statusCode = " + statusCode);
+
+      isServiceAvailable = statusCode == 200;
+    } catch (Exception e) {
+      if (logger.isDebugEnabled()) logger.debug("Done: No REST service.");
+    }
+
+    if (logger.isDebugEnabled())
+      logger.debug("isServiceAvailable = " + isServiceAvailable);
+    return isServiceAvailable;
+  }
+
+  /**
+   * Set up code to be run before each test.
+   * 
+   * @throws IOException if there are problems.
+   */
+  @Before
+  public void setUpBeforeEachTest() throws IOException {
+    if (logger.isDebugEnabled()) logger.debug("port = " + port);
+
+    // Get the path of a temporary directory where the test data will reside.
+    String tempDirPath = getTempDir(ApiControllersTest.class.getCanonicalName())
+	.getAbsolutePath();
+    if (logger.isDebugEnabled()) logger.debug("tempDirPath = " + tempDirPath);
+
+    // Copy the necessary files to the test temporary directory.
+    File srcTree = new File("test/cache");
+    if (logger.isDebugEnabled())
+      logger.debug("srcTree = " + srcTree.getAbsolutePath());
+
+    File destTree = new File(new File(tempDirPath), "cache");
+    if (logger.isDebugEnabled())
+      logger.debug("destTree = " + destTree.getAbsolutePath());
+
+    FileSystemUtils.copyRecursively(srcTree, destTree);
+
+    // Create a file that will communicate to the test REST service where its
+    // data is located.
+    createPlatformDiskSpaceConfigFile(tempDirPath);
+  }
+
+  /**
+   * Creates a file that will communicate to the test REST service where its
+   * data is located.
+   *
+   * @param dirPath
+   *          A String with the path to the directory where the file is to be
+   *          created.
+   * @throws IOException
+   *           if there are problems.
+   */
+  private void createPlatformDiskSpaceConfigFile(String dirPath)
+      throws IOException {
+    if (logger.isDebugEnabled()) logger.debug("dirPath = " + dirPath);
+
+    // The configuration option with the temporary directory where the test data
+    // resides.
+    String platformDiskSpaceConfigParam =
+	ConfigManager.PARAM_PLATFORM_DISK_SPACE_LIST + "=" + dirPath + "/cache"
+	    + System.lineSeparator();
+    if (logger.isDebugEnabled()) logger.debug("platformDiskSpaceConfigParam = '"
+	+ platformDiskSpaceConfigParam +"'.");
+
+    // The path to the file.
+    platformDiskSpaceConfigPath = dirPath + "/platform.txt";
+
+    // Create the file.
+    Files.write(Paths.get(platformDiskSpaceConfigPath),
+	platformDiskSpaceConfigParam.getBytes(), StandardOpenOption.CREATE);
+  }
 
   /**
    * Runs the tests with authentication turned off.
@@ -100,17 +266,13 @@ public class ApiControllersTest {
    */
   @Test
   public void runUnAuthenticatedTests() throws Exception {
-    if (logger.isDebugEnabled()) logger.debug("port = " + port);
-
     // Specify the command line parameters to be used for the tests.
     List<String> cmdLineArgs = getCommandLineArguments();
     cmdLineArgs.add("-p");
-    cmdLineArgs.add("config/apiControllerTestAuthOff.opt");
+    cmdLineArgs.add("test/config/apiControllerTestAuthOff.opt");
 
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
-
-    checkRepositoryService("config/lockss.txt");
 
     getSwaggerDocsTest();
     getMetadataAusAuidUnAuthenticatedTest();
@@ -130,17 +292,13 @@ public class ApiControllersTest {
    */
   @Test
   public void runAuthenticatedTests() throws Exception {
-    if (logger.isDebugEnabled()) logger.debug("port = " + port);
-
     // Specify the command line parameters to be used for the tests.
     List<String> cmdLineArgs = getCommandLineArguments();
     cmdLineArgs.add("-p");
-    cmdLineArgs.add("config/apiControllerTestAuthOn.opt");
+    cmdLineArgs.add("test/config/apiControllerTestAuthOn.opt");
 
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
-
-    checkRepositoryService("config/lockss.txt");
 
     getSwaggerDocsTest();
     getMetadataAusAuidAuthenticatedTest();
@@ -159,12 +317,15 @@ public class ApiControllersTest {
    */
   private List<String> getCommandLineArguments() {
     List<String> cmdLineArgs = new ArrayList<String>();
+
     cmdLineArgs.add("-p");
     cmdLineArgs.add("config/common.xml");
     cmdLineArgs.add("-p");
     cmdLineArgs.add("config/lockss.txt");
     cmdLineArgs.add("-p");
-    cmdLineArgs.add("config/lockss.opt");
+    cmdLineArgs.add("test/config/lockss.opt");
+    cmdLineArgs.add("-p");
+    cmdLineArgs.add(platformDiskSpaceConfigPath);
 
     return cmdLineArgs;
   }
@@ -955,67 +1116,6 @@ public class ApiControllersTest {
     assertEquals(1, result.getUrls().size());
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
-  }
-
-  public void checkRepositoryService(String fileName) {
-    FileInputStream is = null;
-    String restServiceLocation = null;
-
-    try {
-      File file = new File(fileName);
-      is = new FileInputStream(file);
-      Properties properties = new Properties();
-      properties.load(is);
-
-      restServiceLocation = properties.getProperty("org.lockss.plugin"
-	  + ".auContentFromWs.urlArtifactWs.restServiceLocation");
-      if (logger.isDebugEnabled())
-	logger.debug("restServiceLocation = " + restServiceLocation);
-    } catch (FileNotFoundException fnfe) {
-      fnfe.printStackTrace();
-    } catch (IOException ioe) {
-      ioe.printStackTrace();
-    } finally {
-      try {
-	is.close();
-      } catch (IOException ioe) {
-      }
-    }
-
-    // Initialize the request to the REST service.
-    RestTemplate restTemplate = new RestTemplate();
-
-    // Initialize the request headers.
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    // Create the URI of the request to the REST service.
-    UriComponents uriComponents =
-	UriComponentsBuilder.fromUriString(restServiceLocation).build()
-	.expand(Collections.singletonMap("uri", "someUri"));
-
-    URI uri = UriComponentsBuilder.newInstance()
-	.uriComponents(uriComponents).build().encode().toUri();
-    if (logger.isDebugEnabled())
-	logger.debug("Making request to '" + uri + "'...");
-
-    // Make the request to the REST service and get its response.
-    try {
-      ResponseEntity<ArtifactPage> result = restTemplate.exchange(uri,
-	  HttpMethod.GET, new HttpEntity<String>(null, headers),
-	  ArtifactPage.class);
-
-      int statusCode = result.getStatusCodeValue();
-      if (logger.isDebugEnabled()) logger.debug("statusCode = " + statusCode);
-
-      isRestRepositoryServiceAvailable = statusCode == 200;
-    } catch (Exception e) {
-      if (logger.isDebugEnabled()) logger.debug("No repository service.");
-    }
-
-    if (logger.isDebugEnabled())
-      logger.debug("isRestRepositoryServiceAvailable = "
-	  + isRestRepositoryServiceAvailable);
   }
 
   /**
