@@ -29,27 +29,19 @@ package org.lockss.laaws.mdq.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.lockss.config.ConfigManager;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.UrlInfo;
-import org.lockss.laaws.rs.model.ArtifactPage;
-import org.lockss.test.LockssTestCase4;
+import org.lockss.test.SpringLockssTestCase;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +59,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.FileSystemUtils;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
@@ -78,7 +69,7 @@ import org.springframework.web.util.UriUtils;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ApiControllersTest extends LockssTestCase4 {
+public class ApiControllersTest extends SpringLockssTestCase {
   private static final Logger logger =
       LoggerFactory.getLogger(ApiControllersTest.class);
 
@@ -112,90 +103,25 @@ public class ApiControllersTest extends LockssTestCase4 {
    */
   @BeforeClass
   public static void setUpBeforeAllTests() throws IOException {
+    // Get the external REST Repository service location. 
+    String restServiceLocation = getPropertyValueFromFile(
+	"org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation",
+	new File("config/lockss.txt"));
+    if (logger.isDebugEnabled())
+      logger.debug("restServiceLocation = " + restServiceLocation);
+
+    assertNotNull("REST Repository service location not found",
+	restServiceLocation);
+
     // Populate the indication of whether the external REST Repository service
     // is available.
-    isRestRepositoryServiceAvailable = checkExternalRestService(
-	"org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation",
-	new File("config/lockss.txt"),
-	Collections.singletonMap("uri", "someDummyUri"));
-  }
-
-  /**
-   * Provides the indication of whether an external REST service is available.
-   * 
-   * @param propertyName
-   *          A String with the name of the configuration property with the REST
-   *          service location template.
-   * @param configFile
-   *          A File with the configuration file containing the configuration
-   *          property value.
-   * @param uriMap
-   *          A Map<String, String> with the map of values to be interpolated in
-   *          the REST service location template.
-   * @return a boolean with <code>true</code> if the external REST service is
-   *         available, <code> false</code> otherwise.
-   */
-  private static boolean checkExternalRestService(String propertyName,
-      File configFile, Map<String, String> uriMap) throws IOException {
-    if (logger.isDebugEnabled()) {
-      logger.debug("propertyName = " + propertyName);
-      logger.debug("configFile = " + configFile.getAbsolutePath());
-      logger.debug("uriMap = " + uriMap);
-    }
-
-    boolean isServiceAvailable = false;
-    FileInputStream is = null;
-    String restServiceLocation = null;
-
-    // Get the REST service location.
-    try {
-      is = new FileInputStream(configFile);
-      Properties properties = new Properties();
-      properties.load(is);
-      restServiceLocation = properties.getProperty(propertyName);
-      if (logger.isDebugEnabled())
-	logger.debug("restServiceLocation = " + restServiceLocation);
-    } finally {
-      try {
-	is.close();
-      } catch (IOException ioe) {
-      }
-    }
-
-    // Initialize the request to the REST service.
-    RestTemplate restTemplate = new RestTemplate();
-
-    // Initialize the request headers.
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    // Create the URI of the request to the REST service.
-    UriComponents uriComponents = UriComponentsBuilder
-	.fromUriString(restServiceLocation).build().expand(uriMap);
-
-    URI uri = UriComponentsBuilder.newInstance()
-	.uriComponents(uriComponents).build().encode().toUri();
+    isRestRepositoryServiceAvailable =
+	checkExternalRestService(restServiceLocation,
+	    Collections.singletonMap("uri", "someDummyUri"),
+	    HttpStatus.OK.value());
     if (logger.isDebugEnabled())
-	logger.debug("Making request to '" + uri + "'...");
-
-    // Make the request to the REST service and get its response.
-    try {
-      ResponseEntity<ArtifactPage> result = restTemplate.exchange(uri,
-	  HttpMethod.GET, new HttpEntity<String>(null, headers),
-	  ArtifactPage.class);
-
-      int statusCode = result.getStatusCodeValue();
-      if (logger.isDebugEnabled())
-	logger.debug("Done: statusCode = " + statusCode);
-
-      isServiceAvailable = statusCode == 200;
-    } catch (Exception e) {
-      if (logger.isDebugEnabled()) logger.debug("Done: No REST service.");
-    }
-
-    if (logger.isDebugEnabled())
-      logger.debug("isServiceAvailable = " + isServiceAvailable);
-    return isServiceAvailable;
+      logger.debug("isRestRepositoryServiceAvailable = "
+	  + isRestRepositoryServiceAvailable);
   }
 
   /**
@@ -225,37 +151,10 @@ public class ApiControllersTest extends LockssTestCase4 {
 
     // Create a file that will communicate to the test REST service where its
     // data is located.
-    createPlatformDiskSpaceConfigFile(tempDirPath);
-  }
-
-  /**
-   * Creates a file that will communicate to the test REST service where its
-   * data is located.
-   *
-   * @param dirPath
-   *          A String with the path to the directory where the file is to be
-   *          created.
-   * @throws IOException
-   *           if there are problems.
-   */
-  private void createPlatformDiskSpaceConfigFile(String dirPath)
-      throws IOException {
-    if (logger.isDebugEnabled()) logger.debug("dirPath = " + dirPath);
-
-    // The configuration option with the temporary directory where the test data
-    // resides.
-    String platformDiskSpaceConfigParam =
-	ConfigManager.PARAM_PLATFORM_DISK_SPACE_LIST + "=" + dirPath + "/cache"
-	    + System.lineSeparator();
-    if (logger.isDebugEnabled()) logger.debug("platformDiskSpaceConfigParam = '"
-	+ platformDiskSpaceConfigParam +"'.");
-
-    // The path to the file.
-    platformDiskSpaceConfigPath = dirPath + "/platform.txt";
-
-    // Create the file.
-    Files.write(Paths.get(platformDiskSpaceConfigPath),
-	platformDiskSpaceConfigParam.getBytes(), StandardOpenOption.CREATE);
+    platformDiskSpaceConfigPath =
+	createPlatformDiskSpaceConfigFile(tempDirPath);
+    if (logger.isDebugEnabled()) logger.debug("platformDiskSpaceConfigPath = "
+	+ platformDiskSpaceConfigPath);
   }
 
   /**
