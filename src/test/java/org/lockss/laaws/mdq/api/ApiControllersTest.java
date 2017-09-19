@@ -58,7 +58,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.util.FileSystemUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
@@ -81,10 +80,6 @@ public class ApiControllersTest extends SpringLockssTestCase {
   // used for the tests.
   @Autowired
   ApplicationContext appCtx;
-
-  // The path to the configuration file with the platform disk space location
-  // definition.
-  private String platformDiskSpaceConfigPath = null;
 
   // The indication of whether the external REST Repository service is
   // available.
@@ -133,28 +128,15 @@ public class ApiControllersTest extends SpringLockssTestCase {
   public void setUpBeforeEachTest() throws IOException {
     if (logger.isDebugEnabled()) logger.debug("port = " + port);
 
-    // Get the path of a temporary directory where the test data will reside.
-    String tempDirPath = getTempDir(ApiControllersTest.class.getCanonicalName())
-	.getAbsolutePath();
-    if (logger.isDebugEnabled()) logger.debug("tempDirPath = " + tempDirPath);
+    // Set up the temporary directory where the test data will reside.
+    setUpTempDirectory(ApiControllersTest.class.getCanonicalName());
 
     // Copy the necessary files to the test temporary directory.
-    File srcTree = new File("test/cache");
+    File srcTree = new File(new File("test"), "cache");
     if (logger.isDebugEnabled())
       logger.debug("srcTree = " + srcTree.getAbsolutePath());
 
-    File destTree = new File(new File(tempDirPath), "cache");
-    if (logger.isDebugEnabled())
-      logger.debug("destTree = " + destTree.getAbsolutePath());
-
-    FileSystemUtils.copyRecursively(srcTree, destTree);
-
-    // Create a file that will communicate to the test REST service where its
-    // data is located.
-    platformDiskSpaceConfigPath =
-	createPlatformDiskSpaceConfigFile(tempDirPath);
-    if (logger.isDebugEnabled()) logger.debug("platformDiskSpaceConfigPath = "
-	+ platformDiskSpaceConfigPath);
+    copyToTempDir(srcTree);
   }
 
   /**
@@ -224,7 +206,7 @@ public class ApiControllersTest extends SpringLockssTestCase {
     cmdLineArgs.add("-p");
     cmdLineArgs.add("test/config/lockss.opt");
     cmdLineArgs.add("-p");
-    cmdLineArgs.add(platformDiskSpaceConfigPath);
+    cmdLineArgs.add(getPlatformDiskSpaceConfigPath());
 
     return cmdLineArgs;
   }
