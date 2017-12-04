@@ -204,6 +204,8 @@ public class ApiControllersTest extends SpringLockssTestCase {
     cmdLineArgs.add("-p");
     cmdLineArgs.add("config/lockss.txt");
     cmdLineArgs.add("-p");
+    cmdLineArgs.add("test/config/lockss.txt");
+    cmdLineArgs.add("-p");
     cmdLineArgs.add("test/config/lockss.opt");
     cmdLineArgs.add("-p");
     cmdLineArgs.add(getPlatformDiskSpaceConfigPath());

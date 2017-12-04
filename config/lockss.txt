@@ -79,7 +79,7 @@ org.lockss.poll.v3.enableV3Voter=false
 org.lockss.ws.enabled=false
 
 # No Repository Manager.
-org.lockss.plugin.auContentFromWs=true
+#org.lockss.plugin.auContentFromWs=true
 
 org.lockss.ui.port=49521
 
@@ -93,8 +93,8 @@ org.lockss.ui.port=49521
 ##org.lockss.metadataDbManager.derby.streamErrorFile=/tmp/derby.log
 #org.lockss.metadataDbManager.derby.streamErrorLogseveritylevel=0
 #org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.EmbeddedDataSource
-#org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.ClientDataSource
-#org.lockss.metadataDbManager.datasource.password=goodPassword
+org.lockss.metadataDbManager.datasource.className=org.apache.derby.jdbc.ClientDataSource
+org.lockss.metadataDbManager.datasource.password=goodPassword
 ##org.lockss.metadataDbManager.datasource.createDatabase=create
 #org.lockss.metadataDbManager.datasource.databaseName=db/MetadataDbManager
 ##org.lockss.metadataDbManager.datasource.portNumber=1527
