@@ -32,9 +32,6 @@ The wrapper around the Metadata Query Service.
 ### Create the Eclipse project (if so desired)
 File -> Import... -> Maven -> Existing Maven Projects
 
-### Build and install the required LOCKSS daemon jar files:
-run `initBuild`
-
 ### Specify the Repository REST web service
 This web service requires that an external Repository REST web service is
 running so as to provide an indication of whether a URL is cached or not.
@@ -46,6 +43,22 @@ org.lockss.plugin.auContentFromWs.urlArtifactWs.password=the-correct-password
 org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation=http://localhost:the-correct-port/repos/demorepo/artifacts?committed=false&uri={uri}
 org.lockss.plugin.auContentFromWs.urlArtifactWs.timeoutValue=600
 org.lockss.plugin.auContentFromWs.urlArtifactWs.userName=the-correct-user
+
+### Optional Configuration REST web service
+The default configuration of this web service requires that a Configuration REST
+web service is running. The specification of this Configuration REST web service
+is in the script
+
+`./runLaawsMdq`
+
+To run this web service without a Configuration REST web service, remove
+
+`-c,http://lockss-u:lockss-p@localhost:54420,-p,http://localhost:54420/config/file/cluster,`
+
+from the script.
+
+To run this web service with a Configuration REST web service at a different
+location than the default, change `localhost` and/or `54420` accordingly.
 
 ### Build the web service:
 `./buildLaawsMdq`
