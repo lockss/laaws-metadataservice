@@ -95,5 +95,8 @@ This will use port 49520. To use another port, edit the value of the
 ### API is documented at:
 #### http://localhost:49520/swagger-ui.html
 
+### The status of the web service may be obtained at:
+#### http://localhost:49520/status
+
 ### Stop the web service:
 `./stopLaawsMdq`

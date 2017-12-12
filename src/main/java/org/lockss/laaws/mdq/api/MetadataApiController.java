@@ -39,9 +39,11 @@ import org.lockss.app.LockssDaemon;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.PageInfo;
-import org.lockss.laaws.mdq.security.SpringAuthenticationFilter;
+import org.lockss.laaws.mdq.server.LaawsMdqApp;
 import org.lockss.metadata.MetadataManager;
 import org.lockss.rs.auth.Roles;
+import org.lockss.rs.auth.SpringAuthenticationFilter;
+import org.lockss.rs.status.ApiStatus;
 import org.lockss.rs.status.SpringLockssBaseApiController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -227,6 +229,16 @@ public class MetadataApiController extends SpringLockssBaseApiController
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public ErrorResponse internalExceptionHandler(RuntimeException e) {
     return new ErrorResponse(e.getMessage()); 	
+  }
+
+  /**
+   * Provides the status object.
+   * 
+   * @return an ApiStatus with the status.
+   */
+  @Override
+  public ApiStatus getApiStatus() {
+    return LaawsMdqApp.getApiStatus();
   }
 
   /**

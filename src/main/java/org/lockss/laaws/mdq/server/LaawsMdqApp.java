@@ -81,6 +81,9 @@ public class LaawsMdqApp extends LockssDaemon {
 
   private static final String API_VERSION = "1.0.0";
 
+  // Representation of the status of the REST web service.
+  private static ApiStatus apiStatus = new ApiStatus();
+
   public static void main( String[] args ) {
     if (log.isDebugEnabled()) log.debug("args = " + Arrays.toString(args));
 
@@ -93,8 +96,7 @@ public class LaawsMdqApp extends LockssDaemon {
       System.exit(Constants.EXIT_CODE_JAVA_VERSION);
     }
 
-    // Initialize the status provider for this REST web service.
-    ApiStatus apiStatus = new ApiStatus();
+    // Populate the API version for this REST web service.
     apiStatus.setVersion(API_VERSION);
 
     setSystemProperties();
@@ -113,9 +115,6 @@ public class LaawsMdqApp extends LockssDaemon {
       laawsMdqApp = new LaawsMdqApp(opts.getBootstrapPropsUrl(),
 	  opts.getRestConfigServiceUrl(), opts.getPropUrls(),
 	  opts.getGroupNames());
-
-      // Save the status provider for this REST web service.
-      laawsMdqApp.setApiStatus(apiStatus);
 
       laawsMdqApp.startDaemon();
 
@@ -173,5 +172,14 @@ public class LaawsMdqApp extends LockssDaemon {
    */
   protected ManagerDesc[] getManagerDescs() {
     return managerDescs;
+  }
+
+  /**
+   * Provides the status of the REST web service.
+   * 
+   * @return an ApiStatus with the status of the REST web service.
+   */
+  public static ApiStatus getApiStatus() {
+    return apiStatus;
   }
 }
