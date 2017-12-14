@@ -31,14 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.lockss.laaws.mdq.server;
 
-import java.util.Arrays;
-import java.util.List;
-import org.apache.commons.lang3.SystemUtils;
+import static org.lockss.app.LockssDaemon.*;
 import org.lockss.app.LockssDaemon;
-import org.lockss.config.CurrentConfig;
-import org.lockss.daemon.ResourceUnavailableException;
-import org.lockss.rs.status.ApiStatus;
-import org.lockss.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,19 +40,12 @@ import org.slf4j.LoggerFactory;
  * Startup code.
  */
 //@Component
-public class LaawsMdqApp extends LockssDaemon {
+public class LaawsMdqApp {
   private static final Logger log = LoggerFactory.getLogger(LaawsMdqApp.class);
 
   // Manager descriptors.  The order of this table determines the order in
   // which managers are initialized and started.
-  protected final ManagerDesc[] managerDescs = {
-      new ManagerDesc(RESOURCE_MANAGER, DEFAULT_RESOURCE_MANAGER),
-      new ManagerDesc(ALERT_MANAGER, "org.lockss.alert.AlertManagerImpl"),
-      new ManagerDesc(STATUS_SERVICE, DEFAULT_STATUS_SERVICE),
-      // keystore manager must be started before any others that need to
-      // access managed keystores
-      new ManagerDesc(KEYSTORE_MANAGER,
-	  "org.lockss.daemon.LockssKeyStoreManager"),
+  protected static final ManagerDesc[] myManagerDescs = {
       new ManagerDesc(ACCOUNT_MANAGER, "org.lockss.account.AccountManager"),
       // start plugin manager after generic services
       new ManagerDesc(PLUGIN_MANAGER, "org.lockss.plugin.PluginManager"),
@@ -71,6 +58,10 @@ public class LaawsMdqApp extends LockssDaemon {
       // Start the COUNTER reports manager.
       new ManagerDesc(COUNTER_REPORTS_MANAGER,
 	  "org.lockss.exporter.counter.CounterReportsManager"),
+      // Start the job manager.
+      new ManagerDesc(JOB_MANAGER, "org.lockss.job.JobManager"),
+      // Start the job database manager.
+      new ManagerDesc(JOB_DB_MANAGER, "org.lockss.job.JobDbManager"),
       // NOTE: Any managers that are needed to decide whether a servlet is to be
       // enabled or not (through ServletDescr.isEnabled()) need to appear before
       // the AdminServletManager on the next line.
@@ -79,107 +70,16 @@ public class LaawsMdqApp extends LockssDaemon {
       new ManagerDesc(PROXY_MANAGER, "org.lockss.proxy.ProxyManager")
   };
 
-  private static final String API_VERSION = "1.0.0";
-
-  // Representation of the status of the REST web service.
-  private static ApiStatus apiStatus = new ApiStatus();
-
-  public static void main( String[] args ) {
-    if (log.isDebugEnabled()) log.debug("args = " + Arrays.toString(args));
-
-    LaawsMdqApp laawsMdqApp;
-
-    if (!SystemUtils.isJavaVersionAtLeast(MIN_JAVA_VERSION)) {
-      System.err.println("LOCKSS requires at least Java " + MIN_JAVA_VERSION +
-                         ", this is " + SystemUtils.JAVA_VERSION +
-                         ", exiting.");
-      System.exit(Constants.EXIT_CODE_JAVA_VERSION);
-    }
-
-    // Populate the API version for this REST web service.
-    apiStatus.setVersion(API_VERSION);
-
-    setSystemProperties();
-
-    try {
-      StartupOptions opts = getStartupOptions(args);
-      if (log.isDebugEnabled()) {
-	log.debug("opts.getBootstrapPropsUrl() = "
-      + opts.getBootstrapPropsUrl());
-	log.debug("opts.getRestConfigServiceUrl() = "
-	    + opts.getRestConfigServiceUrl());
-	log.debug("opts.getPropUrls() = " + opts.getPropUrls());
-	log.debug("opts.getGroupNames() = " + opts.getGroupNames());
-      }
-
-      laawsMdqApp = new LaawsMdqApp(opts.getBootstrapPropsUrl(),
-	  opts.getRestConfigServiceUrl(), opts.getPropUrls(),
-	  opts.getGroupNames());
-
-      laawsMdqApp.startDaemon();
-
-      // raise priority after starting other threads, so we won't get
-      // locked out and fail to exit when told.
-      Thread.currentThread().setPriority(Thread.NORM_PRIORITY + 2);
-    } catch (ResourceUnavailableException e) {
-      log.error("Exiting because required resource is unavailable", e);
-      System.exit(Constants.EXIT_CODE_RESOURCE_UNAVAILABLE);
-      return;	// compiler doesn't know that System.exit() doesn't return.
-    } catch (Throwable e) {
-      log.error("Exception thrown in main loop", e);
-      System.exit(Constants.EXIT_CODE_EXCEPTION_IN_MAIN);
-      return;	// compiler doesn't know that System.exit() doesn't return.
-    }
-
-    if (CurrentConfig.getBooleanParam(PARAM_APP_EXIT_IMM,
-                                      DEFAULT_APP_EXIT_IMM)) {
-      try {
-	laawsMdqApp.stop();
-      } catch (RuntimeException e) {
-        // ignore errors stopping daemon
-      }
-
-      System.exit(Constants.EXIT_CODE_NORMAL);
-    }
-
-    // The REST web service is ready at this point.
-    apiStatus.setReady(Boolean.TRUE);
-
-    if (log.isDebugEnabled()) log.debug("Done.");
+  public static void main(String[] args) {
+    AppSpec spec = new AppSpec()
+      .setName("Metadata Query Service")
+      .setArgs(args)
+//       .addAppConfig(PluginManager.PARAM_START_ALL_AUS, "true")
+      .setAppManagers(myManagerDescs);
+    LockssDaemon.startStatic(LockssDaemon.class, spec);
   }
 
-  /**
-   * Constructor used to access configuration files.
-   * 
-   * @param bootstrapPropsUrl
-   *          A String with the bootstrap configuration properties URL.
-   * @param restConfigServiceUrl
-   *          A String with the REST configuration service URL.
-   * @param propUrls
-   *          A List<String> with the configuration properties URLs.
-   * @param groupNames
-   *          A String with the group names.
-   */
-  public LaawsMdqApp(String bootstrapPropsUrl, String restConfigServiceUrl,
-      List<String> propUrls, String groupNames) {
-    super(bootstrapPropsUrl, restConfigServiceUrl, propUrls, groupNames);
-  }
-
-  /**
-   * Provides the manager's descriptors.
-   * 
-   * @return a ManagerDesc[] with the application manager's descriptors.
-   */
-  protected ManagerDesc[] getManagerDescs() {
-    return managerDescs;
-  }
-
-  /**
-   * Provides the status of the REST web service.
-   * 
-   * @return an ApiStatus with the status of the REST web service.
-   */
-  public static ApiStatus getApiStatus() {
-    return apiStatus;
+  public LaawsMdqApp() throws Exception {
+    super();
   }
 }

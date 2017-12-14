@@ -35,11 +35,11 @@ import io.swagger.annotations.ApiParam;
 import java.security.AccessControlException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import org.lockss.app.LockssApp;
 import org.lockss.app.LockssDaemon;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.PageInfo;
-import org.lockss.laaws.mdq.server.LaawsMdqApp;
 import org.lockss.metadata.MetadataManager;
 import org.lockss.rs.auth.Roles;
 import org.lockss.rs.auth.SpringAuthenticationFilter;
@@ -231,6 +231,8 @@ public class MetadataApiController extends SpringLockssBaseApiController
     return new ErrorResponse(e.getMessage()); 	
   }
 
+  private static final String API_VERSION = "1.0.0";
+
   /**
    * Provides the status object.
    * 
@@ -238,7 +240,9 @@ public class MetadataApiController extends SpringLockssBaseApiController
    */
   @Override
   public ApiStatus getApiStatus() {
-    return LaawsMdqApp.getApiStatus();
+    return new ApiStatus()
+      .setVersion(API_VERSION)
+      .setReady(LockssApp.getLockssApp().isAppRunning());
   }
 
   /**
