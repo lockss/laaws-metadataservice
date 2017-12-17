@@ -27,9 +27,11 @@
  */
 package org.lockss.laaws.mdq;
 
+import org.lockss.app.LockssApp;
 import org.lockss.app.LockssApp.AppSpec;
 import org.lockss.app.LockssApp.ManagerDesc;
 import org.lockss.app.LockssDaemon;
+import static org.lockss.app.ManagerDescs.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -48,33 +50,24 @@ public class MdqApplication extends WebMvcConfigurerAdapter implements CommandLi
       LoggerFactory.getLogger(MdqApplication.class);
 
   protected static final ManagerDesc[] myManagerDescs = {
-      new ManagerDesc(LockssDaemon.ACCOUNT_MANAGER,
-		      "org.lockss.account.AccountManager"),
+    ACCOUNT_MANAGER_DESC,
       // start plugin manager after generic services
-      new ManagerDesc(LockssDaemon.PLUGIN_MANAGER,
-		      "org.lockss.plugin.PluginManager"),
+    PLUGIN_MANAGER_DESC,
       // start database manager before any manager that uses it.
-      new ManagerDesc(LockssDaemon.METADATA_DB_MANAGER,
-		      "org.lockss.metadata.MetadataDbManager"),
+    METADATA_DB_MANAGER_DESC,
       // start metadata manager after pluggin manager and database manager.
-      new ManagerDesc(LockssDaemon.METADATA_MANAGER,
-		      "org.lockss.metadata.MetadataManager"),
+    METADATA_MANAGER_DESC,
       // Start the COUNTER reports manager.
-      new ManagerDesc(LockssDaemon.COUNTER_REPORTS_MANAGER,
-		      "org.lockss.exporter.counter.CounterReportsManager"),
+    COUNTER_REPORTS_MANAGER_DESC,
       // Start the job manager.
-      new ManagerDesc(LockssDaemon.JOB_MANAGER,
-		      "org.lockss.job.JobManager"),
+    JOB_MANAGER_DESC,
       // Start the job database manager.
-      new ManagerDesc(LockssDaemon.JOB_DB_MANAGER,
-		      "org.lockss.job.JobDbManager"),
+    JOB_DB_MANAGER_DESC,
       // NOTE: Any managers that are needed to decide whether a servlet is to be
       // enabled or not (through ServletDescr.isEnabled()) need to appear before
       // the AdminServletManager on the next line.
-      new ManagerDesc(LockssDaemon.SERVLET_MANAGER,
-		      "org.lockss.servlet.AdminServletManager"),
-      new ManagerDesc(LockssDaemon.PROXY_MANAGER,
-		      "org.lockss.proxy.ProxyManager")
+    SERVLET_MANAGER_DESC,
+    PROXY_MANAGER_DESC,
   };
 
   /**
@@ -98,13 +91,11 @@ public class MdqApplication extends WebMvcConfigurerAdapter implements CommandLi
       // Yes: Start the LOCKSS daemon.
       logger.info("Starting the LOCKSS daemon");
 
-//       LaawsMdqApp.main(args);
-
       AppSpec spec = new AppSpec()
 	.setName("Metadata Query Service")
 	.setArgs(args)
 	.setAppManagers(myManagerDescs);
-      LockssDaemon.startStatic(LockssDaemon.class, spec);
+      LockssApp.startStatic(LockssDaemon.class, spec);
     } else {
       // No: Do nothing. This happens when a test is started and before the
       // test setup has got a chance to inject the appropriate command line
