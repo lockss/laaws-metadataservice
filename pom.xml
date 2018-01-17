@@ -125,6 +125,11 @@ in this Software without prior written authorization from Stanford University.
       <version>1.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
+      <groupId>org.lockss.laaws</groupId>
+      <artifactId>laaws-repository-client</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>antlr4</artifactId>
       <version>4.3</version>
