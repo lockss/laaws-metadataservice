@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2000-2017 Board of Trustees of Leland Stanford Jr. University,
+Copyright (c) 2000-2018 Board of Trustees of Leland Stanford Jr. University,
 all rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -45,7 +45,9 @@ import org.junit.runner.RunWith;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.UrlInfo;
+import org.lockss.plugin.PluginManager;
 import org.lockss.test.SpringLockssTestCase;
+import org.lockss.util.StringUtil;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,22 +104,53 @@ public class ApiControllersTest extends SpringLockssTestCase {
    */
   @BeforeClass
   public static void setUpBeforeAllTests() throws IOException {
-    // Get the external REST Repository service location. 
-    String restServiceLocation = getPropertyValueFromFile(
-	"org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation",
-	new File("config/lockss.txt"));
+    // Get the configuration file.
+    File configFile = new File("config/lockss.txt");
     if (logger.isDebugEnabled())
-      logger.debug("restServiceLocation = " + restServiceLocation);
+      logger.debug("configFile = " + configFile.getAbsolutePath());
 
-    assertNotNull("REST Repository service location not found",
-	restServiceLocation);
+    // Get the URL of the configured REST Repository web service.
+    String repoServiceUrl = getPropertyValueFromFile(
+	PluginManager.PARAM_REPOSERVICE_URL, configFile);
+    if (logger.isDebugEnabled())
+      logger.debug("repoServiceUrl = " + repoServiceUrl);
 
-    // Populate the indication of whether the external REST Repository service
-    // is available.
-    isRestRepositoryServiceAvailable =
-	checkExternalRestService(restServiceLocation,
-	    Collections.singletonMap("uri", "someDummyUri"),
-	    HttpStatus.OK.value());
+    // Check whether the URL of the configured REST Repository web service does
+    // not exist.
+    if (StringUtil.isNullString(repoServiceUrl)) {
+      // Yes: Try to use the configured old REST service location.
+      String restServiceLocation = getPropertyValueFromFile(
+	  "org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation",
+	  configFile);
+      if (logger.isDebugEnabled())
+	logger.debug("restServiceLocation = " + restServiceLocation);
+
+      assertNotNull("REST Repository service location not found",
+	  restServiceLocation);
+
+      // Populate the indication of whether the external REST Repository service
+      // is available.
+      isRestRepositoryServiceAvailable =
+	  checkExternalRestService(restServiceLocation,
+	      Collections.singletonMap("uri", "someDummyUri"),
+	      HttpStatus.OK.value());
+    } else {
+      // No: Get the configured REST Repository web service collection name.
+      String repoServiceCollection = getPropertyValueFromFile(
+	  PluginManager.PARAM_REPOSERVICE_COLLECTION, configFile);
+      if (logger.isDebugEnabled())
+	logger.debug("repoServiceCollection = " + repoServiceCollection);
+
+      assertNotNull("REST Repository service collection not found",
+	  repoServiceCollection);
+
+      // Populate the indication of whether the REST Repository service is
+      // available.
+      isRestRepositoryServiceAvailable =
+	  checkRestRepositoryService(repoServiceUrl, repoServiceCollection,
+	      "someDummyUri");
+    }
+
     if (logger.isDebugEnabled())
       logger.debug("isRestRepositoryServiceAvailable = "
 	  + isRestRepositoryServiceAvailable);
@@ -213,7 +246,7 @@ public class ApiControllersTest extends SpringLockssTestCase {
     cmdLineArgs.add("test/config/lockss.txt");
     cmdLineArgs.add("-p");
     cmdLineArgs.add("test/config/lockss.opt");
-    cmdLineArgs.add("-p");
+    cmdLineArgs.add("-b");
     cmdLineArgs.add(getPlatformDiskSpaceConfigPath());
 
     return cmdLineArgs;

@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
+# Copyright (c) 2016-2018 Board of Trustees of Leland Stanford Jr. University,
 # all rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -119,3 +119,9 @@ org.lockss.plugin.auContentFromWs.urlArtifactWs.password=lockss-p
 org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation=http://localhost:8700/repos/demorepo/artifacts?committed=false&uri={uri}
 org.lockss.plugin.auContentFromWs.urlArtifactWs.timeoutValue=600
 org.lockss.plugin.auContentFromWs.urlArtifactWs.userName=lockss-u
+
+#
+# The REST Repository Service.
+#
+#org.lockss.laaws.reposervice.url=http://localhost:8700
+#org.lockss.laaws.reposervice.collection=demorepo

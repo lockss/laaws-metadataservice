@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2000-2017 Board of Trustees of Leland Stanford Jr. University,
+Copyright (c) 2000-2018 Board of Trustees of Leland Stanford Jr. University,
 all rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -54,7 +54,8 @@ public interface MetadataApi extends SpringLockssBaseApi {
    * 
    * @param auid
    *          A String with the AU identifier.
-   * @return a ResponseEntity<Integer> with the count of metadata items deleted.
+   * @return a {@code ResponseEntity<Integer>} with the count of metadata items
+   *         deleted.
    */
   @ApiOperation(value = "Delete the metadata stored for an AU",
       notes = "Delete the metadata stored for an AU given the AU identifier",
@@ -97,7 +98,7 @@ public interface MetadataApi extends SpringLockssBaseApi {
    * @param limit
    *          An Integer with the maximum number of AU metadata items to be
    *          returned.
-   * @return a ResponseEntity<AuMetadataPageInfo> with the metadata.
+   * @return a {@code ResponseEntity<AuMetadataPageInfo>} with the metadata.
    */
   @ApiOperation(value = "Get the metadata stored for an AU", notes =
       "Get the full metadata stored for an AU given the AU identifier or a pageful of the metadata defined by the page index and size",
@@ -137,7 +138,8 @@ public interface MetadataApi extends SpringLockssBaseApi {
    * 
    * @param item
    *          An ItemMetadata with the AU item metadata.
-   * @return a ResponseEntity<Long> with the identifier of the stored metadata.
+   * @return a {@code ResponseEntity<Long>} with the identifier of the stored
+   *         metadata.
    */
   @ApiOperation(value = "Store the metadata for an AU item",
       notes = "Store the metadata for an item belonging to an AU",

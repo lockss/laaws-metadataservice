@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2017 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2017-2018 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -66,7 +66,7 @@ public class UrlsApiController implements UrlsApi {
    * 
    * @param doi
    *          A String with the DOI for which the URL is requested.
-   * @return a ResponseEntity<UrlInfo> with the URL information.
+   * @return a {@code ResponseEntity<UrlInfo>} with the URL information.
    */
   @Override
   @RequestMapping(value = "/urls/doi/{doi}",
@@ -101,13 +101,8 @@ public class UrlsApiController implements UrlsApi {
    * Provides the URL that results from performing an OpenURL query
    * 
    * @param params
-   *          A List<String> with the OpenURL query parameters.
-   * @param securityContext
-   *          A SecurityContext providing access to security related
-   *          information.
-   * @return a Response with any data that needs to be returned to the runtime.
-   * @throws ApiException
-   *           if there is a problem obtaining the URL.
+   *          A {@code List<String>} with the OpenURL query parameters.
+   * @return a {@code ResponseEntity<UrlInfo>} with the URL information.
    */
   @Override
   @RequestMapping(value = "/urls/openurl",
@@ -146,7 +141,7 @@ public class UrlsApiController implements UrlsApi {
    * Provides the results of an OpenUrl query.
    * 
    * @param params
-   *          A Map<String, String> with the OpenURL query parameters.
+   *          A {@code Map<String, String>} with the OpenURL query parameters.
    * @return a UrlInfo with the results.
    */
   private UrlInfo resolveOpenUrl(Map<String, String> params) {
