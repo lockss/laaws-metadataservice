@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2017 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2017-2018 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -48,7 +48,7 @@ public interface UrlsApi {
    * 
    * @param doi
    *          A String with the DOI for which the URL is requested.
-   * @return a ResponseEntity<UrlInfo> with the URL information.
+   * @return a {@code ResponseEntity<UrlInfo>} with the URL information.
    */
   @ApiOperation(value = "Gets the URL for a DOI",
       notes = "Provides the URL for a DOI given the DOI",
@@ -77,8 +77,8 @@ public interface UrlsApi {
    * Provides the URL that results from performing an OpenURL query
    * 
    * @param params
-   *          A List<String> with the OpenURL query parameters.
-   * @return a ResponseEntity<UrlInfo> with the URL information.
+   *          A {@code List<String>} with the OpenURL query parameters.
+   * @return a {@code ResponseEntity<UrlInfo>} with the URL information.
    */
   @ApiOperation(value = "Performs an OpenURL query",
       notes = "Provides the URL that results from performing an OpenURL query. With query parameters inline",

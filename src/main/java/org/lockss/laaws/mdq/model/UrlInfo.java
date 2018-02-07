@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2018 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -54,10 +54,10 @@ public class UrlInfo {
    * Full constructor.
    * 
    * @param params
-   *          A Map<String, String> with the query parameters that define the
-   *          resulting URLs.
+   *          A {@code Map<String, String>} with the query parameters that
+   *          define the resulting URLs.
    * @param urls
-   *          A List<String> with the URLs.
+   *          A {@code List<String>} with the URLs.
    */
   public UrlInfo(Map<String, String> params, List<String> urls) {
     this.params = params;
@@ -66,7 +66,9 @@ public class UrlInfo {
 
   /**
    * The parameters that define the resulting URLs.
-   **/
+   * 
+   * @return a {@code Map<String, String>} with the parameters.
+   */
   @ApiModelProperty(required = true,
       value = "The parameters that define the resulting URLs")
   public Map<String, String> getParams() {
@@ -78,7 +80,9 @@ public class UrlInfo {
 
   /**
    * The URLs.
-   **/
+   * 
+   * @return a {@code List<String>} with the URLs.
+   */
   @ApiModelProperty(required = true, value = "The URLs")
   public List<String> getUrls() {
     return urls;
