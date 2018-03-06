@@ -36,11 +36,10 @@ import java.security.AccessControlException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import org.lockss.app.LockssApp;
-import org.lockss.app.LockssDaemon;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.PageInfo;
-import org.lockss.metadata.MetadataManager;
+import org.lockss.metadata.extractor.MetadataExtractorManager;
 import org.lockss.rs.auth.Roles;
 import org.lockss.rs.auth.SpringAuthenticationFilter;
 import org.lockss.rs.status.ApiStatus;
@@ -90,7 +89,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
     SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
 
     try {
-      Integer count = getMetadataManager().deleteAuMetadataItems(auid);
+      Integer count = getMetadataExtractorManager().deleteAuMetadataItems(auid);
       if (logger.isDebugEnabled()) logger.debug("count = " + count);
 
       return new ResponseEntity<Integer>(count, HttpStatus.OK);
@@ -167,7 +166,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
       result.setPageInfo(pi);
 
       List<ItemMetadata> items =
-	  getMetadataManager().getAuMetadataDetail(auid, page, limit);
+	  getMetadataExtractorManager().getAuMetadataDetail(auid, page, limit);
       if (logger.isDebugEnabled()) logger.debug("items = " + items);
 
       result.setItems(items);
@@ -204,7 +203,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
     SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
 
     try {
-      Long mdItemSeq = getMetadataManager().storeAuItemMetadata(item);
+      Long mdItemSeq = getMetadataExtractorManager().storeAuItemMetadata(item);
       if (logger.isDebugEnabled()) logger.debug("mdItemSeq = " + mdItemSeq);
 
       return new ResponseEntity<Long>(mdItemSeq, HttpStatus.OK);
@@ -248,11 +247,11 @@ public class MetadataApiController extends SpringLockssBaseApiController
   }
 
   /**
-   * Provides the metadata manager.
+   * Provides the metadata extractor manager.
    * 
-   * @return a MetadataManager with the metadata manager.
+   * @return a MetadataExtractorManager with the metadata extractor manager.
    */
-  private MetadataManager getMetadataManager() {
-    return LockssDaemon.getLockssDaemon().getMetadataManager();
+  private MetadataExtractorManager getMetadataExtractorManager() {
+    return LockssApp.getManagerByTypeStatic(MetadataExtractorManager.class);
   }
 }
