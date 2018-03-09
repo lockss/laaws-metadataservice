@@ -119,7 +119,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
    */
   @Override
   @RequestMapping(value = "/metadata/aus/{auid}",
-  produces = { "application/json" }, consumes = { "application/json" },
+  produces = { "application/json" },
   method = RequestMethod.GET)
   public ResponseEntity<AuMetadataPageInfo> getMetadataAusAuid(
       @PathVariable("auid") String auid,

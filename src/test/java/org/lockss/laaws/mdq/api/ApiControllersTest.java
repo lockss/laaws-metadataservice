@@ -278,32 +278,45 @@ public class ApiControllersTest extends SpringLockssTestCase {
 	.build().encode().toUri();
     if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
-    ResponseEntity<AuMetadataPageInfo> errorResponse =
+    ResponseEntity<AuMetadataPageInfo> successResponse =
 	new TestRestTemplate().exchange(uri, HttpMethod.GET, null,
 	    AuMetadataPageInfo.class);
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    HttpStatus statusCode = successResponse.getStatusCode();
+    assertEquals(HttpStatus.OK, statusCode);
 
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
+    AuMetadataPageInfo result = successResponse.getBody();
+
+    assertEquals(1, result.getItems().size());
+    assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
+    assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
+    assertNull(result.getPageInfo().getTotalCount());
+
+    successResponse = new TestRestTemplate("fakeUser", "fakePassword")
 	.exchange(uri, HttpMethod.GET, null, AuMetadataPageInfo.class);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    statusCode = successResponse.getStatusCode();
+    assertEquals(HttpStatus.OK, statusCode);
+
+    result = successResponse.getBody();
+
+    assertEquals(1, result.getItems().size());
+    assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
+    assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
+    assertNull(result.getPageInfo().getTotalCount());
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
-    ResponseEntity<AuMetadataPageInfo> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
-	    HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    AuMetadataPageInfo.class);
+    successResponse = new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
+	HttpMethod.GET, new HttpEntity<String>(null, headers),
+	AuMetadataPageInfo.class);
 
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
 
-    AuMetadataPageInfo result = successResponse.getBody();
+    result = successResponse.getBody();
 
     assertEquals(1, result.getItems().size());
     assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
@@ -384,12 +397,19 @@ public class ApiControllersTest extends SpringLockssTestCase {
 	.build().encode().toUri();
     if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
-    ResponseEntity<AuMetadataPageInfo> errorResponse =
+    ResponseEntity<AuMetadataPageInfo> successResponse =
 	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
 	    HttpMethod.GET, null, AuMetadataPageInfo.class);
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    HttpStatus statusCode = successResponse.getStatusCode();
+    assertEquals(HttpStatus.OK, statusCode);
+
+    AuMetadataPageInfo result = successResponse.getBody();
+
+    assertEquals(1, result.getItems().size());
+    assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
+    assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
+    assertNull(result.getPageInfo().getTotalCount());
 
     String badUrl = getTestUrlTemplate("/metadata/aus/non-existent");
 
@@ -397,8 +417,9 @@ public class ApiControllersTest extends SpringLockssTestCase {
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
-    errorResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(badUrl, HttpMethod.GET, new HttpEntity<String>(null, headers),
+    ResponseEntity<AuMetadataPageInfo> errorResponse =
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(badUrl,
+	    HttpMethod.GET, new HttpEntity<String>(null, headers),
 	    AuMetadataPageInfo.class);
 
     statusCode = errorResponse.getStatusCode();
@@ -761,17 +782,40 @@ public class ApiControllersTest extends SpringLockssTestCase {
 	.build().encode().toUri();
     if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
-    errorResponse = new TestRestTemplate().exchange(uri, HttpMethod.GET, null,
-	UrlInfo.class);
+    ResponseEntity<UrlInfo> successResponse =
+	new TestRestTemplate().exchange(uri, HttpMethod.GET, null,
+	    UrlInfo.class);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    statusCode = successResponse.getStatusCode();
+    assertEquals(HttpStatus.OK, statusCode);
 
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
+    UrlInfo result = successResponse.getBody();
+    assertEquals(1, result.getParams().size());
+    assertTrue(("info:doi/" + goodDoi)
+	.startsWith(result.getParams().get("rft_id")));
+
+    if (isRestRepositoryServiceAvailable) {
+      assertEquals(1, result.getUrls().size());
+    } else {
+      assertEquals(0, result.getUrls().size());
+    }
+
+    successResponse = new TestRestTemplate("fakeUser", "fakePassword")
 	.exchange(uri, HttpMethod.GET, null, UrlInfo.class);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    statusCode = successResponse.getStatusCode();
+    assertEquals(HttpStatus.OK, statusCode);
+
+    result = successResponse.getBody();
+    assertEquals(1, result.getParams().size());
+    assertTrue(("info:doi/" + goodDoi)
+	.startsWith(result.getParams().get("rft_id")));
+
+    if (isRestRepositoryServiceAvailable) {
+      assertEquals(1, result.getUrls().size());
+    } else {
+      assertEquals(0, result.getUrls().size());
+    }
 
     getUrlsDoiCommonTest();
 
@@ -821,11 +865,22 @@ public class ApiControllersTest extends SpringLockssTestCase {
 	.build().encode().toUri();
     if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
-    errorResponse = new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
-	HttpMethod.GET, null, UrlInfo.class);
+    ResponseEntity<UrlInfo> successResponse = new TestRestTemplate("lockss-u",
+	"lockss-p").exchange(uri, HttpMethod.GET, null, UrlInfo.class);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    statusCode = successResponse.getStatusCode();
+    assertEquals(HttpStatus.OK, statusCode);
+
+    UrlInfo result = successResponse.getBody();
+    assertEquals(1, result.getParams().size());
+    assertTrue(("info:doi/" + goodDoi)
+	.startsWith(result.getParams().get("rft_id")));
+
+    if (isRestRepositoryServiceAvailable) {
+      assertEquals(1, result.getUrls().size());
+    } else {
+      assertEquals(0, result.getUrls().size());
+    }
 
     getUrlsDoiCommonTest();
 
@@ -905,13 +960,13 @@ public class ApiControllersTest extends SpringLockssTestCase {
 	HttpMethod.GET, null, UrlInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
 	.exchange(url, HttpMethod.GET, null, UrlInfo.class);
 
     statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
 
     getUrlsOpenUrlCommonTest();
 
@@ -956,7 +1011,7 @@ public class ApiControllersTest extends SpringLockssTestCase {
 	    HttpMethod.GET, null, UrlInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);

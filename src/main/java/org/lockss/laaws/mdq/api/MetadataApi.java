@@ -118,7 +118,7 @@ public interface MetadataApi extends SpringLockssBaseApi {
       message = "Some or all of the system is not available",
       response = AuMetadataPageInfo.class) })
   @RequestMapping(value = "/metadata/aus/{auid}",
-  produces = { "application/json" }, consumes = { "application/json" },
+  produces = { "application/json" },
   method = RequestMethod.GET)
   default ResponseEntity<AuMetadataPageInfo> getMetadataAusAuid(
       @ApiParam(value =
