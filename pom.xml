@@ -56,6 +56,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   </scm>
 
   <properties>
+    <!-- GitHub project does not match artifactId -->
+    <gitProjectId>laaws-metadataservice</gitProjectId>
     <skipSpringBootRepackage>false</skipSpringBootRepackage>
     <!-- The main class to start by executing java -jar -->
     <start-class>org.lockss.laaws.mdq.MdqApplication</start-class>
