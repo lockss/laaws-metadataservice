@@ -192,7 +192,7 @@ paths:
           description: "Internal server error"
         503:
           description: "Some or all of the system is not available"
-  /urls/doi/{doi}:
+  /urls/doi:
     get:
       tags:
       - "urls"
@@ -203,7 +203,7 @@ paths:
       - "application/json"
       parameters:
       - name: "doi"
-        in: "path"
+        in: "query"
         required: true
         type: "string"
         description: "The DOI for which the URL is requested"

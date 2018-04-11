@@ -36,7 +36,6 @@ import java.util.List;
 import org.lockss.laaws.mdq.model.UrlInfo;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -68,12 +67,12 @@ public interface UrlsApi {
       @ApiResponse(code = 503,
       message = "Some or all of the system is not available",
       response = UrlInfo.class) })
-  @RequestMapping(value = "/urls/doi/{doi}",
+  @RequestMapping(value = "/urls/doi",
   produces = { "application/json" },
   method = RequestMethod.GET)
   default ResponseEntity<UrlInfo> getUrlsDoi(
       @ApiParam(value = "The DOI for which the URL is requested",
-      required=true ) @PathVariable("doi") String doi) {
+      required=true ) @RequestParam("doi") String doi) {
     return new ResponseEntity<UrlInfo>(HttpStatus.NOT_IMPLEMENTED);
   }
 

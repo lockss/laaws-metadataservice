@@ -64,7 +64,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 
 /**
  * Test class for org.lockss.laaws.mdq.api.MetadataApiController and
@@ -102,22 +101,6 @@ public class TestApiControllers extends SpringLockssTestCase {
    */
   @BeforeClass
   public static void setUpBeforeAllTests() throws IOException {
-    // Get the external REST Repository service location. 
-    String restServiceLocation = getPropertyValueFromFile(
-	"org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation",
-	new File("config/lockss.txt"));
-    if (logger.isDebugEnabled())
-      logger.debug("restServiceLocation = " + restServiceLocation);
-
-    assertNotNull("REST Repository service location not found",
-	restServiceLocation);
-
-    // Populate the indication of whether the external REST Repository service
-    // is available.
-    isRestRepositoryServiceAvailable =
-	checkExternalRestService(restServiceLocation,
-	    Collections.singletonMap("uri", "someDummyUri"),
-	    HttpStatus.OK.value());
     if (logger.isDebugEnabled())
       logger.debug("isRestRepositoryServiceAvailable = "
 	  + isRestRepositoryServiceAvailable);
@@ -757,33 +740,52 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void getUrlsDoiUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String template = getTestUrlTemplate("/urls/doi/{doi}");
+    String url = getTestUrlTemplate("/urls/doi");
 
-    // Create the URI of the request to the REST service.
-    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
-	.build().expand(Collections.singletonMap("doi", goodDoi));
-
-    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
-	.build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
-
-    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(uri,
+    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(url,
 	HttpMethod.GET, null, UrlInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.NOT_FOUND, statusCode);
+    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+
+    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
+	.exchange(url, HttpMethod.GET, null, UrlInfo.class);
+
+    statusCode = errorResponse.getStatusCode();
+    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    errorResponse = new TestRestTemplate().exchange(url, HttpMethod.GET,
+	new HttpEntity<String>(null, headers), UrlInfo.class);
+
+    statusCode = errorResponse.getStatusCode();
+    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+
+    headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
+	.exchange(url, HttpMethod.GET, new HttpEntity<String>(null, headers),
+	    UrlInfo.class);
+
+    statusCode = errorResponse.getStatusCode();
+    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
 
     // Create the URI of the request to the REST service.
-    uriComponents = UriComponentsBuilder.fromUriString(template).build()
-	.expand(Collections.singletonMap("doi",
-	    UriUtils.encodePathSegment(goodDoi, "UTF-8")));
-
-    uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+    URI uri = UriComponentsBuilder.fromHttpUrl(url).queryParam("doi", goodDoi)
 	.build().encode().toUri();
     if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
-    ResponseEntity<UrlInfo> successResponse =
-	new TestRestTemplate().exchange(uri, HttpMethod.GET, null,
+    headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    ResponseEntity<UrlInfo> successResponse = new TestRestTemplate()
+	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null, headers),
 	    UrlInfo.class);
 
     statusCode = successResponse.getStatusCode();
@@ -800,8 +802,18 @@ public class TestApiControllers extends SpringLockssTestCase {
       assertEquals(0, result.getUrls().size());
     }
 
+    // Create the URI of the request to the REST service.
+    uri = UriComponentsBuilder.fromHttpUrl(url).queryParam("doi", goodDoi)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+
+    headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
     successResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(uri, HttpMethod.GET, null, UrlInfo.class);
+	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null, headers),
+	    UrlInfo.class);
 
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
@@ -828,45 +840,115 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void getUrlsDoiAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String template = getTestUrlTemplate("/urls/doi/{doi}");
+    String url = getTestUrlTemplate("/urls/doi");
 
-    // Create the URI of the request to the REST service.
-    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
-	.build().expand(Collections.singletonMap("doi", goodDoi));
-
-    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
-	.build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
-
-    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(uri,
+    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(url,
 	HttpMethod.GET, null, UrlInfo.class);
 
     HttpStatus statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
 
     errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(uri, HttpMethod.GET, null, UrlInfo.class);
+	.exchange(url, HttpMethod.GET, null, UrlInfo.class);
 
     statusCode = errorResponse.getStatusCode();
     assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
 
-    errorResponse = new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
-	HttpMethod.GET, null, UrlInfo.class);
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    errorResponse = new TestRestTemplate().exchange(url, HttpMethod.GET,
+	new HttpEntity<String>(null, headers), UrlInfo.class);
 
     statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.NOT_FOUND, statusCode);
+    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
+
+    headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
+	.exchange(url, HttpMethod.GET, new HttpEntity<String>(null, headers),
+	    UrlInfo.class);
+
+    statusCode = errorResponse.getStatusCode();
+    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
 
     // Create the URI of the request to the REST service.
-    uriComponents = UriComponentsBuilder.fromUriString(template).build()
-	.expand(Collections.singletonMap("doi",
-	    UriUtils.encodePathSegment(goodDoi, "UTF-8")));
-
-    uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+    URI uri = UriComponentsBuilder.fromHttpUrl(url).queryParam("doi", goodDoi)
 	.build().encode().toUri();
     if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
-    ResponseEntity<UrlInfo> successResponse = new TestRestTemplate("lockss-u",
-	"lockss-p").exchange(uri, HttpMethod.GET, null, UrlInfo.class);
+    headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    errorResponse = new TestRestTemplate().exchange(uri, HttpMethod.GET,
+	new HttpEntity<String>(null, headers), UrlInfo.class);
+
+    statusCode = errorResponse.getStatusCode();
+    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
+
+    // Create the URI of the request to the REST service.
+    uri = UriComponentsBuilder.fromHttpUrl(url).queryParam("doi", goodDoi)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+
+    headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
+	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null, headers),
+	    UrlInfo.class);
+
+    statusCode = errorResponse.getStatusCode();
+    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
+
+    getUrlsDoiCommonTest();
+
+    if (logger.isDebugEnabled()) logger.debug("Done.");
+  }
+
+  /**
+   * Runs the getUrlsDoi()-related authentication-independent tests.
+   */
+  private void getUrlsDoiCommonTest() throws Exception {
+    if (logger.isDebugEnabled()) logger.debug("Invoked.");
+
+    String url = getTestUrlTemplate("/urls/doi");
+
+    ResponseEntity<UrlInfo> errorResponse =
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(url,
+	    HttpMethod.GET, null, UrlInfo.class);
+
+    HttpStatus statusCode = errorResponse.getStatusCode();
+    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    errorResponse = new TestRestTemplate("lockss-u", "lockss-p").exchange(url,
+	HttpMethod.GET, new HttpEntity<String>(null, headers), UrlInfo.class);
+
+    statusCode = errorResponse.getStatusCode();
+    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+
+    // Create the URI of the request to the REST service.
+    URI uri = UriComponentsBuilder.fromHttpUrl(url).queryParam("doi", goodDoi)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+
+    headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+
+    ResponseEntity<UrlInfo> successResponse =
+	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
+	    HttpMethod.GET, new HttpEntity<String>(null, headers),
+	    UrlInfo.class);
 
     statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
@@ -882,59 +964,16 @@ public class TestApiControllers extends SpringLockssTestCase {
       assertEquals(0, result.getUrls().size());
     }
 
-    getUrlsDoiCommonTest();
-
-    if (logger.isDebugEnabled()) logger.debug("Done.");
-  }
-
-  /**
-   * Runs the getUrlsDoi()-related authentication-independent tests.
-   */
-  private void getUrlsDoiCommonTest() throws Exception {
-    if (logger.isDebugEnabled()) logger.debug("Invoked.");
-
-    String template = getTestUrlTemplate("/urls/doi/{doi}");
-
-    // Create the URI of the request to the REST service.
-    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
-	.build().expand(Collections.singletonMap("doi",
-	    UriUtils.encodePathSegment(goodDoi, "UTF-8")));
-
-    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
-	.build().encode().toUri();
+    uri = UriComponentsBuilder.fromHttpUrl(url)
+	.queryParam("doi", "non-existent").build().encode().toUri();
     if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    ResponseEntity<UrlInfo> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
-	    HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    UrlInfo.class);
-
-    HttpStatus statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    UrlInfo result = successResponse.getBody();
-    assertEquals(1, result.getParams().size());
-    assertTrue(("info:doi/" + goodDoi)
-	.startsWith(result.getParams().get("rft_id")));
-
-    if (isRestRepositoryServiceAvailable) {
-      assertEquals(1, result.getUrls().size());
-    } else {
-      assertEquals(0, result.getUrls().size());
-    }
-
-    String badUrl = getTestUrlTemplate("/urls/doi/non-existent");
 
     headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
 
     successResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(badUrl, HttpMethod.GET, new HttpEntity<String>(null, headers),
+	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null, headers),
 	    UrlInfo.class);
 
     statusCode = successResponse.getStatusCode();

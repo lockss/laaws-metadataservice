@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.lockss.laaws.mdq.api;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.MalformedParametersException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,13 +48,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.UriUtils;
 
 /**
  * Controller for access to URLs.
@@ -73,29 +70,20 @@ public class UrlsApiController implements UrlsApi {
    * @return a {@code ResponseEntity<UrlInfo>} with the URL information.
    */
   @Override
-  @RequestMapping(value = "/urls/doi/{doi}",
+  @RequestMapping(value = "/urls/doi",
   produces = { "application/json" },
   method = RequestMethod.GET)
-  public ResponseEntity<UrlInfo> getUrlsDoi(@PathVariable("doi") String doi) {
+  public ResponseEntity<UrlInfo> getUrlsDoi(@RequestParam("doi") String doi) {
     if (logger.isDebugEnabled()) logger.debug("doi = " + doi);
 
-    String decodedDoi = null;
-
     try {
-      decodedDoi = UriUtils.decode(doi, "UTF-8");
-      if (logger.isDebugEnabled()) logger.debug("decodedDoi = " + decodedDoi);
-
       // Build an OpenURL query.
       Map<String, String> params = new HashMap<String,String>();
-      params.put("rft_id", "info:doi/" + decodedDoi);
+      params.put("rft_id", "info:doi/" + doi);
 
       return new ResponseEntity<UrlInfo>(resolveOpenUrl(params), HttpStatus.OK);
-    } catch (UnsupportedEncodingException uee) {
-      String message = "Cannot decode doi = '" + doi + "'";
-      logger.error(message, uee);
-      throw new MalformedParametersException(message);
     } catch (Exception e) {
-      String message = "Cannot getUrlsDoi() for doi = '" + decodedDoi + "'";
+      String message = "Cannot getUrlsDoi() for doi = '" + doi + "'";
       logger.error(message, e);
       throw new RuntimeException(message);
     }
