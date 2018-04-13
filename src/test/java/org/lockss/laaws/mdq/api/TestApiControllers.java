@@ -795,12 +795,7 @@ public class TestApiControllers extends SpringLockssTestCase {
     assertEquals(1, result.getParams().size());
     assertTrue(("info:doi/" + goodDoi)
 	.startsWith(result.getParams().get("rft_id")));
-
-    if (isRestRepositoryServiceAvailable) {
-      assertEquals(1, result.getUrls().size());
-    } else {
-      assertEquals(0, result.getUrls().size());
-    }
+    assertEquals(1, result.getUrls().size());
 
     // Create the URI of the request to the REST service.
     uri = UriComponentsBuilder.fromHttpUrl(url).queryParam("doi", goodDoi)
@@ -822,12 +817,7 @@ public class TestApiControllers extends SpringLockssTestCase {
     assertEquals(1, result.getParams().size());
     assertTrue(("info:doi/" + goodDoi)
 	.startsWith(result.getParams().get("rft_id")));
-
-    if (isRestRepositoryServiceAvailable) {
-      assertEquals(1, result.getUrls().size());
-    } else {
-      assertEquals(0, result.getUrls().size());
-    }
+    assertEquals(1, result.getUrls().size());
 
     getUrlsDoiCommonTest();
 
@@ -957,12 +947,7 @@ public class TestApiControllers extends SpringLockssTestCase {
     assertEquals(1, result.getParams().size());
     assertTrue(("info:doi/" + goodDoi)
 	.startsWith(result.getParams().get("rft_id")));
-
-    if (isRestRepositoryServiceAvailable) {
-      assertEquals(1, result.getUrls().size());
-    } else {
-      assertEquals(0, result.getUrls().size());
-    }
+    assertEquals(1, result.getUrls().size());
 
     uri = UriComponentsBuilder.fromHttpUrl(url)
 	.queryParam("doi", "non-existent").build().encode().toUri();
@@ -1085,12 +1070,7 @@ public class TestApiControllers extends SpringLockssTestCase {
     UrlInfo result = successResponse.getBody();
     assertEquals(1, result.getParams().size());
     assertEquals(param, "rft_id=" + result.getParams().get("rft_id"));
-
-    if (isRestRepositoryServiceAvailable) {
-      assertEquals(1, result.getUrls().size());
-    } else {
-      assertEquals(0, result.getUrls().size());
-    }
+    assertEquals(1, result.getUrls().size());
 
     String param1 = "rft.issn=1313-2652";
     String param2 = "rft.volume=9";

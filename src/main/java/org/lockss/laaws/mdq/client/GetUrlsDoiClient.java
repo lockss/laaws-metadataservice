@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2018 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,14 +28,11 @@
 package org.lockss.laaws.mdq.client;
 
 import java.net.URI;
-import java.util.Collections;
 import org.lockss.laaws.mdq.model.UrlInfo;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 
 /**
  * Client for the getUrlsDoi() operation.
@@ -52,14 +49,10 @@ public class GetUrlsDoiClient extends BaseClient {
 	  + "for which the URL is requested.");
     }
 
-    String template = baseUri + "/urls/doi/{doi}";
+    String url = baseUri + "/urls/doi";
 
     // Create the URI of the request to the REST service.
-    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
-	.build().expand(Collections.singletonMap("doi",
-	    UriUtils.encodePathSegment(args[0], "UTF-8")));
-
-    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+    URI uri = UriComponentsBuilder.fromUriString(url).queryParam("doi", args[0])
 	.build().encode().toUri();
     System.out.println("uri = " + uri);
 
