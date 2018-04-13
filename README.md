@@ -1,6 +1,6 @@
 <!--
 
-Copyright (c) 2000-2017 Board of Trustees of Leland Stanford Jr. University,
+Copyright (c) 2000-2018 Board of Trustees of Leland Stanford Jr. University,
 all rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -33,35 +33,35 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 The wrapper around the Metadata Query Service.
 
 ### Clone the repo
-`git clone --recursive ssh://git@gitlab.lockss.org/laaws/laaws-metadataservice.git`
+`git clone ssh://git@gitlab.lockss.org/laaws/laaws-metadataservice.git`
 
 ### Create the Eclipse project (if so desired)
 `File` -> `Import...` -> `Maven` -> `Existing Maven Projects`
 
-### Specify the Repository REST web service
-This web service requires that an external Repository REST web service is
-running so as to provide an indication of whether a URL is cached or not.
+### Specify the Repository
+This web service requires an external Repository to provide an indication of
+whether a URL is cached or not.
 
-To specify the properties of such external REST web service, edit in
+To specify the properties of such external Repository, edit in the file
 `config/lockss.txt` the following options and specify the appropriate values:
 
-org.lockss.plugin.auContentFromWs.urlArtifactWs.password=the-correct-password
-org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation=http://localhost:the-correct-port/repos/demorepo/artifacts?committed=false&uri={uri}
-org.lockss.plugin.auContentFromWs.urlArtifactWs.timeoutValue=600
-org.lockss.plugin.auContentFromWs.urlArtifactWs.userName=the-correct-user
+`# default to local repo.`
+`org.lockss.repository.v2Repository=local:demorepo:/tmp/locksslocalrepo`
+`# Put this in lockss.opt to use a REST repositoy service`
+`# org.lockss.repository.v2Repository=rest:demorepo:http://localhost:32640`
 
 ### Optional Configuration REST web service
-The default configuration of this web service requires that a Configuration REST
-web service is running. The specification of this Configuration REST web service
-is in the script
+The default configuration of this web service does not require that a
+Configuration REST web service is running.
 
-`./runLaawsMdq`
+To run this web service with a Configuration REST web service, edit the file
+`./runLaawsMdq` to comment out the line
 
-To run this web service without a Configuration REST web service, remove
+mvn spring-boot:run -Drun.arguments="-p,config/common.xml,-p,config/lockss.txt,-p,config/lockss.opt"
 
-`-c,http://lockss-u:lockss-p@localhost:54420,-p,http://localhost:54420/config/file/cluster,`
+and remove the comment from the last line of the script, like this:
 
-from the script.
+mvn spring-boot:run -Drun.arguments="-c,http://lockss-u:lockss-p@localhost:54420,-p,http://localhost:54420/config/file/cluster,-p,config/common.xml,-p,config/lockss.txt,-p,config/lockss.opt"
 
 To run this web service with a Configuration REST web service at a different
 location than the default, change `localhost` and/or `54420` accordingly.
@@ -74,7 +74,7 @@ This will run the tests as a pre-requisite for the build.
 The result of the build is a so-called "uber JAR" file which includes the
 project code plus all its dependencies and which is located at
 
-`./target/laaws-metadata-service-0.0.1-SNAPSHOT.jar`
+`./target/laaws-metadata-service-*.jar`
 
 ### Run the web service:
 `./runLaawsMdq`
