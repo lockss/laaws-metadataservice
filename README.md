@@ -46,8 +46,11 @@ To specify the properties of such external Repository, edit in the file
 `config/lockss.txt` the following options and specify the appropriate values:
 
 `# default to local repo.`
+
 `org.lockss.repository.v2Repository=local:demorepo:/tmp/locksslocalrepo`
+
 `# Put this in lockss.opt to use a REST repositoy service`
+
 `# org.lockss.repository.v2Repository=rest:demorepo:http://localhost:32640`
 
 ### Optional Configuration REST web service
@@ -57,11 +60,11 @@ Configuration REST web service is running.
 To run this web service with a Configuration REST web service, edit the file
 `./runLaawsMdq` to comment out the line
 
-mvn spring-boot:run -Drun.arguments="-p,config/common.xml,-p,config/lockss.txt,-p,config/lockss.opt"
+`mvn spring-boot:run -Drun.arguments="-p,config/common.xml,-p,config/lockss.txt,-p,config/lockss.opt"`
 
 and remove the comment from the last line of the script, like this:
 
-mvn spring-boot:run -Drun.arguments="-c,http://lockss-u:lockss-p@localhost:54420,-p,http://localhost:54420/config/file/cluster,-p,config/common.xml,-p,config/lockss.txt,-p,config/lockss.opt"
+`mvn spring-boot:run -Drun.arguments="-c,http://lockss-u:lockss-p@localhost:54420,-p,http://localhost:54420/config/file/cluster,-p,config/common.xml,-p,config/lockss.txt,-p,config/lockss.opt"`
 
 To run this web service with a Configuration REST web service at a different
 location than the default, change `localhost` and/or `54420` accordingly.
