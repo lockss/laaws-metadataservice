@@ -35,6 +35,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +48,7 @@ import org.junit.runner.RunWith;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.UrlInfo;
+import org.lockss.repository.RepositoryManager;
 import org.lockss.test.SpringLockssTestCase;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
@@ -84,9 +88,8 @@ public class TestApiControllers extends SpringLockssTestCase {
   @Autowired
   ApplicationContext appCtx;
 
-  // The indication of whether the external REST Repository service is
-  // available.
-  private static boolean isRestRepositoryServiceAvailable = false;
+  // The name of the root directory of the local repository.
+  private String repositoryRootDirName = "testRepo";
 
   // The identifier of an AU that exists in the test database.
   private String goodAuid = "org|lockss|plugin|pensoft|oai|PensoftOaiPlugin"
@@ -101,9 +104,6 @@ public class TestApiControllers extends SpringLockssTestCase {
    */
   @BeforeClass
   public static void setUpBeforeAllTests() throws IOException {
-    if (logger.isDebugEnabled())
-      logger.debug("isRestRepositoryServiceAvailable = "
-	  + isRestRepositoryServiceAvailable);
   }
 
   /**
@@ -120,6 +120,12 @@ public class TestApiControllers extends SpringLockssTestCase {
 
     // Copy the necessary files to the test temporary directory.
     File srcTree = new File(new File("test"), "cache");
+    if (logger.isDebugEnabled())
+      logger.debug("srcTree = " + srcTree.getAbsolutePath());
+
+    copyToTempDir(srcTree);
+
+    srcTree = new File(new File("test"), repositoryRootDirName);
     if (logger.isDebugEnabled())
       logger.debug("srcTree = " + srcTree.getAbsolutePath());
 
@@ -184,8 +190,10 @@ public class TestApiControllers extends SpringLockssTestCase {
    * Provides the standard command line arguments to start the server.
    * 
    * @return a List<String> with the command line arguments.
+   * @throws IOException
+   *           if there are problems.
    */
-  private List<String> getCommandLineArguments() {
+  private List<String> getCommandLineArguments() throws IOException {
     List<String> cmdLineArgs = new ArrayList<String>();
 
     cmdLineArgs.add("-p");
@@ -198,8 +206,45 @@ public class TestApiControllers extends SpringLockssTestCase {
     cmdLineArgs.add("test/config/lockss.opt");
     cmdLineArgs.add("-b");
     cmdLineArgs.add(getPlatformDiskSpaceConfigPath());
+    cmdLineArgs.add("-p");
+    cmdLineArgs.add(getRepositorySpecificationConfigPath("local:demorepo:"
+	+ getTempDirPath() + File.separator + repositoryRootDirName));
 
     return cmdLineArgs;
+  }
+
+  /**
+   * Creates a file that will communicate to the test REST service the
+   * repository specification.
+   *
+   * @param repositorySpec
+   *          A String with repository specification.
+   * @return a String with the path to the created file.
+   * @throws IOException
+   *           if there are problems.
+   */
+  private String getRepositorySpecificationConfigPath(String repositorySpec)
+      throws IOException {
+    if (logger.isDebugEnabled())
+      logger.debug("repositorySpec = " + repositorySpec);
+
+    // The configuration option with the location of the repository.
+    String repositoryConfigParam =
+	RepositoryManager.PARAM_V2_REPOSITORY + "=" + repositorySpec;
+    if (logger.isDebugEnabled()) logger.debug("repositoryConfigParam = '"
+	+ repositoryConfigParam +"'.");
+
+    // The path to the file.
+    String repositoryConfigPath =
+	getTempDirPath() + File.separator + "repository.txt";
+
+    // Create the file.
+    Files.write(Paths.get(repositoryConfigPath),
+	repositoryConfigParam.getBytes(), StandardOpenOption.CREATE);
+
+    if (logger.isDebugEnabled())
+      logger.debug("repositoryConfigPath = " + repositoryConfigPath);
+    return repositoryConfigPath;
   }
 
   /**
