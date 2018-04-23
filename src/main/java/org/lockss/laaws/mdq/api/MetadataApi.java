@@ -34,7 +34,7 @@ package org.lockss.laaws.mdq.api;
 import io.swagger.annotations.*;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.ItemMetadata;
-import org.lockss.rs.status.SpringLockssBaseApi;
+import org.lockss.spring.status.SpringLockssBaseApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
