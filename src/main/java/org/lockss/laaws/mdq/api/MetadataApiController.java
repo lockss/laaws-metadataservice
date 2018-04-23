@@ -42,7 +42,7 @@ import org.lockss.laaws.mdq.model.PageInfo;
 import org.lockss.metadata.extractor.MetadataExtractorManager;
 import org.lockss.spring.auth.Roles;
 import org.lockss.spring.auth.SpringAuthenticationFilter;
-import org.lockss.spring.status.ApiStatus;
+import org.lockss.laaws.status.model.ApiStatus;
 import org.lockss.spring.status.SpringLockssBaseApiController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
