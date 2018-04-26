@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # Copyright (c) 2017-2018 Board of Trustees of Leland Stanford Jr. University,
 # all rights reserved.
 #
@@ -44,13 +46,5 @@ DIR=`get_script_dir "${BASH_SOURCE[0]}"`
 # Change to the directory where the pom.xml file resides.
 cd $DIR/..
 
-$DIR/buildLaawsMdq
-
-targetJar=`ls -1 target/laaws-metadata-service-*.jar | grep -v javadoc`
-
-if [ -f "$targetJar" ]
-then
-  $DIR/runLaawsMdq
-else
-  echo Not running service: Build did not create JAR file.
-fi
+# Build the service.
+mvn clean package
