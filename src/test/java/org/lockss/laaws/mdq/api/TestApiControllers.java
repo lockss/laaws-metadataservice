@@ -35,21 +35,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.ItemMetadata;
+import org.lockss.laaws.mdq.model.PageInfo;
 import org.lockss.laaws.mdq.model.UrlInfo;
-import org.lockss.repository.RepositoryManager;
 import org.lockss.test.SpringLockssTestCase;
+import org.lockss.util.ListUtil;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,9 +64,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -76,8 +77,89 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestApiControllers extends SpringLockssTestCase {
+  private static final String UI_PORT_CONFIGURATION_TEMPLATE =
+      "UiPortConfigTemplate.txt";
+  private static final String UI_PORT_CONFIGURATION_FILE = "UiPort.txt";
+  private static final String DB_CONFIGURATION_TEMPLATE =
+      "DbConfigTemplate.txt";
+  private static final String DB_CONFIGURATION_FILE = "DbConfig.txt";
+
+  // The name of the root directory of the local repository.
+  private static final String REPOSITORY_ROOT_DIR_NAME = "testRepo";
+
+  private static final String EMPTY_STRING = "";
+
+  // The identifier of an AU that exists in the test system.
+  private static final String GOOD_AUID_1 =
+      "org|lockss|plugin|pensoft|oai|PensoftOaiPlugin"
+      + "&au_oai_date~2014&au_oai_set~biorisk"
+      + "&base_url~http%3A%2F%2Fbiorisk%2Epensoft%2Enet%2F";
+
+  // The identifier of another AU that exists in the test system.
+  private static final String GOOD_AUID_2 =
+      "org|lockss|plugin|pensoft|oai|PensoftOaiPlugin"
+      + "&au_oai_date~2015&au_oai_set~biorisk"
+      + "&base_url~http%3A%2F%2Fbiorisk%2Epensoft%2Enet%2F";
+
+  // The identifier of an AU that does not exist in the test system.
+  private static final String UNKNOWN_AUID ="unknown_auid";
+
+  // Credentials.
+  private static final String GOOD_USER = "lockss-u";
+  private static final String GOOD_PWD = "lockss-p";
+  private static final String BAD_USER = "badUser";
+  private static final String BAD_PWD = "badPassword";
+
+  // Metadata contents for the first AU that exists in the test system.
+  private static final String GOOD_METADATA_1 = "{\"scalarMap\":"
+      + "{\"date\":\"2014-10-06\",\"coverage\":\"fulltext\",\"volume\":\"9\","
+      + "\"publication_name\":\"BioRisk\","
+      + "\"publisher_name\":\"Pensoft Publishers\",\"start_page\":\"1\","
+      + "\"au_id\":\"org|lockss|plugin|pensoft|oai|PensoftOaiPlugin"
+      + "&au_oai_date~2014&au_oai_set~biorisk"
+      + "&base_url~http%3A%2F%2Fbiorisk%2Epensoft%2Enet%2F\","
+      + "\"provider_name\":\"Pensoft Publishers\",\"fetch_time\":\"-1\","
+      + "\"item_title\":\"China in the anthropocene: Culprit, victim or "
+      + "last best hope for a global ecological civilisation?\","
+      + "\"doi\":\"10.3897/biorisk.9.6105fgl\"},"
+      + "\"listMap\":{\"author_name\":[\"Joachim Spangenberg\"]},"
+      + "\"mapMap\":{\"issn\":{\"e_issn\":\"13132652\","
+      + "\"p_issn\":\"13132652\"},\"url\":{\"Abstract\":"
+      + "\"http://biorisk.pensoft.net/articles.php?id=1904\",\"Access\":"
+      + "\"https://biorisk.pensoft.net/articles.php?id=1904\""
+      + ",\"FullTextPdfFile\":\"http://biorisk.pensoft.net/lib/ajax_srv/"
+      + "article_elements_srv.php?action=download_pdf&item_id=1904\""
+      + ",\"ArticleMetadata\":\"http://biorisk.pensoft.net/"
+      + "articles.php?id=1904\"}}}";
+
+  // Metadata contents for the second AU that exists in the test system.
+  private static final String GOOD_METADATA_2 = "{\"scalarMap\":"
+      + "{\"date\":\"2015-10-06\",\"coverage\":\"fulltext\",\"volume\":\"19\","
+      + "\"publication_name\":\"BioRisk\","
+      + "\"publisher_name\":\"Pensoft Publishers\",\"start_page\":\"11\","
+      + "\"au_id\":\"org|lockss|plugin|pensoft|oai|PensoftOaiPlugin"
+      + "&au_oai_date~2015&au_oai_set~biorisk"
+      + "&base_url~http%3A%2F%2Fbiorisk%2Epensoft%2Enet%2F\","
+      + "\"provider_name\":\"Pensoft Publishers\",\"fetch_time\":\"-1\","
+      + "\"item_title\":\"FGL Test Article\"},"
+      + "\"listMap\":{\"author_name\":[\"Fernando García-Loygorri\"]},"
+      + "\"mapMap\":{\"issn\":{\"e_issn\":\"13132652\","
+      + "\"p_issn\":\"13132652\"},\"url\":{\"Access\":"
+      + "\"https://biorisk.pensoft.net/articles.php?id=19040\""
+      + ",\"FullTextPdfFile\":\"http://biorisk.pensoft.net/lib/ajax_srv/"
+      + "article_elements_srv.php?action=download_pdf&item_id=19040\"}}}";
+
+  // A DOI that does not exist in the test system.
+  private static final String UNKNOWN_DOI ="unknown_doi";
+
   private static final Logger logger =
       LoggerFactory.getLogger(TestApiControllers.class);
+
+  // The metadata of the first Archival Unit in the test system.
+  private static ItemMetadata ITEM_METADATA_1 = null;
+
+  // The metadata of the second Archival Unit in the test system.
+  private static ItemMetadata ITEM_METADATA_2 = null;
 
   // The port that Tomcat is using during this test.
   @LocalServerPort
@@ -88,22 +170,18 @@ public class TestApiControllers extends SpringLockssTestCase {
   @Autowired
   ApplicationContext appCtx;
 
-  // The name of the root directory of the local repository.
-  private String repositoryRootDirName = "testRepo";
-
-  // The identifier of an AU that exists in the test database.
-  private String goodAuid = "org|lockss|plugin|pensoft|oai|PensoftOaiPlugin"
-      + "&au_oai_date~2014&au_oai_set~biorisk"
-      + "&base_url~http%3A%2F%2Fbiorisk%2Epensoft%2Enet%2F";
-
-  // A DOI that exists in the test database.
-  private String goodDoi = "10.3897/biorisk.9.6105";
-
   /**
    * Set up code to be run before all tests.
    */
   @BeforeClass
   public static void setUpBeforeAllTests() throws IOException {
+    // Fill in the metadata of the first Archival Unit in the test system.
+    ITEM_METADATA_1 =
+	new ObjectMapper().readValue(GOOD_METADATA_1, ItemMetadata.class);
+
+    // Fill in the metadata of the second Archival Unit in the test system.
+    ITEM_METADATA_2 =
+	new ObjectMapper().readValue(GOOD_METADATA_2, ItemMetadata.class);
   }
 
   /**
@@ -125,11 +203,17 @@ public class TestApiControllers extends SpringLockssTestCase {
 
     copyToTempDir(srcTree);
 
-    srcTree = new File(new File("test"), repositoryRootDirName);
+    srcTree = new File(new File("test"), REPOSITORY_ROOT_DIR_NAME);
     if (logger.isDebugEnabled())
       logger.debug("srcTree = " + srcTree.getAbsolutePath());
 
     copyToTempDir(srcTree);
+
+    // Set up the UI port.
+    setUpUiPort(UI_PORT_CONFIGURATION_TEMPLATE, UI_PORT_CONFIGURATION_FILE);
+
+    // Set up the database configuration.
+    setUpDbConfig(DB_CONFIGURATION_TEMPLATE, DB_CONFIGURATION_FILE);
   }
 
   /**
@@ -143,7 +227,7 @@ public class TestApiControllers extends SpringLockssTestCase {
     // Specify the command line parameters to be used for the tests.
     List<String> cmdLineArgs = getCommandLineArguments();
     cmdLineArgs.add("-p");
-    cmdLineArgs.add("test/config/apiControllerTestAuthOff.opt");
+    cmdLineArgs.add("test/config/testAuthOff.txt");
 
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
@@ -170,7 +254,7 @@ public class TestApiControllers extends SpringLockssTestCase {
     // Specify the command line parameters to be used for the tests.
     List<String> cmdLineArgs = getCommandLineArguments();
     cmdLineArgs.add("-p");
-    cmdLineArgs.add("test/config/apiControllerTestAuthOn.opt");
+    cmdLineArgs.add("test/config/testAuthOn.txt");
 
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
@@ -197,54 +281,19 @@ public class TestApiControllers extends SpringLockssTestCase {
     List<String> cmdLineArgs = new ArrayList<String>();
 
     cmdLineArgs.add("-p");
+    cmdLineArgs.add(getPlatformDiskSpaceConfigPath());
+    cmdLineArgs.add("-p");
     cmdLineArgs.add("config/common.xml");
     cmdLineArgs.add("-p");
     cmdLineArgs.add("config/lockss.txt");
     cmdLineArgs.add("-p");
-    cmdLineArgs.add("test/config/lockss.txt");
+    cmdLineArgs.add(getUiPortConfigFile().getAbsolutePath());
+    cmdLineArgs.add("-p");
+    cmdLineArgs.add(getDbConfigFile().getAbsolutePath());
     cmdLineArgs.add("-p");
     cmdLineArgs.add("test/config/lockss.opt");
-    cmdLineArgs.add("-b");
-    cmdLineArgs.add(getPlatformDiskSpaceConfigPath());
-    cmdLineArgs.add("-p");
-    cmdLineArgs.add(getRepositorySpecificationConfigPath("local:demorepo:"
-	+ getTempDirPath() + File.separator + repositoryRootDirName));
 
     return cmdLineArgs;
-  }
-
-  /**
-   * Creates a file that will communicate to the test REST service the
-   * repository specification.
-   *
-   * @param repositorySpec
-   *          A String with repository specification.
-   * @return a String with the path to the created file.
-   * @throws IOException
-   *           if there are problems.
-   */
-  private String getRepositorySpecificationConfigPath(String repositorySpec)
-      throws IOException {
-    if (logger.isDebugEnabled())
-      logger.debug("repositorySpec = " + repositorySpec);
-
-    // The configuration option with the location of the repository.
-    String repositoryConfigParam =
-	RepositoryManager.PARAM_V2_REPOSITORY + "=" + repositorySpec;
-    if (logger.isDebugEnabled()) logger.debug("repositoryConfigParam = '"
-	+ repositoryConfigParam +"'.");
-
-    // The path to the file.
-    String repositoryConfigPath =
-	getTempDirPath() + File.separator + "repository.txt";
-
-    // Create the file.
-    Files.write(Paths.get(repositoryConfigPath),
-	repositoryConfigParam.getBytes(), StandardOpenOption.CREATE);
-
-    if (logger.isDebugEnabled())
-      logger.debug("repositoryConfigPath = " + repositoryConfigPath);
-    return repositoryConfigPath;
   }
 
   /**
@@ -296,60 +345,22 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void getMetadataAusAuidUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String template = getTestUrlTemplate("/metadata/aus/{auid}");
+    // No AUId: Spring reports it cannot find a match to an endpoint.
+    runTestGetMetadataAusAuid(null, null, null, HttpStatus.NOT_FOUND);
 
-    // Create the URI of the request to the REST service.
-    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
-	.build().expand(Collections.singletonMap("auid", goodAuid));
+    // Empty AUId: Spring reports it cannot find a match to an endpoint.
+    runTestGetMetadataAusAuid(EMPTY_STRING, null, null, HttpStatus.NOT_FOUND);
 
-    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
-	.build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+    // Unknown AUId.
+    runTestGetMetadataAusAuid(UNKNOWN_AUID, null, null, HttpStatus.NOT_FOUND);
 
-    ResponseEntity<AuMetadataPageInfo> successResponse =
-	new TestRestTemplate().exchange(uri, HttpMethod.GET, null,
-	    AuMetadataPageInfo.class);
+    // Success with no credentials.
+    verifyGoodAu1Metadata(runTestGetMetadataAusAuid(GOOD_AUID_1, null, null,
+	HttpStatus.OK));
 
-    HttpStatus statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    AuMetadataPageInfo result = successResponse.getBody();
-
-    assertEquals(1, result.getItems().size());
-    assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
-    assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
-    assertNull(result.getPageInfo().getTotalCount());
-
-    successResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(uri, HttpMethod.GET, null, AuMetadataPageInfo.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    result = successResponse.getBody();
-
-    assertEquals(1, result.getItems().size());
-    assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
-    assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
-    assertNull(result.getPageInfo().getTotalCount());
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    successResponse = new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
-	HttpMethod.GET, new HttpEntity<String>(null, headers),
-	AuMetadataPageInfo.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    result = successResponse.getBody();
-
-    assertEquals(1, result.getItems().size());
-    assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
-    assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
-    assertNull(result.getPageInfo().getTotalCount());
+    // success with bad credentials.
+    verifyGoodAu2Metadata(runTestGetMetadataAusAuid(GOOD_AUID_2, BAD_USER,
+	BAD_PWD, HttpStatus.OK));
 
     getMetadataAusAuidCommonTest();
 
@@ -362,47 +373,23 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void getMetadataAusAuidAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String template = getTestUrlTemplate("/metadata/aus/{auid}");
+    // No AUId.
+    runTestGetMetadataAusAuid(null, null, null, HttpStatus.UNAUTHORIZED);
 
-    // Create the URI of the request to the REST service.
-    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
-	.build().expand(Collections.singletonMap("auid", goodAuid));
+    // Empty AUId.
+    runTestGetMetadataAusAuid(EMPTY_STRING, null, null,
+	HttpStatus.UNAUTHORIZED);
 
-    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
-	.build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+    // No credentials.
+    runTestGetMetadataAusAuid(GOOD_AUID_2, null, null, HttpStatus.UNAUTHORIZED);
+    runTestGetMetadataAusAuid(UNKNOWN_AUID, null, null,
+	HttpStatus.UNAUTHORIZED);
 
-    ResponseEntity<AuMetadataPageInfo> errorResponse =
-	new TestRestTemplate().exchange(uri, HttpMethod.GET, null,
-	    AuMetadataPageInfo.class);
-
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
-
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(uri, HttpMethod.GET, null, AuMetadataPageInfo.class);
-
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    ResponseEntity<AuMetadataPageInfo> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
-	    HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    AuMetadataPageInfo.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    AuMetadataPageInfo result = successResponse.getBody();
-
-    assertEquals(1, result.getItems().size());
-    assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
-    assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
-    assertNull(result.getPageInfo().getTotalCount());
+    // Bad credentials.
+    runTestGetMetadataAusAuid(GOOD_AUID_1, BAD_USER, BAD_PWD,
+	HttpStatus.UNAUTHORIZED);
+    runTestGetMetadataAusAuid(UNKNOWN_AUID, BAD_USER, BAD_PWD,
+	HttpStatus.UNAUTHORIZED);
 
     getMetadataAusAuidCommonTest();
 
@@ -415,45 +402,92 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void getMetadataAusAuidCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
+    // No AUId: Spring reports it cannot find a match to an endpoint.
+    runTestGetMetadataAusAuid(null, GOOD_USER, GOOD_PWD, HttpStatus.NOT_FOUND);
+
+    // Empty AUId: Spring reports it cannot find a match to an endpoint.
+    runTestGetMetadataAusAuid(EMPTY_STRING, GOOD_USER, GOOD_PWD,
+	HttpStatus.NOT_FOUND);
+
+    // Unknown AUId.
+    runTestGetMetadataAusAuid(UNKNOWN_AUID, GOOD_USER, GOOD_PWD,
+	HttpStatus.NOT_FOUND);
+
+    // Success.
+    verifyGoodAu1Metadata(runTestGetMetadataAusAuid(GOOD_AUID_1,
+	GOOD_USER, GOOD_PWD, HttpStatus.OK));
+
+    verifyGoodAu2Metadata(runTestGetMetadataAusAuid(GOOD_AUID_2,
+	GOOD_USER, GOOD_PWD, HttpStatus.OK));
+
+    if (logger.isDebugEnabled()) logger.debug("Done.");
+  }
+
+  /**
+   * Performs a GET operation for the metadata of an Archival Unit.
+   * 
+   * @param auId
+   *          A String with the identifier of the Archival Unit.
+   * @param user
+   *          A String with the request username.
+   * @param password
+   *          A String with the request password.
+   * @param expectedStatus
+   *          An HttpStatus with the HTTP status of the result.
+   * @return an AuMetadataPageInfo with the Archival Unit metadata.
+   */
+  private AuMetadataPageInfo runTestGetMetadataAusAuid(String auId, String user,
+      String password, HttpStatus expectedStatus) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("auId = " + auId);
+      logger.debug("user = " + user);
+      logger.debug("password = " + password);
+      logger.debug("expectedStatus = " + expectedStatus);
+    }
+
+    // Get the test URL template.
     String template = getTestUrlTemplate("/metadata/aus/{auid}");
 
     // Create the URI of the request to the REST service.
     UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
-	.build().expand(Collections.singletonMap("auid", goodAuid));
+	.build().expand(Collections.singletonMap("auid", auId));
 
     URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
 	.build().encode().toUri();
     if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
-    ResponseEntity<AuMetadataPageInfo> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
-	    HttpMethod.GET, null, AuMetadataPageInfo.class);
+    // Initialize the request to the REST service.
+    RestTemplate restTemplate = new RestTemplate();
 
-    HttpStatus statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
+    HttpEntity<String> requestEntity = null;
 
-    AuMetadataPageInfo result = successResponse.getBody();
+    // Check whether there are any custom headers to be specified in the
+    // request.
+    if (user != null || password != null) {
 
-    assertEquals(1, result.getItems().size());
-    assertEquals(new Integer(50), result.getPageInfo().getResultsPerPage());
-    assertEquals(new Integer(1), result.getPageInfo().getCurrentPage());
-    assertNull(result.getPageInfo().getTotalCount());
+      // Initialize the request headers.
+      HttpHeaders headers = new HttpHeaders();
 
-    String badUrl = getTestUrlTemplate("/metadata/aus/non-existent");
+      // Set up the authentication credentials, if necessary.
+      setUpCredentials(user, password, headers);
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+      if (logger.isDebugEnabled())
+	logger.debug("requestHeaders = " + headers.toSingleValueMap());
 
-    ResponseEntity<AuMetadataPageInfo> errorResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(badUrl,
-	    HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    AuMetadataPageInfo.class);
+      // Create the request entity.
+      requestEntity = new HttpEntity<String>(null, headers);
+    }
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.NOT_FOUND, statusCode);
+    // Make the request and get the response. 
+    ResponseEntity<AuMetadataPageInfo> response =
+	new TestRestTemplate(restTemplate).exchange(uri, HttpMethod.GET,
+	    requestEntity, AuMetadataPageInfo.class);
 
-    if (logger.isDebugEnabled()) logger.debug("Done.");
+    // Get the response status.
+    HttpStatus statusCode = response.getStatusCode();
+    assertEquals(expectedStatus, statusCode);
+
+    return response.getBody();
   }
 
   /**
@@ -462,62 +496,45 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void deleteMetadataAusAuidUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String template = getTestUrlTemplate("/metadata/aus/{auid}");
+    // No AUId: Spring reports it cannot find a match to an endpoint.
+    runTestDeleteMetadataAusAuid(null, null, null, HttpStatus.NOT_FOUND, -1);
+    runTestDeleteMetadataAusAuid(null, BAD_USER, BAD_PWD, HttpStatus.NOT_FOUND,
+	-1);
 
-    // Create the URI of the request to the REST service.
-    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
-	.build().expand(Collections.singletonMap("auid", goodAuid));
+    // Empty AUId: Spring reports it cannot find a match to an endpoint.
+    runTestDeleteMetadataAusAuid(EMPTY_STRING, null, null, HttpStatus.NOT_FOUND,
+	-1);
+    runTestDeleteMetadataAusAuid(EMPTY_STRING, BAD_USER, BAD_PWD,
+	HttpStatus.NOT_FOUND, -1);
 
-    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
-	.build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+    // Unknown AUId.
+    runTestDeleteMetadataAusAuid(UNKNOWN_AUID, null, null, HttpStatus.NOT_FOUND,
+	-1);
+    runTestDeleteMetadataAusAuid(UNKNOWN_AUID, BAD_USER, BAD_PWD,
+	HttpStatus.NOT_FOUND, -1);
 
-    ResponseEntity<String> errorResponse = new TestRestTemplate()
-	.exchange(uri, HttpMethod.DELETE, null, String.class);
+    // Delete the first good Archival Unit with no credentials.
+    runTestDeleteMetadataAusAuid(GOOD_AUID_1, null, null, HttpStatus.OK, 1);
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    // Verify.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, null, null,
+	HttpStatus.OK).getItems().isEmpty());
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
+    // Verify that the second good Archival Unit is not affected.
+    verifyGoodAu2Metadata(runTestGetMetadataAusAuid(GOOD_AUID_2, null, null,
+	HttpStatus.OK));
 
-    ResponseEntity<Integer> successResponse =
-	new TestRestTemplate().exchange(uri, HttpMethod.DELETE,
-	    new HttpEntity<String>(null, headers), Integer.class);
+    // Delete again the first good Archival Unit with bad credentials.
+    runTestDeleteMetadataAusAuid(GOOD_AUID_1, BAD_USER, BAD_PWD, HttpStatus.OK,
+	0);
 
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
+    // Verify.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, BAD_USER, BAD_PWD,
+	HttpStatus.OK).getItems().isEmpty());
 
-    Integer result = successResponse.getBody();
-    assertEquals(1, result.intValue());
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    successResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(uri, HttpMethod.DELETE, new HttpEntity<String>(null, headers),
-	    Integer.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    result = successResponse.getBody();
-    assertEquals(0, result.intValue());
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    successResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(uri, HttpMethod.DELETE, new HttpEntity<String>(null, headers),
-	    Integer.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    result = successResponse.getBody();
-    assertEquals(0, result.intValue());
+    // Verify that the second good Archival Unit is not affected.
+    verifyGoodAu2Metadata(runTestGetMetadataAusAuid(GOOD_AUID_2, BAD_USER,
+	BAD_PWD, HttpStatus.OK));
 
     deleteMetadataAusAuidCommonTest();
 
@@ -530,56 +547,34 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void deleteMetadataAusAuidAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String template = getTestUrlTemplate("/metadata/aus/{auid}");
+    // No AUId.
+    runTestDeleteMetadataAusAuid(null, null, null, HttpStatus.UNAUTHORIZED, -1);
+    runTestDeleteMetadataAusAuid(null, BAD_USER, BAD_PWD,
+	HttpStatus.UNAUTHORIZED, -1);
 
-    // Create the URI of the request to the REST service.
-    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
-	.build().expand(Collections.singletonMap("auid", goodAuid));
+    // Empty AUId.
+    runTestDeleteMetadataAusAuid(EMPTY_STRING, null, null,
+	HttpStatus.UNAUTHORIZED, -1);
+    runTestDeleteMetadataAusAuid(EMPTY_STRING, BAD_USER, BAD_PWD,
+	HttpStatus.UNAUTHORIZED, -1);
 
-    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
-	.build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+    // Unknown AUId.
+    runTestDeleteMetadataAusAuid(UNKNOWN_AUID, null, null,
+	HttpStatus.UNAUTHORIZED, -1);
+    runTestDeleteMetadataAusAuid(UNKNOWN_AUID, BAD_USER, BAD_PWD,
+	HttpStatus.UNAUTHORIZED, -1);
 
-    ResponseEntity<String> errorResponse = new TestRestTemplate()
-	.exchange(uri, HttpMethod.DELETE, null, String.class);
+    // First good Archival Unit.
+    runTestDeleteMetadataAusAuid(GOOD_AUID_1, null, null,
+	HttpStatus.UNAUTHORIZED, -1);
+    runTestDeleteMetadataAusAuid(GOOD_AUID_1, BAD_USER, BAD_PWD,
+	HttpStatus.UNAUTHORIZED, -1);
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    errorResponse = new TestRestTemplate().exchange(uri, HttpMethod.DELETE,
-	new HttpEntity<String>(null, headers), String.class);
-
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(uri, HttpMethod.DELETE, new HttpEntity<String>(null, headers),
-	    String.class);
-
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    ResponseEntity<Integer> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
-	    HttpMethod.DELETE, new HttpEntity<String>(null, headers),
-	    Integer.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    Integer result = successResponse.getBody();
-    assertEquals(1, result.intValue());
+    // Second good Archival Unit.
+    runTestDeleteMetadataAusAuid(GOOD_AUID_2, null, null,
+	HttpStatus.UNAUTHORIZED, -1);
+    runTestDeleteMetadataAusAuid(GOOD_AUID_2, BAD_USER, BAD_PWD,
+	HttpStatus.UNAUTHORIZED, -1);
 
     deleteMetadataAusAuidCommonTest();
 
@@ -592,37 +587,108 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void deleteMetadataAusAuidCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
+    // No AUId: Spring reports it cannot find a match to an endpoint.
+    runTestDeleteMetadataAusAuid(null, GOOD_USER, GOOD_PWD,
+	HttpStatus.NOT_FOUND, -1);
+
+    // Empty AUId: Spring reports it cannot find a match to an endpoint.
+    runTestDeleteMetadataAusAuid(EMPTY_STRING, GOOD_USER, GOOD_PWD,
+	HttpStatus.NOT_FOUND, -1);
+
+    // Unknown AUId.
+    runTestDeleteMetadataAusAuid(UNKNOWN_AUID, GOOD_USER, GOOD_PWD,
+	HttpStatus.NOT_FOUND, -1);
+
+    // Delete the second good Archival Unit.
+    runTestDeleteMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
+	HttpStatus.OK, 1);
+
+    // Verify.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
+	HttpStatus.OK).getItems().isEmpty());
+
+    // Delete again the second good Archival Unit.
+    runTestDeleteMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
+	HttpStatus.OK, 0);
+
+    // Verify.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
+	HttpStatus.OK).getItems().isEmpty());
+
+    if (logger.isDebugEnabled()) logger.debug("Done.");
+  }
+
+  /**
+   * Performs a DELETE operation for the metadata of an Archival Unit.
+   * 
+   * @param auId
+   *          A String with the identifier of the Archival Unit.
+   * @param user
+   *          A String with the request username.
+   * @param password
+   *          A String with the request password.
+   * @param expectedStatus
+   *          An HttpStatus with the HTTP status of the result.
+   * @param expectedDeletedCount
+   *          An int with the count of expected metadata items to be deleted.
+   */
+  private void runTestDeleteMetadataAusAuid(String auId, String user,
+      String password, HttpStatus expectedStatus, int expectedDeletedCount) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("auId = " + auId);
+      logger.debug("user = " + user);
+      logger.debug("password = " + password);
+      logger.debug("expectedStatus = " + expectedStatus);
+      logger.debug("expectedDeletedCount = " + expectedDeletedCount);
+    }
+
+    // Get the test URL template.
     String template = getTestUrlTemplate("/metadata/aus/{auid}");
 
     // Create the URI of the request to the REST service.
     UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
-	.build().expand(Collections.singletonMap("auid", goodAuid));
+	.build().expand(Collections.singletonMap("auid", auId));
 
     URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
 	.build().encode().toUri();
     if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
-    ResponseEntity<String> errorResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
-	    HttpMethod.DELETE, null, String.class);
+    // Initialize the request to the REST service.
+    RestTemplate restTemplate = new RestTemplate();
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    HttpEntity<String> requestEntity = null;
 
-    String badUrl = getTestUrlTemplate("/metadata/aus/non-existent");
+    // Check whether there are any custom headers to be specified in the
+    // request.
+    if (user != null || password != null) {
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+      // Initialize the request headers.
+      HttpHeaders headers = new HttpHeaders();
 
-    errorResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(badUrl, HttpMethod.DELETE,
-	    new HttpEntity<String>(null, headers), String.class);
+      // Set up the authentication credentials, if necessary.
+      setUpCredentials(user, password, headers);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.NOT_FOUND, statusCode);
+      if (logger.isDebugEnabled())
+	logger.debug("requestHeaders = " + headers.toSingleValueMap());
 
-    if (logger.isDebugEnabled()) logger.debug("Done.");
+      // Create the request entity.
+      requestEntity = new HttpEntity<String>(null, headers);
+    }
+
+    // The next call should use the Integer class instead of the String class,
+    // but Spring gets confused when errors are reported.
+    // Make the request and get the response. 
+    ResponseEntity<String> response = new TestRestTemplate(restTemplate).
+	exchange(uri, HttpMethod.DELETE, requestEntity, String.class);
+
+    // Get the response status.
+    HttpStatus statusCode = response.getStatusCode();
+    assertEquals(expectedStatus, statusCode);
+
+    if (isSuccess(statusCode)) {
+      // Verify the count of deleted items.
+      assertEquals(expectedDeletedCount, Integer.parseInt(response.getBody()));
+    }
   }
 
   /**
@@ -631,38 +697,55 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void postMetadataAusItemUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String url = getTestUrlTemplate("/metadata/aus");
+    // Missing payload (This should return HttpStatus.BAD_REQUEST, but Spring
+    // returns HttpStatus.UNSUPPORTED_MEDIA_TYPE).
+    runTestPostMetadataAus(null, null, null, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+    runTestPostMetadataAus(null, BAD_USER, BAD_PWD,
+	HttpStatus.UNSUPPORTED_MEDIA_TYPE);
 
-    ResponseEntity<String> errorResponse = new TestRestTemplate()
-	.exchange(url, HttpMethod.POST, null, String.class);
+    // Verify that the first good Archival Unit is empty.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, null, null, HttpStatus.OK)
+	.getItems().isEmpty());
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    // Verify that the second good Archival Unit is empty.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, null, null, HttpStatus.OK)
+	.getItems().isEmpty());
 
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(url, HttpMethod.POST, null, String.class);
+    // Fill in the metadata of the first Archival Unit in the test system.
+    runTestPostMetadataAus(ITEM_METADATA_1, null, null, HttpStatus.OK);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    // Verify.
+    verifyGoodAu1Metadata(runTestGetMetadataAusAuid(GOOD_AUID_1, null, null,
+	HttpStatus.OK));
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
+    // Verify that the second good Archival Unit is unchanged.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, null, null, HttpStatus.OK)
+	.getItems().isEmpty());
 
-    errorResponse = new TestRestTemplate().exchange(url, HttpMethod.POST,
-	new HttpEntity<String>(null, headers), String.class);
+    // Fill in the metadata of the second Archival Unit in the test system.
+    runTestPostMetadataAus(ITEM_METADATA_2, BAD_USER, BAD_PWD, HttpStatus.OK);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, statusCode);
+    // Verify.
+    verifyGoodAu2Metadata(runTestGetMetadataAusAuid(GOOD_AUID_2, null, null,
+	HttpStatus.OK));
 
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
+    // Verify that the first good Archival Unit is unchanged.
+    verifyGoodAu1Metadata(runTestGetMetadataAusAuid(GOOD_AUID_1, BAD_USER,
+	BAD_PWD, HttpStatus.OK));
 
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(url, HttpMethod.POST, new HttpEntity<String>(null, headers),
-	    String.class);
+    // Delete the first good Archival Unit with no credentials.
+    runTestDeleteMetadataAusAuid(GOOD_AUID_1, null, null, HttpStatus.OK, 1);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, statusCode);
+    // Verify.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, null, null, HttpStatus.OK)
+	.getItems().isEmpty());
+
+    // Delete the second good Archival Unit with no credentials.
+    runTestDeleteMetadataAusAuid(GOOD_AUID_2, null, null, HttpStatus.OK, 1);
+
+    // Verify.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, null, null, HttpStatus.OK)
+	.getItems().isEmpty());
 
     postMetadataAusItemCommonTest();
 
@@ -675,38 +758,25 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void postMetadataAusItemAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String url = getTestUrlTemplate("/metadata/aus");
+    // No payload.
+    runTestPostMetadataAus(null, null, null, HttpStatus.UNAUTHORIZED);
+    runTestPostMetadataAus(null, BAD_USER, BAD_PWD, HttpStatus.UNAUTHORIZED);
 
-    ResponseEntity<String> errorResponse = new TestRestTemplate()
-	.exchange(url, HttpMethod.POST, null, String.class);
+    // Fill in the metadata of the first Archival Unit in the test system.
+    runTestPostMetadataAus(ITEM_METADATA_1, null, null,
+	HttpStatus.UNAUTHORIZED);
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
+    // Fill in the metadata of the second Archival Unit in the test system.
+    runTestPostMetadataAus(ITEM_METADATA_2, BAD_USER, BAD_PWD,
+	HttpStatus.UNAUTHORIZED);
 
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(url, HttpMethod.POST, null, String.class);
+    // Delete the first good Archival Unit.
+    runTestDeleteMetadataAusAuid(GOOD_AUID_1, GOOD_USER, GOOD_PWD,
+	HttpStatus.OK, 1);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    errorResponse = new TestRestTemplate().exchange(url, HttpMethod.POST,
-	new HttpEntity<String>(null, headers), String.class);
-
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(url, HttpMethod.POST, new HttpEntity<String>(null, headers),
-	    String.class);
-
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
+    // Verify.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, GOOD_USER, GOOD_PWD,
+	HttpStatus.OK).getItems().isEmpty());
 
     postMetadataAusItemCommonTest();
 
@@ -719,64 +789,108 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void postMetadataAusItemCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String url = getTestUrlTemplate("/metadata/aus");
+    // Missing payload (This should return HttpStatus.BAD_REQUEST, but Spring
+    // returns HttpStatus.UNSUPPORTED_MEDIA_TYPE).
+    runTestPostMetadataAus(null, GOOD_USER, GOOD_PWD,
+	HttpStatus.UNSUPPORTED_MEDIA_TYPE);
 
-    ResponseEntity<String> errorResponse =
-	new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(url, HttpMethod.POST, null, String.class);
+    // Verify that the first good Archival Unit is empty.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, GOOD_USER, GOOD_PWD,
+	HttpStatus.OK).getItems().isEmpty());
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, statusCode);
+    // Verify that the second good Archival Unit is empty.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
+	HttpStatus.OK).getItems().isEmpty());
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
+    // Fill in the metadata of the first Archival Unit in the test system.
+    runTestPostMetadataAus(ITEM_METADATA_1, GOOD_USER, GOOD_PWD, HttpStatus.OK);
 
-    errorResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(url, HttpMethod.POST, new HttpEntity<String>(null, headers),
-	    String.class);
+    // Verify.
+    verifyGoodAu1Metadata(runTestGetMetadataAusAuid(GOOD_AUID_1, GOOD_USER,
+	GOOD_PWD, HttpStatus.OK));
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, statusCode);
+    // Verify that the second good Archival Unit is unchanged.
+    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
+	HttpStatus.OK).getItems().isEmpty());
 
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
+    // Fill in the metadata of the second Archival Unit in the test system.
+    runTestPostMetadataAus(ITEM_METADATA_2, GOOD_USER, GOOD_PWD, HttpStatus.OK);
 
-    String metadataJsonValue = "{\"scalarMap\":{\"date\":\"2014-10-06\"," 
-	+ "\"coverage\":\"fulltext\",\"volume\":\"9\","
-	+ "\"publication_name\":\"BioRisk Volume 2014\","
-	+ "\"publisher_name\":\"Pensoft Publishers\",\"start_page\":\"1\","
-	+ "\"au_id\":\"org|lockss|plugin|pensoft|oai|PensoftOaiPlugin"
-	+ "&au_oai_date~2014&au_oai_set~biorisk"
-	+ "&base_url~http%3A%2F%2Fbiorisk%2Epensoft%2Enet%2F\","
-	+ "\"provider_name\":\"Pensoft Publishers\",\"fetch_time\":\"-1\","
-	+ "\"item_title\":\"China in the anthropocene: Culprit, victim or "
-	+ "last best hope for a global ecological civilisation?\","
-	+ "\"doi\":\"10.3897/biorisk.9.6105\"},"
-	+ "\"listMap\":{\"proprietary_id\":[]},"
-	+ "\"mapMap\":{\"issn\":{\"e_issn\":\"13132652\","
-	+ "\"p_issn\":\"13132652\"},\"url\":{\"Abstract\":"
-	+ "\"http://biorisk.pensoft.net/articles.php?id=1904\",\"Access\":"
-	+ "\"http://biorisk.pensoft.net/articles.php?id=1904\""
-	+ ",\"FullTextPdfFile\":\"http://biorisk.pensoft.net/lib/ajax_srv/"
-	+ "article_elements_srv.php?action=download_pdf&item_id=1904\""
-	+ ",\"ArticleMetadata\":\"http://biorisk.pensoft.net/"
-	+ "articles.php?id=1904\"}}}";
+    // Verify.
+    verifyGoodAu2Metadata(runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER,
+	GOOD_PWD, HttpStatus.OK));
 
-    ItemMetadata metadata =
-	new ObjectMapper().readValue(metadataJsonValue, ItemMetadata.class);
-
-    ResponseEntity<Long> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(url,
-	    HttpMethod.POST, new HttpEntity<ItemMetadata>(metadata, headers),
-	    Long.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    Long result = successResponse.getBody();
-    assertTrue(result.longValue() > 0);
+    // Verify that the first good Archival Unit is unchanged.
+    verifyGoodAu1Metadata(runTestGetMetadataAusAuid(GOOD_AUID_1, GOOD_USER,
+	GOOD_PWD, HttpStatus.OK));
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
+  }
+
+  /**
+   * Performs a POST operation for the metadata of an Archival Unit.
+   * 
+   * @param metadata
+   *          An ItemMetadata with the metadata.
+   * @param user
+   *          A String with the request username.
+   * @param password
+   *          A String with the request password.
+   * @param expectedStatus
+   *          An HttpStatus with the HTTP status of the result.
+   */
+  private void runTestPostMetadataAus(ItemMetadata metadata, String user,
+      String password, HttpStatus expectedStatus) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("metadata = " + metadata);
+      logger.debug("user = " + user);
+      logger.debug("password = " + password);
+      logger.debug("expectedStatus = " + expectedStatus);
+    }
+
+    // Get the test URL template.
+    String template = getTestUrlTemplate("/metadata/aus");
+
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents =
+	UriComponentsBuilder.fromUriString(template).build();
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+
+    // Initialize the request to the REST service.
+    RestTemplate restTemplate = new RestTemplate();
+
+    HttpEntity<ItemMetadata> requestEntity = null;
+
+    // Check whether there are any custom headers to be specified in the
+    // request.
+    if (metadata != null || user != null || password != null) {
+
+      // Initialize the request headers.
+      HttpHeaders headers = new HttpHeaders();
+
+      // Set up the authentication credentials, if necessary.
+      setUpCredentials(user, password, headers);
+
+      if (logger.isDebugEnabled())
+	logger.debug("requestHeaders = " + headers.toSingleValueMap());
+
+      // Create the request entity.
+      requestEntity = new HttpEntity<ItemMetadata>(metadata, headers);
+    }
+
+    // The next call should use the Long class instead of the String class,
+    // but Spring gets confused when errors are reported.
+    // Make the request and get the response. 
+    ResponseEntity<String> response =
+	new TestRestTemplate(restTemplate). exchange(uri, HttpMethod.POST,
+	    requestEntity, String.class);
+
+    // Get the response status.
+    HttpStatus statusCode = response.getStatusCode();
+    assertEquals(expectedStatus, statusCode);
   }
 
   /**
@@ -785,84 +899,24 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void getUrlsDoiUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String url = getTestUrlTemplate("/urls/doi");
+    // No DOI.
+    runTestGetUrlsDoi(null, null, null, HttpStatus.OK, null);
+    runTestGetUrlsDoi(null, BAD_USER, BAD_PWD, HttpStatus.OK, null);
 
-    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(url,
-	HttpMethod.GET, null, UrlInfo.class);
+    // Empty DOI.
+    runTestGetUrlsDoi(EMPTY_STRING, null, null, HttpStatus.OK, null);
+    runTestGetUrlsDoi(EMPTY_STRING, BAD_USER, BAD_PWD, HttpStatus.OK, null);
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+    // DOI of the first Archival Unit in the test system.
+    String doi = ITEM_METADATA_1.getScalarMap().get("doi");
+    String expectedUrl = ITEM_METADATA_1.getMapMap().get("url").get("Access");
 
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(url, HttpMethod.GET, null, UrlInfo.class);
+    runTestGetUrlsDoi(doi, null, null, HttpStatus.OK, expectedUrl);
+    runTestGetUrlsDoi(doi, BAD_USER, BAD_PWD, HttpStatus.OK, expectedUrl);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    errorResponse = new TestRestTemplate().exchange(url, HttpMethod.GET,
-	new HttpEntity<String>(null, headers), UrlInfo.class);
-
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(url, HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    UrlInfo.class);
-
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
-
-    // Create the URI of the request to the REST service.
-    URI uri = UriComponentsBuilder.fromHttpUrl(url).queryParam("doi", goodDoi)
-	.build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    ResponseEntity<UrlInfo> successResponse = new TestRestTemplate()
-	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    UrlInfo.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    UrlInfo result = successResponse.getBody();
-    assertEquals(1, result.getParams().size());
-    assertTrue(("info:doi/" + goodDoi)
-	.startsWith(result.getParams().get("rft_id")));
-    assertEquals(1, result.getUrls().size());
-
-    // Create the URI of the request to the REST service.
-    uri = UriComponentsBuilder.fromHttpUrl(url).queryParam("doi", goodDoi)
-	.build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    successResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    UrlInfo.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    result = successResponse.getBody();
-    assertEquals(1, result.getParams().size());
-    assertTrue(("info:doi/" + goodDoi)
-	.startsWith(result.getParams().get("rft_id")));
-    assertEquals(1, result.getUrls().size());
+    // Unknown DOI.
+    runTestGetUrlsDoi(UNKNOWN_DOI, null, null, HttpStatus.OK, null);
+    runTestGetUrlsDoi(UNKNOWN_DOI, BAD_USER, BAD_PWD, HttpStatus.OK, null);
 
     getUrlsDoiCommonTest();
 
@@ -875,71 +929,25 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void getUrlsDoiAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String url = getTestUrlTemplate("/urls/doi");
+    // No DOI.
+    runTestGetUrlsDoi(null, null, null, HttpStatus.UNAUTHORIZED, null);
+    runTestGetUrlsDoi(null, BAD_USER, BAD_PWD, HttpStatus.UNAUTHORIZED, null);
 
-    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(url,
-	HttpMethod.GET, null, UrlInfo.class);
+    // Empty DOI.
+    runTestGetUrlsDoi(EMPTY_STRING, null, null, HttpStatus.UNAUTHORIZED, null);
+    runTestGetUrlsDoi(EMPTY_STRING, BAD_USER, BAD_PWD, HttpStatus.UNAUTHORIZED,
+	null);
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
+    // DOI of the first Archival Unit in the test system.
+    String doi = ITEM_METADATA_1.getScalarMap().get("doi");
 
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(url, HttpMethod.GET, null, UrlInfo.class);
+    runTestGetUrlsDoi(doi, null, null, HttpStatus.UNAUTHORIZED, null);
+    runTestGetUrlsDoi(doi, BAD_USER, BAD_PWD, HttpStatus.UNAUTHORIZED, null);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    errorResponse = new TestRestTemplate().exchange(url, HttpMethod.GET,
-	new HttpEntity<String>(null, headers), UrlInfo.class);
-
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(url, HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    UrlInfo.class);
-
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
-
-    // Create the URI of the request to the REST service.
-    URI uri = UriComponentsBuilder.fromHttpUrl(url).queryParam("doi", goodDoi)
-	.build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    errorResponse = new TestRestTemplate().exchange(uri, HttpMethod.GET,
-	new HttpEntity<String>(null, headers), UrlInfo.class);
-
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
-
-    // Create the URI of the request to the REST service.
-    uri = UriComponentsBuilder.fromHttpUrl(url).queryParam("doi", goodDoi)
-	.build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    UrlInfo.class);
-
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
+    // Unknown DOI.
+    runTestGetUrlsDoi(UNKNOWN_DOI, null, null, HttpStatus.UNAUTHORIZED, null);
+    runTestGetUrlsDoi(UNKNOWN_DOI, BAD_USER, BAD_PWD, HttpStatus.UNAUTHORIZED,
+	null);
 
     getUrlsDoiCommonTest();
 
@@ -952,69 +960,110 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void getUrlsDoiCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String url = getTestUrlTemplate("/urls/doi");
+    // No DOI.
+    runTestGetUrlsDoi(null, GOOD_USER, GOOD_PWD, HttpStatus.OK, null);
 
-    ResponseEntity<UrlInfo> errorResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(url,
-	    HttpMethod.GET, null, UrlInfo.class);
+    // Empty DOI.
+    runTestGetUrlsDoi(EMPTY_STRING, GOOD_USER, GOOD_PWD, HttpStatus.OK, null);
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+    // DOI of the first Archival Unit in the test system.
+    String doi = ITEM_METADATA_1.getScalarMap().get("doi");
+    String expectedUrl = ITEM_METADATA_1.getMapMap().get("url").get("Access");
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+    runTestGetUrlsDoi(doi, GOOD_USER, GOOD_PWD, HttpStatus.OK, expectedUrl);
 
-    errorResponse = new TestRestTemplate("lockss-u", "lockss-p").exchange(url,
-	HttpMethod.GET, new HttpEntity<String>(null, headers), UrlInfo.class);
+    // Unknown DOI.
+    runTestGetUrlsDoi(UNKNOWN_DOI, GOOD_USER, GOOD_PWD, HttpStatus.OK, null);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+    if (logger.isDebugEnabled()) logger.debug("Done.");
+  }
+
+  /**
+   * Performs a GET operation for the URL of a DOI.
+   *
+   * @param doi
+   *          A String with the DOI.
+   * @param user
+   *          A String with the request username.
+   * @param password
+   *          A String with the request password.
+   * @param expectedStatus
+   *          An HttpStatus with the HTTP status of the result.
+   * @param expectedUrl
+   *          A String with the URL in the result.
+   */
+  private void runTestGetUrlsDoi(String doi, String user, String password,
+      HttpStatus expectedStatus, String expectedUrl) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("doi = " + doi);
+      logger.debug("user = " + user);
+      logger.debug("password = " + password);
+      logger.debug("expectedStatus = " + expectedStatus);
+      logger.debug("expectedUrl = " + expectedUrl);
+    }
+
+    // Get the test URL template.
+    String template = getTestUrlTemplate("/urls/doi");
 
     // Create the URI of the request to the REST service.
-    URI uri = UriComponentsBuilder.fromHttpUrl(url).queryParam("doi", goodDoi)
+    URI uri = UriComponentsBuilder.fromHttpUrl(template).queryParam("doi", doi)
 	.build().encode().toUri();
     if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
 
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+    // Initialize the request to the REST service.
+    RestTemplate restTemplate = new RestTemplate();
 
-    ResponseEntity<UrlInfo> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
-	    HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    UrlInfo.class);
+    HttpEntity<String> requestEntity = null;
 
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
+    // Check whether there are any custom headers to be specified in the
+    // request.
+    if (user != null || password != null) {
 
-    UrlInfo result = successResponse.getBody();
-    assertEquals(1, result.getParams().size());
-    assertTrue(("info:doi/" + goodDoi)
-	.startsWith(result.getParams().get("rft_id")));
-    assertEquals(1, result.getUrls().size());
+      // Initialize the request headers.
+      HttpHeaders headers = new HttpHeaders();
 
-    uri = UriComponentsBuilder.fromHttpUrl(url)
-	.queryParam("doi", "non-existent").build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+      // Set up the authentication credentials, if necessary.
+      setUpCredentials(user, password, headers);
 
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+      if (logger.isDebugEnabled())
+	logger.debug("requestHeaders = " + headers.toSingleValueMap());
 
-    successResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    UrlInfo.class);
+      // Create the request entity.
+      requestEntity = new HttpEntity<String>(null, headers);
+    }
 
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
+    // Make the request and get the response. 
+    ResponseEntity<UrlInfo> response = new TestRestTemplate(restTemplate)
+	.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
 
-    result = successResponse.getBody();
-    assertEquals(1, result.getParams().size());
-    assertEquals("info:doi/non-existent", result.getParams().get("rft_id"));
-    assertEquals(0, result.getUrls().size());
+    // Get the response status.
+    HttpStatus statusCode = response.getStatusCode();
+    assertEquals(expectedStatus, statusCode);
 
-    if (logger.isDebugEnabled()) logger.debug("Done.");
+    // Verify.
+    if (isSuccess(statusCode)) {
+      UrlInfo result = response.getBody();
+
+      // Parameters.
+      Map<String, String> params = result.getParams();
+      assertEquals(1, params.size());
+
+      if (doi == null) {
+	assertEquals("info:doi/", params.get("rft_id"));
+      } else {
+	assertEquals("info:doi/" + doi, params.get("rft_id"));
+      }
+
+      // URLs.
+      List<String> urls = result.getUrls();
+
+      if (expectedUrl == null) {
+	assertEquals(0, urls.size());
+      } else {
+	assertEquals(1, urls.size());
+	assertEquals(expectedUrl, urls.get(0));
+      }
+    }
   }
 
   /**
@@ -1023,19 +1072,53 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void getUrlsOpenUrlUnAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String url = getTestUrlTemplate("/urls/openurl");
+    // No OpenURL params.
+    runTestGetUrlsOpenUrl(null, null, null, HttpStatus.BAD_REQUEST, null);
+    runTestGetUrlsOpenUrl(null, BAD_USER, BAD_PWD, HttpStatus.BAD_REQUEST,
+	null);
 
-    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(url,
-	HttpMethod.GET, null, UrlInfo.class);
+    // Empty OpenURL params.
+    List<String> params = new ArrayList<>();
+    runTestGetUrlsOpenUrl(params, null, null, HttpStatus.BAD_REQUEST, null);
+    runTestGetUrlsOpenUrl(params, BAD_USER, BAD_PWD, HttpStatus.BAD_REQUEST,
+	null);
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+    // DOI of the first Archival Unit in the test system.
+    params = ListUtil.list("rft_id=info:doi/"
+	+ ITEM_METADATA_1.getScalarMap().get("doi"));
+    String expectedUrl = ITEM_METADATA_1.getMapMap().get("url").get("Access");
 
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(url, HttpMethod.GET, null, UrlInfo.class);
+    runTestGetUrlsOpenUrl(params, null, null, HttpStatus.OK, expectedUrl);
+    runTestGetUrlsOpenUrl(params, BAD_USER, BAD_PWD, HttpStatus.OK,
+	expectedUrl);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+    // Unknown DOI.
+    params = ListUtil.list("rft_id=info:doi/" + UNKNOWN_DOI);
+
+    runTestGetUrlsOpenUrl(params, null, null, HttpStatus.OK, null);
+    runTestGetUrlsOpenUrl(params, BAD_USER, BAD_PWD, HttpStatus.OK, null);
+
+    // Multiple parameters for the first Archival Unit in the test system.
+    params = ListUtil.list(
+	"rft.issn=" + ITEM_METADATA_1.getMapMap().get("issn").get("p_issn"),
+	"rft.volume=" + ITEM_METADATA_1.getScalarMap().get("volume"),
+	"rft.spage=" + ITEM_METADATA_1.getScalarMap().get("start_page"));
+
+    runTestGetUrlsOpenUrl(params, null, null, HttpStatus.OK, expectedUrl);
+    runTestGetUrlsOpenUrl(params, BAD_USER, BAD_PWD, HttpStatus.OK,
+	expectedUrl);
+
+    // Multiple parameters for the second Archival Unit in the test system.
+    params = ListUtil.list(
+	"rft.issn=" + ITEM_METADATA_2.getMapMap().get("issn").get("p_issn"),
+	"rft.volume=" + ITEM_METADATA_2.getScalarMap().get("volume"),
+	"rft.spage=" + ITEM_METADATA_2.getScalarMap().get("start_page"));
+
+    expectedUrl = ITEM_METADATA_2.getMapMap().get("url").get("Access");
+
+    runTestGetUrlsOpenUrl(params, null, null, HttpStatus.OK, expectedUrl);
+    runTestGetUrlsOpenUrl(params, BAD_USER, BAD_PWD, HttpStatus.OK,
+	expectedUrl);
 
     getUrlsOpenUrlCommonTest();
 
@@ -1048,19 +1131,51 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void getUrlsOpenUrlAuthenticatedTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String url = getTestUrlTemplate("/urls/openurl");
+    // No OpenURL params.
+    runTestGetUrlsOpenUrl(null, null, null, HttpStatus.UNAUTHORIZED, null);
+    runTestGetUrlsOpenUrl(null, BAD_USER, BAD_PWD, HttpStatus.UNAUTHORIZED,
+	null);
 
-    ResponseEntity<UrlInfo> errorResponse = new TestRestTemplate().exchange(url,
-	HttpMethod.GET, null, UrlInfo.class);
+    // Empty OpenURL params.
+    List<String> params = new ArrayList<>();
+    runTestGetUrlsOpenUrl(params, null, null, HttpStatus.UNAUTHORIZED, null);
+    runTestGetUrlsOpenUrl(params, BAD_USER, BAD_PWD, HttpStatus.UNAUTHORIZED,
+	null);
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
+    // DOI of the first Archival Unit in the test system.
+    params = ListUtil.list("rft_id=info:doi/"
+	+ ITEM_METADATA_1.getScalarMap().get("doi"));
 
-    errorResponse = new TestRestTemplate("fakeUser", "fakePassword")
-	.exchange(url, HttpMethod.GET, null, UrlInfo.class);
+    runTestGetUrlsOpenUrl(params, null, null, HttpStatus.UNAUTHORIZED, null);
+    runTestGetUrlsOpenUrl(params, BAD_USER, BAD_PWD, HttpStatus.UNAUTHORIZED,
+	null);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.UNAUTHORIZED, statusCode);
+    // Unknown DOI.
+    params = ListUtil.list("rft_id=info:doi/" + UNKNOWN_DOI);
+
+    runTestGetUrlsOpenUrl(params, null, null, HttpStatus.UNAUTHORIZED, null);
+    runTestGetUrlsOpenUrl(params, BAD_USER, BAD_PWD, HttpStatus.UNAUTHORIZED,
+	null);
+
+    // Multiple parameters for the first Archival Unit in the test system.
+    params = ListUtil.list(
+	"rft.issn=" + ITEM_METADATA_1.getMapMap().get("issn").get("p_issn"),
+	"rft.volume=" + ITEM_METADATA_1.getScalarMap().get("volume"),
+	"rft.spage=" + ITEM_METADATA_1.getScalarMap().get("start_page"));
+
+    runTestGetUrlsOpenUrl(params, null, null, HttpStatus.UNAUTHORIZED, null);
+    runTestGetUrlsOpenUrl(params, BAD_USER, BAD_PWD, HttpStatus.UNAUTHORIZED,
+	null);
+
+    // Multiple parameters for the second Archival Unit in the test system.
+    params = ListUtil.list(
+	"rft.issn=" + ITEM_METADATA_2.getMapMap().get("issn").get("p_issn"),
+	"rft.volume=" + ITEM_METADATA_2.getScalarMap().get("volume"),
+	"rft.spage=" + ITEM_METADATA_2.getScalarMap().get("start_page"));
+
+    runTestGetUrlsOpenUrl(params, null, null, HttpStatus.UNAUTHORIZED, null);
+    runTestGetUrlsOpenUrl(params, BAD_USER, BAD_PWD, HttpStatus.UNAUTHORIZED,
+	null);
 
     getUrlsOpenUrlCommonTest();
 
@@ -1073,78 +1188,224 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void getUrlsOpenUrlCommonTest() throws Exception {
     if (logger.isDebugEnabled()) logger.debug("Invoked.");
 
-    String template = getTestUrlTemplate("/urls/openurl");
+    // No OpenURL params.
+    runTestGetUrlsOpenUrl(null, GOOD_USER, GOOD_PWD, HttpStatus.BAD_REQUEST,
+	null);
 
-    ResponseEntity<UrlInfo> errorResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(template,
-	    HttpMethod.GET, null, UrlInfo.class);
+    // Empty OpenURL params.
+    List<String> params = new ArrayList<>();
+    runTestGetUrlsOpenUrl(params, GOOD_USER, GOOD_PWD, HttpStatus.BAD_REQUEST,
+	null);
 
-    HttpStatus statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+    // DOI of the first Archival Unit in the test system.
+    params = ListUtil.list("rft_id=info:doi/"
+	+ ITEM_METADATA_1.getScalarMap().get("doi"));
+    String expectedUrl = ITEM_METADATA_1.getMapMap().get("url").get("Access");
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+    runTestGetUrlsOpenUrl(params, GOOD_USER, GOOD_PWD, HttpStatus.OK,
+	expectedUrl);
 
-    errorResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(template, HttpMethod.GET,
-	    new HttpEntity<String>(null, headers), UrlInfo.class);
+    // Unknown DOI.
+    params = ListUtil.list("rft_id=info:doi/" + UNKNOWN_DOI);
+    runTestGetUrlsOpenUrl(params, GOOD_USER, GOOD_PWD, HttpStatus.OK, null);
 
-    statusCode = errorResponse.getStatusCode();
-    assertEquals(HttpStatus.BAD_REQUEST, statusCode);
+    // Multiple parameters for the first Archival Unit in the test system.
+    params = ListUtil.list(
+	"rft.issn=" + ITEM_METADATA_1.getMapMap().get("issn").get("p_issn"),
+	"rft.volume=" + ITEM_METADATA_1.getScalarMap().get("volume"),
+	"rft.spage=" + ITEM_METADATA_1.getScalarMap().get("start_page"));
 
-    String param = "rft_id=info:doi/" + goodDoi;
+    runTestGetUrlsOpenUrl(params, GOOD_USER, GOOD_PWD, HttpStatus.OK,
+	expectedUrl);
 
-    // Create the URI of the request to the REST service.
-    URI uri = UriComponentsBuilder.fromHttpUrl(template)
-	.queryParam("params", param).build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+    // Multiple parameters for the second Archival Unit in the test system.
+    params = ListUtil.list(
+	"rft.issn=" + ITEM_METADATA_2.getMapMap().get("issn").get("p_issn"),
+	"rft.volume=" + ITEM_METADATA_2.getScalarMap().get("volume"),
+	"rft.spage=" + ITEM_METADATA_2.getScalarMap().get("start_page"));
 
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
+    expectedUrl = ITEM_METADATA_2.getMapMap().get("url").get("Access");
 
-    ResponseEntity<UrlInfo> successResponse =
-	new TestRestTemplate("lockss-u", "lockss-p").exchange(uri,
-	    HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    UrlInfo.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    UrlInfo result = successResponse.getBody();
-    assertEquals(1, result.getParams().size());
-    assertEquals(param, "rft_id=" + result.getParams().get("rft_id"));
-    assertEquals(1, result.getUrls().size());
-
-    String param1 = "rft.issn=1313-2652";
-    String param2 = "rft.volume=9";
-    String param3 = "rft.spage=1";
-
-    uri = UriComponentsBuilder.fromHttpUrl(template)
-	.queryParam("params", param1).queryParam("params", param2)
-	.queryParam("params", param3).build().encode().toUri();
-    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
-
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    if (logger.isDebugEnabled()) logger.debug("headers = " + headers);
-
-    successResponse = new TestRestTemplate("lockss-u", "lockss-p")
-	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null, headers),
-	    UrlInfo.class);
-
-    statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    result = successResponse.getBody();
-    assertEquals(3, result.getParams().size());
-    assertEquals(param1, "rft.issn=" + result.getParams().get("rft.issn"));
-    assertEquals(param2, "rft.volume=" + result.getParams().get("rft.volume"));
-    assertEquals(param3, "rft.spage=" + result.getParams().get("rft.spage"));
-    assertEquals(1, result.getUrls().size());
+    runTestGetUrlsOpenUrl(params, GOOD_USER, GOOD_PWD, HttpStatus.OK,
+	expectedUrl);
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
+  }
+
+  /**
+   * Performs a GET operation for the URL that results from performing an
+   * OpenURL query.
+   *
+   * @param openUrlParams
+   *          A List<String> with the parameters of the OpenURL query.
+   * @param user
+   *          A String with the request username.
+   * @param password
+   *          A String with the request password.
+   * @param expectedStatus
+   *          An HttpStatus with the HTTP status of the result.
+   * @param expectedUrl
+   *          A String with the URL in the result.
+   */
+  private void runTestGetUrlsOpenUrl(List<String> openUrlParams, String user,
+      String password, HttpStatus expectedStatus, String expectedUrl) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("openUrlParams = " + openUrlParams);
+      logger.debug("user = " + user);
+      logger.debug("password = " + password);
+      logger.debug("expectedStatus = " + expectedStatus);
+      logger.debug("expectedUrl = " + expectedUrl);
+    }
+
+    // Get the test URL template.
+    String template = getTestUrlTemplate("/urls/openurl");
+
+    // Create the URI of the request to the REST service.
+    UriComponentsBuilder ucb = UriComponentsBuilder.fromHttpUrl(template);
+
+    if (openUrlParams != null) {
+      for (String param : openUrlParams) {
+	ucb = ucb.queryParam("params", param);
+      }
+    }
+
+    URI uri = ucb.build().encode().toUri();
+    if (logger.isDebugEnabled()) logger.debug("uri = " + uri);
+
+    // Initialize the request to the REST service.
+    RestTemplate restTemplate = new RestTemplate();
+
+    HttpEntity<String> requestEntity = null;
+
+    // Check whether there are any custom headers to be specified in the
+    // request.
+    if (user != null || password != null) {
+
+      // Initialize the request headers.
+      HttpHeaders headers = new HttpHeaders();
+
+      // Set up the authentication credentials, if necessary.
+      setUpCredentials(user, password, headers);
+
+      if (logger.isDebugEnabled())
+	logger.debug("requestHeaders = " + headers.toSingleValueMap());
+
+      // Create the request entity.
+      requestEntity = new HttpEntity<String>(null, headers);
+    }
+
+    // Make the request and get the response. 
+    ResponseEntity<UrlInfo> response = new TestRestTemplate(restTemplate)
+	.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
+
+    // Get the response status.
+    HttpStatus statusCode = response.getStatusCode();
+    assertEquals(expectedStatus, statusCode);
+
+    // Verify.
+    if (isSuccess(statusCode)) {
+      UrlInfo result = response.getBody();
+
+      // Parameters.
+      Map<String, String> params = result.getParams();
+      assertEquals(openUrlParams.size(), params.size());
+
+      for (Map.Entry<String, String> param : params.entrySet()) {
+	assertTrue(openUrlParams.contains(
+	    param.getKey() + "=" + param.getValue()));
+      }
+
+      // URLs.
+      List<String> urls = result.getUrls();
+
+      if (expectedUrl == null) {
+	assertEquals(0, urls.size());
+      } else {
+	assertEquals(1, urls.size());
+	assertEquals(expectedUrl, urls.get(0));
+      }
+    }
+  }
+
+  /**
+   * Verifies that the passed metadata matches that of the known first good
+   * Archival Unit.
+   * 
+   * @param auMetadata
+   *          A AuMetadataPageInfo with the Archival Unit metadata to be
+   *          verified.
+   */
+  private void verifyGoodAu1Metadata(AuMetadataPageInfo auMetadata) {
+    if (logger.isDebugEnabled()) logger.debug("auMetadata = " + auMetadata);
+
+    PageInfo pageInfo = auMetadata.getPageInfo();
+    assertNull(pageInfo.getTotalCount());
+    assertEquals(new Integer(50), pageInfo.getResultsPerPage());
+    assertEquals(new Integer(1), pageInfo.getCurrentPage());
+    assertTrue(pageInfo.getCurLink().startsWith(getTestUrlTemplate("")));
+    assertTrue(pageInfo.getNextLink().startsWith(getTestUrlTemplate("")));
+
+    List<ItemMetadata> items = auMetadata.getItems();
+    assertEquals(1, items.size());
+    assertEquals(ITEM_METADATA_1, items.get(0));
+  }
+
+  /**
+   * Verifies that the passed metadata matches that of the known second good
+   * Archival Unit.
+   * 
+   * @param auMetadata
+   *          A AuMetadataPageInfo with the Archival Unit metadata to be
+   *          verified.
+   */
+  private void verifyGoodAu2Metadata(AuMetadataPageInfo auMetadata) {
+    if (logger.isDebugEnabled()) logger.debug("auMetadata = " + auMetadata);
+
+    PageInfo pageInfo = auMetadata.getPageInfo();
+    assertNull(pageInfo.getTotalCount());
+    assertEquals(new Integer(50), pageInfo.getResultsPerPage());
+    assertEquals(new Integer(1), pageInfo.getCurrentPage());
+    assertTrue(pageInfo.getCurLink().startsWith(getTestUrlTemplate("")));
+    assertTrue(pageInfo.getNextLink().startsWith(getTestUrlTemplate("")));
+
+    List<ItemMetadata> items = auMetadata.getItems();
+    assertEquals(1, items.size());
+    assertEquals(ITEM_METADATA_2, items.get(0));
+  }
+
+  /**
+   * Adds credentials to the HTTP headers, if necessary.
+   * 
+   * @param user
+   *          A String with the credentials username.
+   * @param password
+   *          A String with the credentials password.
+   * @param headers
+   *          An HttpHeaders with the HTTP headers.
+   */
+  private void setUpCredentials(String user, String password,
+      HttpHeaders headers) {
+    // Check whether there are credentials to be added.
+    if (user != null && password != null) {
+      // Yes: Set the authentication credentials.
+      String credentials = user + ":" + password;
+      String authHeaderValue = "Basic " + Base64.getEncoder()
+      .encodeToString(credentials.getBytes(Charset.forName("US-ASCII")));
+
+      headers.set("Authorization", authHeaderValue);
+    }
+  }
+
+  /**
+   * Provides an indication of whether a successful response has been obtained.
+   * 
+   * @param statusCode
+   *          An HttpStatus with the response status code.
+   * @return a boolean with <code>true</code> if a successful response has been
+   *         obtained, <code>false</code> otherwise.
+   */
+  private boolean isSuccess(HttpStatus statusCode) {
+    return statusCode.is2xxSuccessful();
   }
 
   /**

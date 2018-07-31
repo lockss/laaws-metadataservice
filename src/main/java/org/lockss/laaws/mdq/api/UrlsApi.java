@@ -70,7 +70,7 @@ public interface UrlsApi {
   @RequestMapping(value = "/urls/doi",
   produces = { "application/json" },
   method = RequestMethod.GET)
-  default ResponseEntity<UrlInfo> getUrlsDoi(
+  default ResponseEntity<?> getUrlsDoi(
       @ApiParam(value = "The DOI for which the URL is requested",
       required=true ) @RequestParam("doi") String doi) {
     return new ResponseEntity<UrlInfo>(HttpStatus.NOT_IMPLEMENTED);
@@ -101,7 +101,7 @@ public interface UrlsApi {
   @RequestMapping(value = "/urls/openurl",
   produces = { "application/json" },
   method = RequestMethod.GET)
-  default ResponseEntity<UrlInfo> getUrlsOpenUrl(
+  default ResponseEntity<?> getUrlsOpenUrl(
       @ApiParam(value = "The OpenURL parameters", required = true)
       @RequestParam("params") List<String> params) {
     return new ResponseEntity<UrlInfo>(HttpStatus.NOT_IMPLEMENTED);

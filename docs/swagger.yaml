@@ -48,8 +48,6 @@ tags:
   description: "Operations that return URLs"
 schemes:
 - "https"
-consumes:
-- "application/json"
 produces:
 - "application/json"
 security:
@@ -137,8 +135,6 @@ paths:
       summary: "Delete the metadata stored for an AU"
       description: "Delete the metadata stored for an AU given the AU identifier"
       operationId: "deleteMetadataAusAuid"
-      consumes:
-      - "application/json"
       produces:
       - "application/json"
       parameters:

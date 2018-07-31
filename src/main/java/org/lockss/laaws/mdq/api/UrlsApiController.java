@@ -73,7 +73,7 @@ public class UrlsApiController implements UrlsApi {
   @RequestMapping(value = "/urls/doi",
   produces = { "application/json" },
   method = RequestMethod.GET)
-  public ResponseEntity<UrlInfo> getUrlsDoi(@RequestParam("doi") String doi) {
+  public ResponseEntity<?> getUrlsDoi(@RequestParam("doi") String doi) {
     if (logger.isDebugEnabled()) logger.debug("doi = " + doi);
 
     try {
@@ -100,7 +100,7 @@ public class UrlsApiController implements UrlsApi {
   @RequestMapping(value = "/urls/openurl",
   produces = { "application/json" },
   method = RequestMethod.GET)
-  public ResponseEntity<UrlInfo> getUrlsOpenUrl(
+  public ResponseEntity<?> getUrlsOpenUrl(
       @RequestParam("params") List<String> params) {
     if (logger.isDebugEnabled()) logger.debug("params = " + params);
 

@@ -80,12 +80,13 @@ public class MetadataApiController extends SpringLockssBaseApiController
    */
   @Override
   @RequestMapping(value = "/metadata/aus/{auid}",
-  produces = { "application/json" }, consumes = { "application/json" },
+  produces = { "application/json" },
   method = RequestMethod.DELETE)
-  public ResponseEntity<Integer> deleteMetadataAusAuid(
+  public ResponseEntity<?> deleteMetadataAusAuid(
       @PathVariable("auid") String auid) {
     if (logger.isDebugEnabled()) logger.debug("auid = " + auid);
 
+    // Check authorization.
     SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
 
     try {
@@ -95,7 +96,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
       return new ResponseEntity<Integer>(count, HttpStatus.OK);
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid '" + auid + "'";
-      logger.error(message);
+      logger.error(message, iae);
       throw new IllegalArgumentException(message);
     } catch (Exception e) {
       String message = "Cannot deleteMetadataAusAuid() for auid '" + auid + "'";
@@ -121,8 +122,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
   @RequestMapping(value = "/metadata/aus/{auid}",
   produces = { "application/json" },
   method = RequestMethod.GET)
-  public ResponseEntity<AuMetadataPageInfo> getMetadataAusAuid(
-      @PathVariable("auid") String auid,
+  public ResponseEntity<?> getMetadataAusAuid(@PathVariable("auid") String auid,
       @RequestParam(value = "page", required = false, defaultValue="1")
       Integer page,
       @RequestParam(value = "limit", required = false, defaultValue="50")
@@ -175,7 +175,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
       return new ResponseEntity<AuMetadataPageInfo>(result, HttpStatus.OK);
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid '" + auid + "'";
-      logger.error(message);
+      logger.error(message, iae);
       throw new IllegalArgumentException(message);
     } catch (Exception e) {
       String message = "Cannot getMetadataAusAuid() for auid '" + auid + "'";
@@ -196,10 +196,11 @@ public class MetadataApiController extends SpringLockssBaseApiController
   @RequestMapping(value = "/metadata/aus",
   produces = { "application/json" }, consumes = { "application/json" },
   method = RequestMethod.POST)
-  public ResponseEntity<Long> postMetadataAusItem(
+  public ResponseEntity<?> postMetadataAusItem(
       @ApiParam(required=true) @RequestBody ItemMetadata item) {
     if (logger.isDebugEnabled()) logger.debug("item = " + item);
 
+    // Check authorization.
     SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
 
     try {

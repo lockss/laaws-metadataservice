@@ -78,9 +78,9 @@ public interface MetadataApi extends SpringLockssBaseApi {
       message = "Some or all of the system is not available",
       response = Integer.class) })
   @RequestMapping(value = "/metadata/aus/{auid}",
-  produces = { "application/json" }, consumes = { "application/json" },
+  produces = { "application/json" },
   method = RequestMethod.DELETE)
-  default ResponseEntity<Integer> deleteMetadataAusAuid(
+  default ResponseEntity<?> deleteMetadataAusAuid(
       @ApiParam(value =
       "The identifier of the AU for which the metadata is to be deleted",
       required=true ) @PathVariable("auid") String auid) {
@@ -120,7 +120,7 @@ public interface MetadataApi extends SpringLockssBaseApi {
   @RequestMapping(value = "/metadata/aus/{auid}",
   produces = { "application/json" },
   method = RequestMethod.GET)
-  default ResponseEntity<AuMetadataPageInfo> getMetadataAusAuid(
+  default ResponseEntity<?> getMetadataAusAuid(
       @ApiParam(value =
       "The identifier of the AU for which the metadata is requested",
       required=true ) @PathVariable("auid") String auid,
@@ -162,7 +162,7 @@ public interface MetadataApi extends SpringLockssBaseApi {
   @RequestMapping(value = "/metadata/aus",
   produces = { "application/json" }, consumes = { "application/json" },
   method = RequestMethod.POST)
-  default ResponseEntity<Long> postMetadataAusItem(
+  default ResponseEntity<?> postMetadataAusItem(
       @ApiParam(value = "The metadata of the AU item to be stored",
       required=true ) @RequestBody ItemMetadata item) {
     return new ResponseEntity<Long>(HttpStatus.NOT_IMPLEMENTED);
