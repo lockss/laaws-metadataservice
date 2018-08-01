@@ -71,7 +71,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
   private HttpServletRequest request;
 
   /**
-   * Deletes the metadata stored for an AU given the AU identifier.
+   * Deletes from the database an Archival Unit given its identifier.
    * 
    * @param auid
    *          A String with the AU identifier.
@@ -90,7 +90,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
     SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
 
     try {
-      Integer count = getMetadataExtractorManager().deleteAuMetadataItems(auid);
+      Integer count = getMetadataExtractorManager().deleteAu(auid);
       if (logger.isDebugEnabled()) logger.debug("count = " + count);
 
       return new ResponseEntity<Integer>(count, HttpStatus.OK);

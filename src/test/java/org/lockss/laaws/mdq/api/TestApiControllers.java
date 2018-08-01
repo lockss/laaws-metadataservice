@@ -347,12 +347,17 @@ public class TestApiControllers extends SpringLockssTestCase {
 
     // No AUId: Spring reports it cannot find a match to an endpoint.
     runTestGetMetadataAusAuid(null, null, null, HttpStatus.NOT_FOUND);
+    runTestGetMetadataAusAuid(null, BAD_USER, BAD_PWD, HttpStatus.NOT_FOUND);
 
     // Empty AUId: Spring reports it cannot find a match to an endpoint.
     runTestGetMetadataAusAuid(EMPTY_STRING, null, null, HttpStatus.NOT_FOUND);
+    runTestGetMetadataAusAuid(EMPTY_STRING, BAD_USER, BAD_PWD,
+	HttpStatus.NOT_FOUND);
 
     // Unknown AUId.
     runTestGetMetadataAusAuid(UNKNOWN_AUID, null, null, HttpStatus.NOT_FOUND);
+    runTestGetMetadataAusAuid(UNKNOWN_AUID, BAD_USER, BAD_PWD,
+	HttpStatus.NOT_FOUND);
 
     // Success with no credentials.
     verifyGoodAu1Metadata(runTestGetMetadataAusAuid(GOOD_AUID_1, null, null,
@@ -517,20 +522,18 @@ public class TestApiControllers extends SpringLockssTestCase {
     runTestDeleteMetadataAusAuid(GOOD_AUID_1, null, null, HttpStatus.OK, 1);
 
     // Verify.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, null, null,
-	HttpStatus.OK).getItems().isEmpty());
+    runTestGetMetadataAusAuid(GOOD_AUID_1, null, null, HttpStatus.NOT_FOUND);
 
     // Verify that the second good Archival Unit is not affected.
     verifyGoodAu2Metadata(runTestGetMetadataAusAuid(GOOD_AUID_2, null, null,
 	HttpStatus.OK));
 
     // Delete again the first good Archival Unit with bad credentials.
-    runTestDeleteMetadataAusAuid(GOOD_AUID_1, BAD_USER, BAD_PWD, HttpStatus.OK,
-	0);
+    runTestDeleteMetadataAusAuid(GOOD_AUID_1, BAD_USER, BAD_PWD,
+	HttpStatus.NOT_FOUND, -1);
 
     // Verify.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, BAD_USER, BAD_PWD,
-	HttpStatus.OK).getItems().isEmpty());
+    runTestGetMetadataAusAuid(GOOD_AUID_1, null, null, HttpStatus.NOT_FOUND);
 
     // Verify that the second good Archival Unit is not affected.
     verifyGoodAu2Metadata(runTestGetMetadataAusAuid(GOOD_AUID_2, BAD_USER,
@@ -604,16 +607,12 @@ public class TestApiControllers extends SpringLockssTestCase {
 	HttpStatus.OK, 1);
 
     // Verify.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
-	HttpStatus.OK).getItems().isEmpty());
+    runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
+	HttpStatus.NOT_FOUND);
 
     // Delete again the second good Archival Unit.
     runTestDeleteMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
-	HttpStatus.OK, 0);
-
-    // Verify.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
-	HttpStatus.OK).getItems().isEmpty());
+	HttpStatus.NOT_FOUND, -1);
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
   }
@@ -703,24 +702,23 @@ public class TestApiControllers extends SpringLockssTestCase {
     runTestPostMetadataAus(null, BAD_USER, BAD_PWD,
 	HttpStatus.UNSUPPORTED_MEDIA_TYPE);
 
-    // Verify that the first good Archival Unit is empty.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, null, null, HttpStatus.OK)
-	.getItems().isEmpty());
+    // Verify that the first good Archival Unit does not exist.
+    runTestGetMetadataAusAuid(GOOD_AUID_1, null, null, HttpStatus.NOT_FOUND);
 
-    // Verify that the second good Archival Unit is empty.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, null, null, HttpStatus.OK)
-	.getItems().isEmpty());
+    // Verify that the second good Archival Unit does not exist.
+    runTestGetMetadataAusAuid(GOOD_AUID_2, BAD_USER, BAD_PWD,
+	HttpStatus.NOT_FOUND);
 
     // Fill in the metadata of the first Archival Unit in the test system.
     runTestPostMetadataAus(ITEM_METADATA_1, null, null, HttpStatus.OK);
 
     // Verify.
-    verifyGoodAu1Metadata(runTestGetMetadataAusAuid(GOOD_AUID_1, null, null,
-	HttpStatus.OK));
+    verifyGoodAu1Metadata(runTestGetMetadataAusAuid(GOOD_AUID_1, BAD_USER,
+	BAD_PWD, HttpStatus.OK));
 
     // Verify that the second good Archival Unit is unchanged.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, null, null, HttpStatus.OK)
-	.getItems().isEmpty());
+    runTestGetMetadataAusAuid(GOOD_AUID_2, BAD_USER, BAD_PWD,
+	HttpStatus.NOT_FOUND);
 
     // Fill in the metadata of the second Archival Unit in the test system.
     runTestPostMetadataAus(ITEM_METADATA_2, BAD_USER, BAD_PWD, HttpStatus.OK);
@@ -737,15 +735,15 @@ public class TestApiControllers extends SpringLockssTestCase {
     runTestDeleteMetadataAusAuid(GOOD_AUID_1, null, null, HttpStatus.OK, 1);
 
     // Verify.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, null, null, HttpStatus.OK)
-	.getItems().isEmpty());
+    runTestGetMetadataAusAuid(GOOD_AUID_1, BAD_USER, BAD_PWD,
+	HttpStatus.NOT_FOUND);
 
     // Delete the second good Archival Unit with no credentials.
-    runTestDeleteMetadataAusAuid(GOOD_AUID_2, null, null, HttpStatus.OK, 1);
+    runTestDeleteMetadataAusAuid(GOOD_AUID_2, BAD_USER, BAD_PWD, HttpStatus.OK,
+	1);
 
     // Verify.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, null, null, HttpStatus.OK)
-	.getItems().isEmpty());
+    runTestGetMetadataAusAuid(GOOD_AUID_2, null, null, HttpStatus.NOT_FOUND);
 
     postMetadataAusItemCommonTest();
 
@@ -775,8 +773,8 @@ public class TestApiControllers extends SpringLockssTestCase {
 	HttpStatus.OK, 1);
 
     // Verify.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, GOOD_USER, GOOD_PWD,
-	HttpStatus.OK).getItems().isEmpty());
+    runTestGetMetadataAusAuid(GOOD_AUID_1, GOOD_USER, GOOD_PWD,
+	HttpStatus.NOT_FOUND);
 
     postMetadataAusItemCommonTest();
 
@@ -794,13 +792,13 @@ public class TestApiControllers extends SpringLockssTestCase {
     runTestPostMetadataAus(null, GOOD_USER, GOOD_PWD,
 	HttpStatus.UNSUPPORTED_MEDIA_TYPE);
 
-    // Verify that the first good Archival Unit is empty.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_1, GOOD_USER, GOOD_PWD,
-	HttpStatus.OK).getItems().isEmpty());
+    // Verify that the first good Archival Unit does not exist.
+    runTestGetMetadataAusAuid(GOOD_AUID_1, GOOD_USER, GOOD_PWD,
+	HttpStatus.NOT_FOUND);
 
-    // Verify that the second good Archival Unit is empty.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
-	HttpStatus.OK).getItems().isEmpty());
+    // Verify that the second good Archival Unit does not exist.
+    runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
+	HttpStatus.NOT_FOUND);
 
     // Fill in the metadata of the first Archival Unit in the test system.
     runTestPostMetadataAus(ITEM_METADATA_1, GOOD_USER, GOOD_PWD, HttpStatus.OK);
@@ -810,8 +808,8 @@ public class TestApiControllers extends SpringLockssTestCase {
 	GOOD_PWD, HttpStatus.OK));
 
     // Verify that the second good Archival Unit is unchanged.
-    assertTrue(runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
-	HttpStatus.OK).getItems().isEmpty());
+    runTestGetMetadataAusAuid(GOOD_AUID_2, GOOD_USER, GOOD_PWD,
+	HttpStatus.NOT_FOUND);
 
     // Fill in the metadata of the second Archival Unit in the test system.
     runTestPostMetadataAus(ITEM_METADATA_2, GOOD_USER, GOOD_PWD, HttpStatus.OK);
