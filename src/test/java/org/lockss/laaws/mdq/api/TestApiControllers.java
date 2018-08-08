@@ -90,9 +90,6 @@ public class TestApiControllers extends SpringLockssTestCase {
       "DbConfigTemplate.txt";
   private static final String DB_CONFIGURATION_FILE = "DbConfig.txt";
 
-  // The name of the root directory of the local repository.
-  private static final String REPOSITORY_ROOT_DIR_NAME = "testRepo";
-
   private static final String EMPTY_STRING = "";
 
   // The identifier of an AU that exists in the test system.
@@ -192,12 +189,6 @@ public class TestApiControllers extends SpringLockssTestCase {
 
     // Copy the necessary files to the test temporary directory.
     File srcTree = new File(new File("test"), "cache");
-    if (logger.isDebugEnabled())
-      logger.debug("srcTree = " + srcTree.getAbsolutePath());
-
-    copyToTempDir(srcTree);
-
-    srcTree = new File(new File("test"), REPOSITORY_ROOT_DIR_NAME);
     if (logger.isDebugEnabled())
       logger.debug("srcTree = " + srcTree.getAbsolutePath());
 
@@ -1760,8 +1751,6 @@ public class TestApiControllers extends SpringLockssTestCase {
 
     public TestDerbyMetadataDbManager() {
       super(true);
-      targetDatabaseVersion = 28;
-      asynchronousUpdates = new int[] {10, 15, 17, 20, 22};
     }
 
     @Override
