@@ -49,13 +49,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -87,7 +85,12 @@ public class MetadataApiController extends SpringLockssBaseApiController
     if (logger.isDebugEnabled()) logger.debug("auid = " + auid);
 
     // Check authorization.
-    SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
+    try {
+      SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
+    } catch (AccessControlException ace) {
+      logger.warn(ace.getMessage());
+      return new ResponseEntity<String>(ace.getMessage(), HttpStatus.FORBIDDEN);
+    }
 
     try {
       Integer count = getMetadataExtractorManager().deleteAu(auid);
@@ -96,12 +99,13 @@ public class MetadataApiController extends SpringLockssBaseApiController
       return new ResponseEntity<Integer>(count, HttpStatus.OK);
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid '" + auid + "'";
-      logger.error(message, iae);
-      throw new IllegalArgumentException(message);
+      logger.warn(message, iae);
+      return new ResponseEntity<String>(message, HttpStatus.NOT_FOUND);
     } catch (Exception e) {
       String message = "Cannot deleteMetadataAusAuid() for auid '" + auid + "'";
-      logger.error(message, e);
-      throw new RuntimeException(message);
+      logger.warn(message, e);
+      return new ResponseEntity<String>(message,
+	  HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -133,24 +137,29 @@ public class MetadataApiController extends SpringLockssBaseApiController
       logger.debug("limit = " + limit);
     }
 
+    if (page == null || page.intValue() <= 0) {
+      String message =
+	  "Index of the requested page must be a positive integer; it was '"
+	      + page + "'";
+	logger.warn(message);
+	return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
+    }
+
+    if (limit == null || limit.intValue() < 0) {
+      String message =
+	  "Limit of requested items must be a non-negative integer; it was '"
+	      + limit + "'";
+	logger.warn(message);
+	return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
+    }
+
     try {
       PageInfo pi = new PageInfo();
 
-      String curLink = request.getRequestURL().toString();
-      String nextLink = curLink;
-
-      if (page != null) {
-	curLink = curLink + "?page=" + page;
-	nextLink = nextLink + "?page=" + (page + 1);
-
-	if (limit != null) {
-	  curLink = curLink + "&limit=" + limit;
-	  nextLink = nextLink + "&limit=" + limit;
-	}
-      } else if (limit != null) {
-	curLink = curLink + "?limit=" + limit;
-	nextLink = nextLink + "?limit=" + limit;
-      }
+      String curLink = request.getRequestURL().toString() + "?page=" + page
+	  + "&limit=" + limit;
+      String nextLink = request.getRequestURL().toString()
+	  + "?page=" + (page + 1) + "&limit=" + limit;
 
       if (logger.isDebugEnabled()) {
 	logger.debug("curLink = " + curLink);
@@ -175,12 +184,13 @@ public class MetadataApiController extends SpringLockssBaseApiController
       return new ResponseEntity<AuMetadataPageInfo>(result, HttpStatus.OK);
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid '" + auid + "'";
-      logger.error(message, iae);
-      throw new IllegalArgumentException(message);
+      logger.warn(message, iae);
+      return new ResponseEntity<String>(message, HttpStatus.NOT_FOUND);
     } catch (Exception e) {
       String message = "Cannot getMetadataAusAuid() for auid '" + auid + "'";
-      logger.error(message, e);
-      throw new RuntimeException(message);
+      logger.warn(message, e);
+      return new ResponseEntity<String>(message,
+	  HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -201,7 +211,12 @@ public class MetadataApiController extends SpringLockssBaseApiController
     if (logger.isDebugEnabled()) logger.debug("item = " + item);
 
     // Check authorization.
-    SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
+    try {
+      SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
+    } catch (AccessControlException ace) {
+      logger.warn(ace.getMessage());
+      return new ResponseEntity<String>(ace.getMessage(), HttpStatus.FORBIDDEN);
+    }
 
     try {
       Long mdItemSeq = getMetadataExtractorManager().storeAuItemMetadata(item);
@@ -210,27 +225,10 @@ public class MetadataApiController extends SpringLockssBaseApiController
       return new ResponseEntity<Long>(mdItemSeq, HttpStatus.OK);
     } catch (Exception e) {
       String message = "Cannot postMetadataAusItem() for item '" + item + "'";
-      logger.error(message, e);
-      throw new RuntimeException(message);
+      logger.warn(message, e);
+      return new ResponseEntity<String>(message,
+	  HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  @ExceptionHandler(AccessControlException.class)
-  @ResponseStatus(HttpStatus.FORBIDDEN)
-  public ErrorResponse authorizationExceptionHandler(AccessControlException e) {
-    return new ErrorResponse(e.getMessage()); 	
-  }
-
-  @ExceptionHandler(IllegalArgumentException.class)
-  @ResponseStatus(HttpStatus.NOT_FOUND)
-  public ErrorResponse notFoundExceptionHandler(IllegalArgumentException e) {
-    return new ErrorResponse(e.getMessage()); 	
-  }
-
-  @ExceptionHandler(RuntimeException.class)
-  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-  public ErrorResponse internalExceptionHandler(RuntimeException e) {
-    return new ErrorResponse(e.getMessage()); 	
   }
 
   private static final String API_VERSION = "1.0.0";

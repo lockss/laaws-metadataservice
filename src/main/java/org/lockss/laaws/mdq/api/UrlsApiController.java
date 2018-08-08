@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.lockss.laaws.mdq.api;
 
-import java.lang.reflect.MalformedParametersException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,11 +46,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -84,8 +81,9 @@ public class UrlsApiController implements UrlsApi {
       return new ResponseEntity<UrlInfo>(resolveOpenUrl(params), HttpStatus.OK);
     } catch (Exception e) {
       String message = "Cannot getUrlsDoi() for doi = '" + doi + "'";
-      logger.error(message, e);
-      throw new RuntimeException(message);
+      logger.warn(message, e);
+      return new ResponseEntity<String>(message,
+	  HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -124,8 +122,9 @@ public class UrlsApiController implements UrlsApi {
 	  HttpStatus.OK);
     } catch (Exception e) {
       String message = "Cannot getUrlsOpenUrl() for params = '" + params + "'";
-      logger.error(message, e);
-      throw new RuntimeException(message);
+      logger.warn(message, e);
+      return new ResponseEntity<String>(message,
+	  HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -170,18 +169,5 @@ public class UrlsApiController implements UrlsApi {
     if (logger.isDebugEnabled()) logger.debug("result = " + result);
 
     return result;
-  }
-
-  @ExceptionHandler(MalformedParametersException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public ErrorResponse badRequestExceptionHandler(
-      MalformedParametersException e) {
-    return new ErrorResponse(e.getMessage()); 	
-  }
-
-  @ExceptionHandler(RuntimeException.class)
-  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-  public ErrorResponse internalExceptionHandler(RuntimeException e) {
-    return new ErrorResponse(e.getMessage()); 	
   }
 }
