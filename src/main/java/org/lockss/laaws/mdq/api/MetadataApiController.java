@@ -196,7 +196,8 @@ public class MetadataApiController extends SpringLockssBaseApiController
 
       return new ResponseEntity<AuMetadataPageInfo>(result, HttpStatus.OK);
     } catch (ConcurrentModificationException cme) {
-      String message = "Pagination invalid for auid '" + auid + "'";
+      String message =
+	  "Pagination conflict for auid '" + auid + "': " + cme.getMessage();
       logger.warn(message, cme);
       return new ResponseEntity<String>(message, HttpStatus.CONFLICT);
     } catch (IllegalArgumentException iae) {

@@ -487,152 +487,143 @@ public class TestApiControllers extends SpringLockssTestCase {
   private void runTestGetMetadataAusAuidPagination(String user, String password)
       throws Exception {
     // Bad limit.
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, -1, null, user, password,
-	HttpStatus.BAD_REQUEST);
+    int requestCount = -1;
+    String continuationToken = null;
+    runTestGetMetadataAusAuid(UNKNOWN_AUID, requestCount, continuationToken,
+	user, password, HttpStatus.BAD_REQUEST);
 
     // Not found.
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, 0, null, user, password,
-	HttpStatus.NOT_FOUND);
+    requestCount = 0;
+    runTestGetMetadataAusAuid(UNKNOWN_AUID, requestCount, continuationToken,
+	user, password, HttpStatus.NOT_FOUND);
 
     // Get all the items.
-    verifyMetadata(AU_1_MD, null, runTestGetMetadataAusAuid(AUID_1, 10, null,
-	user, password, HttpStatus.OK));
+    requestCount = 10;
+    ItemMetadataContinuationToken expectedImct = null;
+    verifyMetadata(AU_1_MD, expectedImct, runTestGetMetadataAusAuid(AUID_1,
+	requestCount, continuationToken, user, password, HttpStatus.OK));
 
     // Get the first item.
-    AuMetadataPageInfo aumpi = runTestGetMetadataAusAuid(AUID_1, 1, null, user,
-	password, HttpStatus.OK);
+    requestCount = 1;
+    AuMetadataPageInfo aumpi = runTestGetMetadataAusAuid(AUID_1, requestCount,
+	continuationToken, user, password, HttpStatus.OK);
 
-    String continuationToken = aumpi.getPageInfo().getContinuationToken();
-    ItemMetadataContinuationToken expectedImct =
+    continuationToken = aumpi.getPageInfo().getContinuationToken();
+    ItemMetadataContinuationToken firstImct =
 	new ItemMetadataContinuationToken(continuationToken);
-    Long auExtractionTimestamp = expectedImct.getAuExtractionTimestamp();
-    Long lastItemMdItemSeq = expectedImct.getLastItemMdItemSeq();
+    Long auExtractionTimestamp = firstImct.getAuExtractionTimestamp();
+    Long lastItemMdItemSeq = firstImct.getLastItemMdItemSeq();
+
+    // The five items in this Archival Unit have primary keys ranging from 2 to
+    // 6, both inclusive.
     assertEquals(2L, lastItemMdItemSeq.longValue());
-    verifyMetadata(ListUtil.list(ITEM_METADATA_1_1), expectedImct, aumpi);
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_1), firstImct, aumpi);
 
     // Get the next one.
-    aumpi = runTestGetMetadataAusAuid(AUID_1, 1, continuationToken, user,
-	password, HttpStatus.OK);
+    aumpi = runTestGetMetadataAusAuid(AUID_1, requestCount, continuationToken,
+	user, password, HttpStatus.OK);
 
     continuationToken = aumpi.getPageInfo().getContinuationToken();
     expectedImct = new ItemMetadataContinuationToken(auExtractionTimestamp,
-	lastItemMdItemSeq.longValue() + 1);
+	lastItemMdItemSeq.longValue() + requestCount);
     verifyMetadata(ListUtil.list(ITEM_METADATA_1_2), expectedImct, aumpi);
+    lastItemMdItemSeq = expectedImct.getLastItemMdItemSeq();
 
     // Get the next two.
-    aumpi = runTestGetMetadataAusAuid(AUID_1, 2, continuationToken, user,
-	password, HttpStatus.OK);
+    requestCount = 2;
+    aumpi = runTestGetMetadataAusAuid(AUID_1, requestCount, continuationToken,
+	user, password, HttpStatus.OK);
 
     continuationToken = aumpi.getPageInfo().getContinuationToken();
     expectedImct = new ItemMetadataContinuationToken(
-	auExtractionTimestamp, lastItemMdItemSeq.longValue() + 3);
+	auExtractionTimestamp, lastItemMdItemSeq.longValue() + requestCount);
     verifyMetadata(ListUtil.list(ITEM_METADATA_1_3, ITEM_METADATA_1_4),
 	expectedImct, aumpi);
 
     // Get the last (partial) page.
-    verifyMetadata(ListUtil.list(ITEM_METADATA_1_5), null,
-	runTestGetMetadataAusAuid(AUID_1, 3, continuationToken, user, password,
-	    HttpStatus.OK));
+    requestCount = 3;
+    expectedImct = null;
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_5), expectedImct,
+	runTestGetMetadataAusAuid(AUID_1, requestCount, continuationToken, user,
+	    password, HttpStatus.OK));
 
     // Get the first two items.
-    aumpi = runTestGetMetadataAusAuid(AUID_1, 2, null, user, password,
-	HttpStatus.OK);
+    requestCount = 2;
+    continuationToken = null;
+    aumpi = runTestGetMetadataAusAuid(AUID_1, requestCount, continuationToken,
+	user, password, HttpStatus.OK);
 
     continuationToken = aumpi.getPageInfo().getContinuationToken();
-    expectedImct = new ItemMetadataContinuationToken(continuationToken);
-    lastItemMdItemSeq = expectedImct.getLastItemMdItemSeq();
+    firstImct = new ItemMetadataContinuationToken(continuationToken);
+    lastItemMdItemSeq = firstImct.getLastItemMdItemSeq();
     assertEquals(3L, lastItemMdItemSeq.longValue());
     verifyMetadata(ListUtil.list(ITEM_METADATA_1_1, ITEM_METADATA_1_2),
-	expectedImct, aumpi);
+	firstImct, aumpi);
 
     // Get the next three (the rest).
-    aumpi = runTestGetMetadataAusAuid(AUID_1, 3, continuationToken, user,
-	password, HttpStatus.OK);
-
-    continuationToken = aumpi.getPageInfo().getContinuationToken();
-    expectedImct = new ItemMetadataContinuationToken(auExtractionTimestamp,
-	lastItemMdItemSeq.longValue() + 3);
+    requestCount = 3;
     verifyMetadata(ListUtil.list(ITEM_METADATA_1_3, ITEM_METADATA_1_4,
-	ITEM_METADATA_1_5), expectedImct, aumpi);
-
-    // Get the next (non-existent) one.
-    aumpi = runTestGetMetadataAusAuid(AUID_1, 1, continuationToken, user,
-	password, HttpStatus.OK);
-
-    verifyMetadata(new ArrayList<ItemMetadata>(), null, aumpi);
+	ITEM_METADATA_1_5), expectedImct,
+	runTestGetMetadataAusAuid(AUID_1, requestCount, continuationToken, user,
+	    password, HttpStatus.OK));
 
     // Get the first three items.
-    aumpi = runTestGetMetadataAusAuid(AUID_1, 3, null, user, password,
-	HttpStatus.OK);
+    requestCount = 3;
+    continuationToken = null;
+    aumpi = runTestGetMetadataAusAuid(AUID_1, requestCount, continuationToken,
+	user, password, HttpStatus.OK);
 
     continuationToken = aumpi.getPageInfo().getContinuationToken();
-    expectedImct = new ItemMetadataContinuationToken(continuationToken);
-    lastItemMdItemSeq = expectedImct.getLastItemMdItemSeq();
+    firstImct = new ItemMetadataContinuationToken(continuationToken);
+    lastItemMdItemSeq = firstImct.getLastItemMdItemSeq();
     assertEquals(4L, lastItemMdItemSeq.longValue());
     verifyMetadata(ListUtil.list(ITEM_METADATA_1_1, ITEM_METADATA_1_2,
-	ITEM_METADATA_1_3), expectedImct, aumpi);
+	ITEM_METADATA_1_3), firstImct, aumpi);
 
     // Get the next two (the rest).
-    aumpi = runTestGetMetadataAusAuid(AUID_1, 2, continuationToken, user,
-	password, HttpStatus.OK);
-
-    continuationToken = aumpi.getPageInfo().getContinuationToken();
-    expectedImct = new ItemMetadataContinuationToken(auExtractionTimestamp,
-	lastItemMdItemSeq.longValue() + 2);
+    requestCount = 2;
     verifyMetadata(ListUtil.list(ITEM_METADATA_1_4, ITEM_METADATA_1_5),
-	expectedImct, aumpi);
-
-    // Get the next (non-existent) two.
-    aumpi = runTestGetMetadataAusAuid(AUID_1, 2, continuationToken, user,
-	password, HttpStatus.OK);
-
-    verifyMetadata(new ArrayList<ItemMetadata>(), null, aumpi);
+	expectedImct, runTestGetMetadataAusAuid(AUID_1, requestCount,
+	    continuationToken, user, password, HttpStatus.OK));
 
     // Get the first four items.
-    aumpi = runTestGetMetadataAusAuid(AUID_1, 4, null, user, password,
-	HttpStatus.OK);
+    requestCount = 4;
+    continuationToken = null;
+    aumpi = runTestGetMetadataAusAuid(AUID_1, requestCount, continuationToken,
+	user, password, HttpStatus.OK);
 
     continuationToken = aumpi.getPageInfo().getContinuationToken();
-    expectedImct = new ItemMetadataContinuationToken(continuationToken);
-    assertEquals(5L, expectedImct.getLastItemMdItemSeq().longValue());
+    firstImct = new ItemMetadataContinuationToken(continuationToken);
+    assertEquals(5L, firstImct.getLastItemMdItemSeq().longValue());
     verifyMetadata(ListUtil.list(ITEM_METADATA_1_1, ITEM_METADATA_1_2,
-	ITEM_METADATA_1_3, ITEM_METADATA_1_4), expectedImct, aumpi);
+	ITEM_METADATA_1_3, ITEM_METADATA_1_4), firstImct, aumpi);
 
     // Get the last (partial) page.
-    verifyMetadata(ListUtil.list(ITEM_METADATA_1_5), null,
-	runTestGetMetadataAusAuid(AUID_1, 5, continuationToken, user, password,
-	    HttpStatus.OK));
+    requestCount = 5;
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_5), expectedImct,
+	runTestGetMetadataAusAuid(AUID_1, requestCount, continuationToken, user,
+	    password, HttpStatus.OK));
 
     // Get the first five (all) items.
-    aumpi = runTestGetMetadataAusAuid(AUID_1, 5, null, user, password,
-	HttpStatus.OK);
-
-    continuationToken = aumpi.getPageInfo().getContinuationToken();
-    expectedImct = new ItemMetadataContinuationToken(continuationToken);
-    assertEquals(6L, expectedImct.getLastItemMdItemSeq().longValue());
-    verifyMetadata(AU_1_MD, expectedImct, aumpi);
-
-    // Get the next (non-existent) six.
-    aumpi = runTestGetMetadataAusAuid(AUID_1, 6, continuationToken, user,
-	password, HttpStatus.OK);
-
-    verifyMetadata(new ArrayList<ItemMetadata>(), null, aumpi);
+    continuationToken = null;
+    verifyMetadata(AU_1_MD, expectedImct,
+	runTestGetMetadataAusAuid(AUID_1, requestCount, continuationToken, user,
+	    password, HttpStatus.OK));
 
     // Try to get the first one with an incorrect Archival Unit metadata
     // extraction timestamp in the past.
+    requestCount = 1;
     continuationToken = new ItemMetadataContinuationToken(
-	auExtractionTimestamp - 1000000, 0L)
-	.toWebResponseContinuationToken();
-    runTestGetMetadataAusAuid(AUID_1, 1, continuationToken, user, password,
-	HttpStatus.CONFLICT);
+	auExtractionTimestamp - 1000000L, 0L).toWebResponseContinuationToken();
+    runTestGetMetadataAusAuid(AUID_1, requestCount, continuationToken, user,
+	password, HttpStatus.CONFLICT);
 
     // Try to get the first one with an incorrect Archival Unit metadata
     // extraction timestamp in the future.
     continuationToken = new ItemMetadataContinuationToken(
-	auExtractionTimestamp + 1000000, 0L)
-	.toWebResponseContinuationToken();
-    runTestGetMetadataAusAuid(AUID_1, 1, continuationToken, user, password,
-	HttpStatus.CONFLICT);
+	auExtractionTimestamp + 1000000L, 0L).toWebResponseContinuationToken();
+    runTestGetMetadataAusAuid(AUID_1, requestCount, continuationToken, user,
+	password, HttpStatus.CONFLICT);
   }
 
   /**
