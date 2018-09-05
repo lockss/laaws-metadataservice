@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2018 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -38,7 +38,7 @@ import java.util.Objects;
 public class PageInfo   {
   private Integer totalCount = null;
   private Integer resultsPerPage = null;
-  private Integer currentPage = null;
+  private String continuationToken = null;
   private String curLink = null;
   private String nextLink = null;
 
@@ -72,17 +72,17 @@ public class PageInfo   {
   }
 
   /**
-   * The current page number.
+   * The continuation token.
    * 
-   * @return currentPage
+   * @return continuationToken
    **/
-  @ApiModelProperty(required = true, value = "The current page number")
-  public Integer getCurrentPage() {
-    return currentPage;
+  @ApiModelProperty(required = true, value = "The continuation token")
+  public String getContinuationToken() {
+    return continuationToken;
   }
 
-  public void setCurrentPage(Integer currentPage) {
-    this.currentPage = currentPage;
+  public void setContinuationToken(String continuationToken) {
+    this.continuationToken = continuationToken;
   }
 
   /**
@@ -124,14 +124,14 @@ public class PageInfo   {
     PageInfo pageInfo = (PageInfo) o;
     return Objects.equals(this.totalCount, pageInfo.totalCount) &&
         Objects.equals(this.resultsPerPage, pageInfo.resultsPerPage) &&
-        Objects.equals(this.currentPage, pageInfo.currentPage) &&
+        Objects.equals(this.continuationToken, pageInfo.continuationToken) &&
         Objects.equals(this.curLink, pageInfo.curLink) &&
         Objects.equals(this.nextLink, pageInfo.nextLink);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalCount, resultsPerPage, currentPage, curLink,
+    return Objects.hash(totalCount, resultsPerPage, continuationToken, curLink,
 	nextLink);
   }
 
@@ -143,8 +143,8 @@ public class PageInfo   {
     .append("\n");
     sb.append("    resultsPerPage: ").append(toIndentedString(resultsPerPage))
     .append("\n");
-    sb.append("    currentPage: ").append(toIndentedString(currentPage))
-    .append("\n");
+    sb.append("    continuationToken: ")
+    .append(toIndentedString(continuationToken)).append("\n");
     sb.append("    curLink: ").append(toIndentedString(curLink)).append("\n");
     sb.append("    nextLink: ").append(toIndentedString(nextLink)).append("\n");
     sb.append("}");

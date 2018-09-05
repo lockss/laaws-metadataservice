@@ -92,8 +92,8 @@ paths:
       - "metadata"
       summary: "Get the metadata stored for an AU"
       description: "Get the full metadata stored for an AU given the AU\
-        \ identifier or a pageful of the metadata defined by the page index and\
-        \ size"
+        \ identifier or a pageful of the metadata defined by the continuation\
+        \ token and size"
       operationId: "getMetadataAusAuid"
       produces:
       - "application/json"
@@ -104,18 +104,18 @@ paths:
           \ requested"
         required: true
         type: "string"
-      - name: "page"
-        in: "query"
-        required: false
-        type: "integer"
-        description: "The identifier of the page of metadata to be returned"
-        default: 1
       - name: "limit"
         in: "query"
         required: false
         type: "integer"
         description: "The number of items per page"
         default: 50
+      - name: "continuationToken"
+        in: "query"
+        required: false
+        type: "string"
+        description: "The continuation token of the next page of metadata to be\
+          \ returned"
       responses:
         200:
           description: "The metadata of the specified AU"
@@ -282,10 +282,11 @@ definitions:
   pageInfo:
     type: "object"
     required:
-    - "curLink"
-    - "currentPage"
-    - "resultsPerPage"
     - "totalCount"
+    - "resultsPerPage"
+    - "continuationToken"
+    - "curLink"
+    - "nextLink"
     properties:
       totalCount:
         type: "integer"
@@ -295,10 +296,9 @@ definitions:
         type: "integer"
         format: "int32"
         description: "The number of results per page"
-      currentPage:
-        type: "integer"
-        format: "int32"
-        description: "The current page number"
+      continuationToken:
+        type: "string"
+        description: "The continuation token"
       curLink:
         type: "string"
         description: "The link to the current page"

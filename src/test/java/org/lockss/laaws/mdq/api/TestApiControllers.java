@@ -48,9 +48,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lockss.config.Configuration;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
-import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.PageInfo;
 import org.lockss.laaws.mdq.model.UrlInfo;
+import org.lockss.metadata.ItemMetadata;
+import org.lockss.metadata.ItemMetadataContinuationToken;
 import org.lockss.metadata.MetadataDbManager;
 import org.lockss.metadata.extractor.MetadataExtractorManager;
 import org.lockss.plugin.Plugin;
@@ -208,12 +209,12 @@ public class TestApiControllers extends SpringLockssTestCase {
     MetadataExtractorManager mem = new MetadataExtractorManager(testDbManager);
     Plugin plugin = new DefinablePlugin();
 
-    mem.storeAuItemMetadata(ITEM_METADATA_1_1, plugin);
-    mem.storeAuItemMetadata(ITEM_METADATA_1_2, plugin);
-    mem.storeAuItemMetadata(ITEM_METADATA_1_3, plugin);
-    mem.storeAuItemMetadata(ITEM_METADATA_1_4, plugin);
-    mem.storeAuItemMetadata(ITEM_METADATA_1_5, plugin);
-    mem.storeAuItemMetadata(ITEM_METADATA_2_1, plugin);
+    mem.storeAuItemMetadataForTesting(ITEM_METADATA_1_1, plugin);
+    mem.storeAuItemMetadataForTesting(ITEM_METADATA_1_2, plugin);
+    mem.storeAuItemMetadataForTesting(ITEM_METADATA_1_3, plugin);
+    mem.storeAuItemMetadataForTesting(ITEM_METADATA_1_4, plugin);
+    mem.storeAuItemMetadataForTesting(ITEM_METADATA_1_5, plugin);
+    mem.storeAuItemMetadataForTesting(ITEM_METADATA_2_1, plugin);
   }
 
   /**
@@ -354,7 +355,7 @@ public class TestApiControllers extends SpringLockssTestCase {
     runTestGetMetadataAusAuid(null, null, null, BAD_USER, BAD_PWD,
 	HttpStatus.NOT_FOUND);
     runTestGetMetadataAusAuid(null, -1, null, null, null, HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(null, null, 0, BAD_USER, BAD_PWD,
+    runTestGetMetadataAusAuid(null, null, null, BAD_USER, BAD_PWD,
 	HttpStatus.NOT_FOUND);
 
     // Empty AUId: Spring reports it cannot find a match to an endpoint.
@@ -364,7 +365,7 @@ public class TestApiControllers extends SpringLockssTestCase {
 	HttpStatus.NOT_FOUND);
     runTestGetMetadataAusAuid(EMPTY_STRING, -1, null, null, null,
 	HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(EMPTY_STRING, null, -1, BAD_USER, BAD_PWD,
+    runTestGetMetadataAusAuid(EMPTY_STRING, -1, null, BAD_USER, BAD_PWD,
 	HttpStatus.NOT_FOUND);
 
     // Unknown AUId.
@@ -372,31 +373,21 @@ public class TestApiControllers extends SpringLockssTestCase {
 	HttpStatus.NOT_FOUND);
     runTestGetMetadataAusAuid(UNKNOWN_AUID, null, null, BAD_USER, BAD_PWD,
 	HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, null, 0, null, null,
+    runTestGetMetadataAusAuid(UNKNOWN_AUID, 1, null, null, null,
 	HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, null, 1, BAD_USER, BAD_PWD,
-	HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, 1, 0, null, null,
-	HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, 1, 1, BAD_USER, BAD_PWD,
+    runTestGetMetadataAusAuid(UNKNOWN_AUID, 1, null, BAD_USER, BAD_PWD,
 	HttpStatus.NOT_FOUND);
 
-    // Bad limit.
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, null, -1, null, null,
-	HttpStatus.BAD_REQUEST);
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, null, -1, BAD_USER, BAD_PWD,
-	HttpStatus.BAD_REQUEST);
-
-    // Success with no credentials.
-    verifyMetadata(null, null, AU_1_MD, runTestGetMetadataAusAuid(AUID_1, null,
-	null, null, null, HttpStatus.OK));
+    // Success getting all with no credentials.
+    verifyMetadata(AU_1_MD, null, runTestGetMetadataAusAuid(AUID_1, null, null,
+	null, null, HttpStatus.OK));
 
     // Pagination with no credentials.
     runTestGetMetadataAusAuidPagination(null, null);
 
-    // Success with bad credentials.
-    verifyMetadata(null, null, AU_2_MD, runTestGetMetadataAusAuid(AUID_2, null,
-	null, BAD_USER, BAD_PWD, HttpStatus.OK));
+    // Success getting all with with bad credentials.
+    verifyMetadata(AU_2_MD, null, runTestGetMetadataAusAuid(AUID_2, null, null,
+	BAD_USER, BAD_PWD, HttpStatus.OK));
 
     // Pagination with bad credentials.
     runTestGetMetadataAusAuidPagination(BAD_USER, BAD_PWD);
@@ -436,13 +427,13 @@ public class TestApiControllers extends SpringLockssTestCase {
     // No credentials.
     runTestGetMetadataAusAuid(AUID_2, null, null, null, null,
 	HttpStatus.UNAUTHORIZED);
-    runTestGetMetadataAusAuid(AUID_2, 0, -1, null, null,
+    runTestGetMetadataAusAuid(AUID_2, 0, null, null, null,
 	HttpStatus.UNAUTHORIZED);
 
     // Bad credentials.
     runTestGetMetadataAusAuid(AUID_1, null, null, BAD_USER, BAD_PWD,
 	HttpStatus.UNAUTHORIZED);
-    runTestGetMetadataAusAuid(AUID_1, -1, -1, BAD_USER, BAD_PWD,
+    runTestGetMetadataAusAuid(AUID_1, -1, null, BAD_USER, BAD_PWD,
 	HttpStatus.UNAUTHORIZED);
 
     getMetadataAusAuidCommonTest();
@@ -471,15 +462,11 @@ public class TestApiControllers extends SpringLockssTestCase {
     runTestGetMetadataAusAuid(UNKNOWN_AUID, null, null, GOOD_USER, GOOD_PWD,
 	HttpStatus.NOT_FOUND);
 
-    // Bad limit.
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, null, -1, GOOD_USER, GOOD_PWD,
-	HttpStatus.BAD_REQUEST);
-
     // Success.
-    verifyMetadata(null, null, AU_1_MD, runTestGetMetadataAusAuid(AUID_1, null,
-	null, GOOD_USER, GOOD_PWD, HttpStatus.OK));
-    verifyMetadata(null, null, AU_2_MD, runTestGetMetadataAusAuid(AUID_2, null,
-	null, GOOD_USER, GOOD_PWD, HttpStatus.OK));
+    verifyMetadata(AU_1_MD, null, runTestGetMetadataAusAuid(AUID_1, null, null,
+	GOOD_USER, GOOD_PWD, HttpStatus.OK));
+    verifyMetadata(AU_2_MD, null, runTestGetMetadataAusAuid(AUID_2, null, null,
+	GOOD_USER, GOOD_PWD, HttpStatus.OK));
 
     // Pagination.
     runTestGetMetadataAusAuidPagination(GOOD_USER, GOOD_PWD);
@@ -499,153 +486,153 @@ public class TestApiControllers extends SpringLockssTestCase {
    */
   private void runTestGetMetadataAusAuidPagination(String user, String password)
       throws Exception {
-    // Bad page.
+    // Bad limit.
     runTestGetMetadataAusAuid(UNKNOWN_AUID, -1, null, user, password,
 	HttpStatus.BAD_REQUEST);
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, -1, -1, user, password,
-	HttpStatus.BAD_REQUEST);
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, 0, 0, user, password,
-	HttpStatus.BAD_REQUEST);
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, 0, 1, user, password,
-	HttpStatus.BAD_REQUEST);
 
-    // No limit.
-    verifyMetadata(1, 0, AU_1_MD, runTestGetMetadataAusAuid(AUID_1, 1, 0, user,
-	password, HttpStatus.OK));
-    verifyMetadata(2, 0, AU_1_MD, runTestGetMetadataAusAuid(AUID_1, 2, 0, user,
-	password, HttpStatus.OK));
-    verifyMetadata(5, 0, AU_1_MD, runTestGetMetadataAusAuid(AUID_1, 5, 0, user,
-	password, HttpStatus.OK));
-    verifyMetadata(10, 0, AU_1_MD, runTestGetMetadataAusAuid(AUID_1, 10, 0,
-	user, password, HttpStatus.OK));
-    verifyMetadata(1, 0, AU_2_MD, runTestGetMetadataAusAuid(AUID_2, 1, 0, user,
-	password, HttpStatus.OK));
+    // Not found.
+    runTestGetMetadataAusAuid(UNKNOWN_AUID, 0, null, user, password,
+	HttpStatus.NOT_FOUND);
 
-    // Page 1.
-    verifyMetadata(1, 10, AU_1_MD, runTestGetMetadataAusAuid(AUID_1, 1, 10,
-	user, password, HttpStatus.OK));
-    verifyMetadata(1, 5, AU_1_MD, runTestGetMetadataAusAuid(AUID_1, 1, 5, user,
-	password, HttpStatus.OK));
-
-    List<ItemMetadata> expectedItems = ListUtil.list(ITEM_METADATA_1_1);
-    verifyMetadata(1, 1, expectedItems, runTestGetMetadataAusAuid(AUID_1, 1, 1,
+    // Get all the items.
+    verifyMetadata(AU_1_MD, null, runTestGetMetadataAusAuid(AUID_1, 10, null,
 	user, password, HttpStatus.OK));
 
-    expectedItems.add(ITEM_METADATA_1_2);
-    verifyMetadata(1, 2, expectedItems, runTestGetMetadataAusAuid(AUID_1, 1, 2,
-	user, password, HttpStatus.OK));
+    // Get the first item.
+    AuMetadataPageInfo aumpi = runTestGetMetadataAusAuid(AUID_1, 1, null, user,
+	password, HttpStatus.OK);
 
-    expectedItems.add(ITEM_METADATA_1_3);
-    verifyMetadata(1, 3, expectedItems, runTestGetMetadataAusAuid(AUID_1, 1, 3,
-	user, password, HttpStatus.OK));
+    String continuationToken = aumpi.getPageInfo().getContinuationToken();
+    ItemMetadataContinuationToken expectedImct =
+	new ItemMetadataContinuationToken(continuationToken);
+    Long auExtractionTimestamp = expectedImct.getAuExtractionTimestamp();
+    Long lastItemMdItemSeq = expectedImct.getLastItemMdItemSeq();
+    assertEquals(2L, lastItemMdItemSeq.longValue());
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_1), expectedImct, aumpi);
 
-    expectedItems.add(ITEM_METADATA_1_4);
-    verifyMetadata(1, 4, expectedItems, runTestGetMetadataAusAuid(AUID_1, 1, 4,
-	user, password, HttpStatus.OK));
+    // Get the next one.
+    aumpi = runTestGetMetadataAusAuid(AUID_1, 1, continuationToken, user,
+	password, HttpStatus.OK);
 
-    verifyMetadata(1, 10, AU_2_MD, runTestGetMetadataAusAuid(AUID_2, 1, 10,
-	user, password, HttpStatus.OK));
-    verifyMetadata(1, 1, AU_2_MD, runTestGetMetadataAusAuid(AUID_2, 1, 1, user,
-	password, HttpStatus.OK));
+    continuationToken = aumpi.getPageInfo().getContinuationToken();
+    expectedImct = new ItemMetadataContinuationToken(auExtractionTimestamp,
+	lastItemMdItemSeq.longValue() + 1);
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_2), expectedImct, aumpi);
 
-    // Page 2.
-    expectedItems = ListUtil.list(ITEM_METADATA_1_2);
-    verifyMetadata(2, 1, expectedItems, runTestGetMetadataAusAuid(AUID_1, 2, 1,
-	user, password, HttpStatus.OK));
+    // Get the next two.
+    aumpi = runTestGetMetadataAusAuid(AUID_1, 2, continuationToken, user,
+	password, HttpStatus.OK);
 
-    expectedItems = ListUtil.list(ITEM_METADATA_1_3, ITEM_METADATA_1_4);
-    verifyMetadata(2, 2, expectedItems, runTestGetMetadataAusAuid(AUID_1, 2, 2,
-	user, password, HttpStatus.OK));
+    continuationToken = aumpi.getPageInfo().getContinuationToken();
+    expectedImct = new ItemMetadataContinuationToken(
+	auExtractionTimestamp, lastItemMdItemSeq.longValue() + 3);
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_3, ITEM_METADATA_1_4),
+	expectedImct, aumpi);
 
-    expectedItems = ListUtil.list(ITEM_METADATA_1_4, ITEM_METADATA_1_5);
-    verifyMetadata(2, 3, expectedItems, runTestGetMetadataAusAuid(AUID_1, 2, 3,
-	user, password, HttpStatus.OK));
+    // Get the last (partial) page.
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_5), null,
+	runTestGetMetadataAusAuid(AUID_1, 3, continuationToken, user, password,
+	    HttpStatus.OK));
 
-    expectedItems = ListUtil.list(ITEM_METADATA_1_5);
-    verifyMetadata(2, 4, expectedItems, runTestGetMetadataAusAuid(AUID_1, 2, 4,
-	user, password, HttpStatus.OK));
+    // Get the first two items.
+    aumpi = runTestGetMetadataAusAuid(AUID_1, 2, null, user, password,
+	HttpStatus.OK);
 
-    expectedItems = ListUtil.list();
-    verifyMetadata(2, 5, expectedItems, runTestGetMetadataAusAuid(AUID_1, 2, 5,
-	user, password, HttpStatus.OK));
-    verifyMetadata(2, 10, expectedItems, runTestGetMetadataAusAuid(AUID_1, 2,
-	10, user, password, HttpStatus.OK));
+    continuationToken = aumpi.getPageInfo().getContinuationToken();
+    expectedImct = new ItemMetadataContinuationToken(continuationToken);
+    lastItemMdItemSeq = expectedImct.getLastItemMdItemSeq();
+    assertEquals(3L, lastItemMdItemSeq.longValue());
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_1, ITEM_METADATA_1_2),
+	expectedImct, aumpi);
 
-    expectedItems = ListUtil.list();
-    verifyMetadata(2, 1, expectedItems, runTestGetMetadataAusAuid(AUID_2, 2, 1,
-	user, password, HttpStatus.OK));
-    verifyMetadata(2, 2, expectedItems, runTestGetMetadataAusAuid(AUID_2, 2, 2,
-	user, password, HttpStatus.OK));
-    verifyMetadata(2, 10, expectedItems, runTestGetMetadataAusAuid(AUID_2, 2,
-	10, user, password, HttpStatus.OK));
+    // Get the next three (the rest).
+    aumpi = runTestGetMetadataAusAuid(AUID_1, 3, continuationToken, user,
+	password, HttpStatus.OK);
 
-    // Page 3.
-    expectedItems = ListUtil.list(ITEM_METADATA_1_3);
-    verifyMetadata(3, 1, expectedItems, runTestGetMetadataAusAuid(AUID_1, 3, 1,
-	user, password, HttpStatus.OK));
+    continuationToken = aumpi.getPageInfo().getContinuationToken();
+    expectedImct = new ItemMetadataContinuationToken(auExtractionTimestamp,
+	lastItemMdItemSeq.longValue() + 3);
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_3, ITEM_METADATA_1_4,
+	ITEM_METADATA_1_5), expectedImct, aumpi);
 
-    expectedItems = ListUtil.list(ITEM_METADATA_1_5);
-    verifyMetadata(3, 2, expectedItems, runTestGetMetadataAusAuid(AUID_1, 3, 2,
-	user, password, HttpStatus.OK));
+    // Get the next (non-existent) one.
+    aumpi = runTestGetMetadataAusAuid(AUID_1, 1, continuationToken, user,
+	password, HttpStatus.OK);
 
-    expectedItems = ListUtil.list();
-    verifyMetadata(3, 3, expectedItems, runTestGetMetadataAusAuid(AUID_1, 3, 3,
-	user, password, HttpStatus.OK));
-    verifyMetadata(3, 4, expectedItems, runTestGetMetadataAusAuid(AUID_1, 3, 4,
-	user, password, HttpStatus.OK));
-    verifyMetadata(3, 5, expectedItems, runTestGetMetadataAusAuid(AUID_1, 3, 5,
-	user, password, HttpStatus.OK));
-    verifyMetadata(3, 10, expectedItems, runTestGetMetadataAusAuid(AUID_1, 3,
-	10, user, password, HttpStatus.OK));
+    verifyMetadata(new ArrayList<ItemMetadata>(), null, aumpi);
 
-    // Page 4.
-    expectedItems = ListUtil.list(ITEM_METADATA_1_4);
-    verifyMetadata(4, 1, expectedItems, runTestGetMetadataAusAuid(AUID_1, 4, 1,
-	user, password, HttpStatus.OK));
+    // Get the first three items.
+    aumpi = runTestGetMetadataAusAuid(AUID_1, 3, null, user, password,
+	HttpStatus.OK);
 
-    expectedItems = ListUtil.list();
-    verifyMetadata(4, 2, expectedItems, runTestGetMetadataAusAuid(AUID_1, 4, 2,
-	user, password, HttpStatus.OK));
-    verifyMetadata(4, 3, expectedItems, runTestGetMetadataAusAuid(AUID_1, 4, 3,
-	user, password, HttpStatus.OK));
-    verifyMetadata(4, 4, expectedItems, runTestGetMetadataAusAuid(AUID_1, 4, 4,
-	user, password, HttpStatus.OK));
-    verifyMetadata(4, 5, expectedItems, runTestGetMetadataAusAuid(AUID_1, 4, 5,
-	user, password, HttpStatus.OK));
-    verifyMetadata(4, 10, expectedItems, runTestGetMetadataAusAuid(AUID_1, 4,
-	10, user, password, HttpStatus.OK));
+    continuationToken = aumpi.getPageInfo().getContinuationToken();
+    expectedImct = new ItemMetadataContinuationToken(continuationToken);
+    lastItemMdItemSeq = expectedImct.getLastItemMdItemSeq();
+    assertEquals(4L, lastItemMdItemSeq.longValue());
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_1, ITEM_METADATA_1_2,
+	ITEM_METADATA_1_3), expectedImct, aumpi);
 
-    // Page 5.
-    expectedItems = ListUtil.list(ITEM_METADATA_1_5);
-    verifyMetadata(5, 1, expectedItems, runTestGetMetadataAusAuid(AUID_1, 5, 1,
-	user, password, HttpStatus.OK));
+    // Get the next two (the rest).
+    aumpi = runTestGetMetadataAusAuid(AUID_1, 2, continuationToken, user,
+	password, HttpStatus.OK);
 
-    expectedItems = ListUtil.list();
-    verifyMetadata(5, 2, expectedItems, runTestGetMetadataAusAuid(AUID_1, 5, 2,
-	user, password, HttpStatus.OK));
-    verifyMetadata(5, 3, expectedItems, runTestGetMetadataAusAuid(AUID_1, 5, 3,
-	user, password, HttpStatus.OK));
-    verifyMetadata(5, 4, expectedItems, runTestGetMetadataAusAuid(AUID_1, 5, 4,
-	user, password, HttpStatus.OK));
-    verifyMetadata(5, 5, expectedItems, runTestGetMetadataAusAuid(AUID_1, 5, 5,
-	user, password, HttpStatus.OK));
-    verifyMetadata(5, 10, expectedItems, runTestGetMetadataAusAuid(AUID_1, 5,
-	10, user, password, HttpStatus.OK));
+    continuationToken = aumpi.getPageInfo().getContinuationToken();
+    expectedImct = new ItemMetadataContinuationToken(auExtractionTimestamp,
+	lastItemMdItemSeq.longValue() + 2);
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_4, ITEM_METADATA_1_5),
+	expectedImct, aumpi);
 
-    // Page 6.
-    expectedItems = ListUtil.list();
-    verifyMetadata(6, 1, expectedItems, runTestGetMetadataAusAuid(AUID_1, 6, 1,
-	user, password, HttpStatus.OK));
-    verifyMetadata(6, 2, expectedItems, runTestGetMetadataAusAuid(AUID_1, 6, 2,
-	user, password, HttpStatus.OK));
-    verifyMetadata(6, 3, expectedItems, runTestGetMetadataAusAuid(AUID_1, 6, 3,
-	user, password, HttpStatus.OK));
-    verifyMetadata(6, 4, expectedItems, runTestGetMetadataAusAuid(AUID_1, 6, 4,
-	user, password, HttpStatus.OK));
-    verifyMetadata(6, 5, expectedItems, runTestGetMetadataAusAuid(AUID_1, 6, 5,
-	user, password, HttpStatus.OK));
-    verifyMetadata(6, 10, expectedItems, runTestGetMetadataAusAuid(AUID_1, 6,
-	10, user, password, HttpStatus.OK));
+    // Get the next (non-existent) two.
+    aumpi = runTestGetMetadataAusAuid(AUID_1, 2, continuationToken, user,
+	password, HttpStatus.OK);
+
+    verifyMetadata(new ArrayList<ItemMetadata>(), null, aumpi);
+
+    // Get the first four items.
+    aumpi = runTestGetMetadataAusAuid(AUID_1, 4, null, user, password,
+	HttpStatus.OK);
+
+    continuationToken = aumpi.getPageInfo().getContinuationToken();
+    expectedImct = new ItemMetadataContinuationToken(continuationToken);
+    assertEquals(5L, expectedImct.getLastItemMdItemSeq().longValue());
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_1, ITEM_METADATA_1_2,
+	ITEM_METADATA_1_3, ITEM_METADATA_1_4), expectedImct, aumpi);
+
+    // Get the last (partial) page.
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_5), null,
+	runTestGetMetadataAusAuid(AUID_1, 5, continuationToken, user, password,
+	    HttpStatus.OK));
+
+    // Get the first five (all) items.
+    aumpi = runTestGetMetadataAusAuid(AUID_1, 5, null, user, password,
+	HttpStatus.OK);
+
+    continuationToken = aumpi.getPageInfo().getContinuationToken();
+    expectedImct = new ItemMetadataContinuationToken(continuationToken);
+    assertEquals(6L, expectedImct.getLastItemMdItemSeq().longValue());
+    verifyMetadata(AU_1_MD, expectedImct, aumpi);
+
+    // Get the next (non-existent) six.
+    aumpi = runTestGetMetadataAusAuid(AUID_1, 6, continuationToken, user,
+	password, HttpStatus.OK);
+
+    verifyMetadata(new ArrayList<ItemMetadata>(), null, aumpi);
+
+    // Try to get the first one with an incorrect Archival Unit metadata
+    // extraction timestamp in the past.
+    continuationToken = new ItemMetadataContinuationToken(
+	auExtractionTimestamp - 1000000, 0L)
+	.toWebResponseContinuationToken();
+    runTestGetMetadataAusAuid(AUID_1, 1, continuationToken, user, password,
+	HttpStatus.CONFLICT);
+
+    // Try to get the first one with an incorrect Archival Unit metadata
+    // extraction timestamp in the future.
+    continuationToken = new ItemMetadataContinuationToken(
+	auExtractionTimestamp + 1000000, 0L)
+	.toWebResponseContinuationToken();
+    runTestGetMetadataAusAuid(AUID_1, 1, continuationToken, user, password,
+	HttpStatus.CONFLICT);
   }
 
   /**
@@ -653,11 +640,12 @@ public class TestApiControllers extends SpringLockssTestCase {
    * 
    * @param auId
    *          A String with the identifier of the Archival Unit.
-   * @param page
-   *          An Integer with the index of the metadata page to be returned.
    * @param limit
    *          An Integer with the maximum number of AU metadata items to be
    *          returned.
+   * @param continuationToken
+   *          An ItemMetadataContinuationToken with the continuation token of
+   *          the next page of metadata to be returned.
    * @param user
    *          A String with the request username.
    * @param password
@@ -669,12 +657,12 @@ public class TestApiControllers extends SpringLockssTestCase {
    *           if there are problems.
    */
   private AuMetadataPageInfo runTestGetMetadataAusAuid(String auId,
-      Integer page, Integer limit, String user, String password,
+      Integer limit, String continuationToken, String user, String password,
       HttpStatus expectedStatus) throws Exception {
     if (logger.isDebugEnabled()) {
       logger.debug("auId = " + auId);
-      logger.debug("page = " + page);
       logger.debug("limit = " + limit);
+      logger.debug("continuationToken = " + continuationToken);
       logger.debug("user = " + user);
       logger.debug("password = " + password);
       logger.debug("expectedStatus = " + expectedStatus);
@@ -690,12 +678,12 @@ public class TestApiControllers extends SpringLockssTestCase {
     UriComponentsBuilder ucb =
 	UriComponentsBuilder.newInstance().uriComponents(uriComponents);
 
-    if (page != null) {
-      ucb.queryParam("page", page);
-    }
-
     if (limit != null) {
       ucb.queryParam("limit", limit);
+    }
+
+    if (continuationToken != null) {
+      ucb.queryParam("continuationToken", continuationToken);
     }
 
     URI uri = ucb.build().encode().toUri();
@@ -773,8 +761,8 @@ public class TestApiControllers extends SpringLockssTestCase {
 	AU_1_MD.size());
 
     // Verify that the second good Archival Unit is not affected.
-    verifyMetadata(null, null, AU_2_MD, runTestGetMetadataAusAuid(AUID_2, null,
-	null, null, null, HttpStatus.OK));
+    verifyMetadata(AU_2_MD, null, runTestGetMetadataAusAuid(AUID_2, null, null,
+	null, null, HttpStatus.OK));
 
     // Delete again the first good Archival Unit with bad credentials.
     runTestDeleteMetadataAusAuid(AUID_1, BAD_USER, BAD_PWD,
@@ -785,8 +773,8 @@ public class TestApiControllers extends SpringLockssTestCase {
 	HttpStatus.NOT_FOUND);
 
     // Verify that the second good Archival Unit is not affected.
-    verifyMetadata(null, null, AU_2_MD, runTestGetMetadataAusAuid(AUID_2, null,
-	null, null, null, HttpStatus.OK));
+    verifyMetadata(AU_2_MD, null, runTestGetMetadataAusAuid(AUID_2, null, null,
+	null, null, HttpStatus.OK));
 
     deleteMetadataAusAuidCommonTest();
 
@@ -977,7 +965,7 @@ public class TestApiControllers extends SpringLockssTestCase {
 
     // Verify.
     List<ItemMetadata> au1Items = ListUtil.list(ITEM_METADATA_1_1);
-    verifyMetadata(null, null, ListUtil.list(ITEM_METADATA_1_1),
+    verifyMetadata(ListUtil.list(ITEM_METADATA_1_1), null, 
 	runTestGetMetadataAusAuid(AUID_1, null, null, BAD_USER, BAD_PWD,
 	    HttpStatus.OK));
 
@@ -991,8 +979,8 @@ public class TestApiControllers extends SpringLockssTestCase {
 
     // Verify.
     au1Items.add(ITEM_METADATA_1_2);
-    verifyMetadata(null, null, au1Items, runTestGetMetadataAusAuid(AUID_1, null,
-	null, null, null, HttpStatus.OK));
+    verifyMetadata(au1Items, null, runTestGetMetadataAusAuid(AUID_1, null, null,
+	null, null, HttpStatus.OK));
 
     // Verify that the second good Archival Unit is unchanged.
     runTestGetMetadataAusAuid(AUID_2, null, null, BAD_USER, BAD_PWD,
@@ -1003,12 +991,12 @@ public class TestApiControllers extends SpringLockssTestCase {
 
     // Verify.
     List<ItemMetadata> au2Items = ListUtil.list(ITEM_METADATA_2_1);
-    verifyMetadata(null, null, au2Items, runTestGetMetadataAusAuid(AUID_2, null,
-	null, null, null, HttpStatus.OK));
+    verifyMetadata(au2Items, null, runTestGetMetadataAusAuid(AUID_2, null, null,
+	null, null, HttpStatus.OK));
 
     // Verify that the first good Archival Unit is unchanged.
-    verifyMetadata(null, null, au1Items, runTestGetMetadataAusAuid(AUID_1, null,
-	null, BAD_USER, BAD_PWD, HttpStatus.OK));
+    verifyMetadata(au1Items, null, runTestGetMetadataAusAuid(AUID_1, null, null,
+	BAD_USER, BAD_PWD, HttpStatus.OK));
 
     // Delete the first good Archival Unit with no credentials.
     runTestDeleteMetadataAusAuid(AUID_1, null, null, HttpStatus.OK,
@@ -1082,8 +1070,8 @@ public class TestApiControllers extends SpringLockssTestCase {
 
     // Verify.
     List<ItemMetadata> au1Items = ListUtil.list(ITEM_METADATA_1_1);
-    verifyMetadata(null, null, au1Items, runTestGetMetadataAusAuid(AUID_1, null,
-	null, GOOD_USER, GOOD_PWD, HttpStatus.OK));
+    verifyMetadata(au1Items, null, runTestGetMetadataAusAuid(AUID_1, null, null,
+	GOOD_USER, GOOD_PWD, HttpStatus.OK));
 
     // Verify that the second good Archival Unit is unchanged.
     runTestGetMetadataAusAuid(AUID_2, null, null, GOOD_USER, GOOD_PWD,
@@ -1096,8 +1084,8 @@ public class TestApiControllers extends SpringLockssTestCase {
 
     // Verify.
     au1Items.add(ITEM_METADATA_1_5);
-    verifyMetadata(null, null, au1Items, runTestGetMetadataAusAuid(AUID_1, null,
-	null, GOOD_USER, GOOD_PWD, HttpStatus.OK));
+    verifyMetadata(au1Items, null, runTestGetMetadataAusAuid(AUID_1, null, null,
+	GOOD_USER, GOOD_PWD, HttpStatus.OK));
 
     // Verify that the second good Archival Unit is unchanged.
     runTestGetMetadataAusAuid(AUID_2, null, null, GOOD_USER, GOOD_PWD,
@@ -1110,8 +1098,8 @@ public class TestApiControllers extends SpringLockssTestCase {
 
     // Verify.
     au1Items.add(ITEM_METADATA_1_2);
-    verifyMetadata(null, null, au1Items, runTestGetMetadataAusAuid(AUID_1, null,
-	null, GOOD_USER, GOOD_PWD, HttpStatus.OK));
+    verifyMetadata(au1Items, null, runTestGetMetadataAusAuid(AUID_1, null, null,
+	GOOD_USER, GOOD_PWD, HttpStatus.OK));
 
     // Verify that the second good Archival Unit is unchanged.
     runTestGetMetadataAusAuid(AUID_2, null, null, GOOD_USER, GOOD_PWD,
@@ -1122,14 +1110,13 @@ public class TestApiControllers extends SpringLockssTestCase {
 	HttpStatus.OK);
 
     // Verify.
-    verifyMetadata(null, null, ListUtil.list(ITEM_METADATA_2_1),
+    verifyMetadata(ListUtil.list(ITEM_METADATA_2_1), null,
 	runTestGetMetadataAusAuid(AUID_2, null, null, GOOD_USER, GOOD_PWD,
 	    HttpStatus.OK));
 
     // Verify that the first good Archival Unit is unchanged.
-    verifyMetadata(null, null, au1Items,
-	runTestGetMetadataAusAuid(AUID_1, null, null, GOOD_USER, GOOD_PWD,
-	    HttpStatus.OK));
+    verifyMetadata(au1Items, null, runTestGetMetadataAusAuid(AUID_1, null, null,
+	GOOD_USER, GOOD_PWD, HttpStatus.OK));
 
     if (logger.isDebugEnabled()) logger.debug("Done.");
   }
@@ -1663,37 +1650,45 @@ public class TestApiControllers extends SpringLockssTestCase {
   /**
    * Verifies that the passed metadata matches the expected items.
    * 
-   * @param expectedPage
-   *          An Integer with the expected metadata page returned.
-   * @param expectedLimit
-   *          An Integer with the expected maximum number of AU metadata items
-   *          returned.
    * @param expectedItems
    *          A List<ItemMetadata> with the expected items to found.
+   * @param expectedContinuationToken
+   *          An ItemMetadataContinuationToken with the expected continuation
+   *          token returned.
    * @param auMetadata
    *          A AuMetadataPageInfo with the Archival Unit metadata to be
    *          verified.
    */
-  private void verifyMetadata(Integer expectedPage, Integer expectedLimit,
-      List<ItemMetadata> expectedItems, AuMetadataPageInfo auMetadata) {
+  private void verifyMetadata(List<ItemMetadata> expectedItems,
+      ItemMetadataContinuationToken expectedContinuationToken,
+      AuMetadataPageInfo auMetadata) {
     if (logger.isDebugEnabled()) {
-      logger.debug("expectedPage = " + expectedPage);
-      logger.debug("expectedLimit = " + expectedLimit);
       logger.debug("expectedItems = " + expectedItems);
+      logger.debug("expectedContinuationToken = " + expectedContinuationToken);
       logger.debug("auMetadata = " + auMetadata);
     }
 
-    expectedPage = expectedPage == null ? 1 : expectedPage;
-    expectedLimit = expectedLimit == null ? 50 : expectedLimit;
-
     PageInfo pageInfo = auMetadata.getPageInfo();
     assertNull(pageInfo.getTotalCount());
-    assertEquals(expectedPage, pageInfo.getCurrentPage());
-    assertEquals(expectedLimit, pageInfo.getResultsPerPage());
-    assertTrue(pageInfo.getCurLink().startsWith(getTestUrlTemplate("")));
-    assertTrue(pageInfo.getNextLink().startsWith(getTestUrlTemplate("")));
+    assertEquals(expectedItems.size(), pageInfo.getResultsPerPage().intValue());
 
-    assertEquals(expectedItems, auMetadata.getItems());
+    if (expectedContinuationToken != null) {
+      assertEquals(expectedContinuationToken.toWebResponseContinuationToken(),
+	  pageInfo.getContinuationToken());
+      assertEquals(expectedContinuationToken.getLastItemMdItemSeq(),
+	  auMetadata.getItems().get(auMetadata.getItems().size()-1).getId());
+      assertTrue(pageInfo.getNextLink().startsWith(getTestUrlTemplate("")));
+    } else {
+      assertNull(pageInfo.getContinuationToken());
+    }
+
+    assertTrue(pageInfo.getCurLink().startsWith(getTestUrlTemplate("")));
+    assertEquals(expectedItems.size(), auMetadata.getItems().size());
+
+    for (int i = 0; i < expectedItems.size(); i++) {
+      expectedItems.get(i).setId(auMetadata.getItems().get(i).getId());
+      assertEquals(expectedItems.get(i), auMetadata.getItems().get(i));
+    }
   }
 
   /**

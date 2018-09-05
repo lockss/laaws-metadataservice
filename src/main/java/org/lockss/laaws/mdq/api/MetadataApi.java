@@ -33,7 +33,7 @@ package org.lockss.laaws.mdq.api;
 
 import io.swagger.annotations.*;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
-import org.lockss.laaws.mdq.model.ItemMetadata;
+import org.lockss.metadata.ItemMetadata;
 import org.lockss.spring.status.SpringLockssBaseApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -89,19 +89,20 @@ public interface MetadataApi extends SpringLockssBaseApi {
 
   /**
    * Provides the full metadata stored for an AU given the AU identifier or a
-   * pageful of the metadata defined by the page index and size.
+   * pageful of the metadata defined by the continuation token and size.
    * 
    * @param auid
    *          A String with the AU identifier.
-   * @param page
-   *          An Integer with the index of the page to be returned.
    * @param limit
    *          An Integer with the maximum number of AU metadata items to be
    *          returned.
+   * @param continuationToken
+   *          A String with the continuation token of the next page of metadata
+   *          to be returned.
    * @return a {@code ResponseEntity<AuMetadataPageInfo>} with the metadata.
    */
   @ApiOperation(value = "Get the metadata stored for an AU", notes =
-      "Get the full metadata stored for an AU given the AU identifier or a pageful of the metadata defined by the page index and size",
+      "Get the full metadata stored for an AU given the AU identifier or a pageful of the metadata defined by the continuation token and size",
       response = AuMetadataPageInfo.class,
       authorizations = {@Authorization(value = "basicAuth")},
       tags={ "metadata", })
@@ -124,12 +125,12 @@ public interface MetadataApi extends SpringLockssBaseApi {
       @ApiParam(value =
       "The identifier of the AU for which the metadata is requested",
       required=true ) @PathVariable("auid") String auid,
-      @ApiParam(value = "The identifier of the page of metadata to be returned",
-      defaultValue = "1") @RequestParam(value = "page", required = false,
-      defaultValue="1") Integer page,
       @ApiParam(value = "The number of items per page", defaultValue = "50")
       @RequestParam(value = "limit", required = false, defaultValue="50")
-      Integer limit) {
+      Integer limit,
+      @ApiParam(value = "The continuation token of the next page of metadata to be returned")
+      @RequestParam(value = "continuationToken", required = false)
+      String continuationToken) {
     return new ResponseEntity<AuMetadataPageInfo>(HttpStatus.NOT_IMPLEMENTED);
   }
 

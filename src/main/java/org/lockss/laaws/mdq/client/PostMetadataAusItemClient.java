@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2017 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2017-2018 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,7 +28,7 @@
 package org.lockss.laaws.mdq.client;
 
 import java.net.URI;
-import org.lockss.laaws.mdq.model.ItemMetadata;
+import org.lockss.metadata.ItemMetadata;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;

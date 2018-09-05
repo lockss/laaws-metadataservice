@@ -33,16 +33,18 @@ package org.lockss.laaws.mdq.api;
 
 import io.swagger.annotations.ApiParam;
 import java.security.AccessControlException;
-import java.util.List;
+import java.util.ConcurrentModificationException;
 import javax.servlet.http.HttpServletRequest;
 import org.lockss.app.LockssApp;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
-import org.lockss.laaws.mdq.model.ItemMetadata;
 import org.lockss.laaws.mdq.model.PageInfo;
+import org.lockss.laaws.status.model.ApiStatus;
+import org.lockss.metadata.ItemMetadata;
+import org.lockss.metadata.ItemMetadataContinuationToken;
+import org.lockss.metadata.ItemMetadataPage;
 import org.lockss.metadata.extractor.MetadataExtractorManager;
 import org.lockss.spring.auth.Roles;
 import org.lockss.spring.auth.SpringAuthenticationFilter;
-import org.lockss.laaws.status.model.ApiStatus;
 import org.lockss.spring.status.SpringLockssBaseApiController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,15 +113,16 @@ public class MetadataApiController extends SpringLockssBaseApiController
 
   /**
    * Provides the full metadata stored for an AU given the AU identifier or a
-   * pageful of the metadata defined by the page index and size.
+   * pageful of the metadata defined by the continuation token and size.
    * 
    * @param auid
    *          A String with the AU identifier.
-   * @param page
-   *          An Integer with the index of the page to be returned.
    * @param limit
    *          An Integer with the maximum number of AU metadata items to be
    *          returned.
+   * @param continuationToken
+   *          A String with the continuation token of the next page of metadata
+   *          to be returned.
    * @return a {@code ResponseEntity<AuMetadataPageInfo>} with the metadata.
    */
   @Override
@@ -127,24 +130,17 @@ public class MetadataApiController extends SpringLockssBaseApiController
   produces = { "application/json" },
   method = RequestMethod.GET)
   public ResponseEntity<?> getMetadataAusAuid(@PathVariable("auid") String auid,
-      @RequestParam(value = "page", required = false, defaultValue="1")
-      Integer page,
       @RequestParam(value = "limit", required = false, defaultValue="50")
-      Integer limit) {
+      Integer limit,
+      @RequestParam(value = "continuationToken", required = false)
+      String continuationToken) {
     if (logger.isDebugEnabled()) {
       logger.debug("auid = " + auid);
-      logger.debug("page = " + page);
       logger.debug("limit = " + limit);
+      logger.debug("continuationToken = " + continuationToken);
     }
 
-    if (page == null || page.intValue() <= 0) {
-      String message =
-	  "Index of the requested page must be a positive integer; it was '"
-	      + page + "'";
-	logger.warn(message);
-	return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
-    }
-
+    // Validation of requested page size.
     if (limit == null || limit.intValue() < 0) {
       String message =
 	  "Limit of requested items must be a non-negative integer; it was '"
@@ -153,35 +149,56 @@ public class MetadataApiController extends SpringLockssBaseApiController
 	return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
     }
 
+    // Parse the request continuation token.
+    ItemMetadataContinuationToken imct = null;
+
     try {
-      PageInfo pi = new PageInfo();
+      imct = new ItemMetadataContinuationToken(continuationToken);
+    } catch (IllegalArgumentException iae) {
+      String message =
+	  "Invalid continuation token '" + continuationToken + "'";
+      logger.warn(message, iae);
+      return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
+    }
 
-      String curLink = request.getRequestURL().toString() + "?page=" + page
-	  + "&limit=" + limit;
-      String nextLink = request.getRequestURL().toString()
-	  + "?page=" + (page + 1) + "&limit=" + limit;
-
-      if (logger.isDebugEnabled()) {
-	logger.debug("curLink = " + curLink);
-	logger.debug("nextLink = " + nextLink);
-      }
-
-      pi.setCurLink(curLink);
-      pi.setNextLink(nextLink);
-      pi.setCurrentPage(page);
-      pi.setResultsPerPage(limit);
+    try {
+      // Get the pageful of results.
+      ItemMetadataPage itemsPage = getMetadataExtractorManager()
+	  .getAuMetadataDetail(auid, limit, imct);
+      if (logger.isDebugEnabled()) logger.debug("itemsPage = " + itemsPage);
 
       AuMetadataPageInfo result = new AuMetadataPageInfo();
+      PageInfo pi = new PageInfo();
       result.setPageInfo(pi);
 
-      List<ItemMetadata> items =
-	  getMetadataExtractorManager().getAuMetadataDetail(auid, page, limit);
-      if (logger.isDebugEnabled()) logger.debug("items = " + items);
+      String curLink = request.getRequestURL().toString() + "?limit=" + limit
+	  + "&continuationToken=" + continuationToken;
+      if (logger.isDebugEnabled()) logger.debug("curLink = " + curLink);
 
-      result.setItems(items);
+      pi.setCurLink(curLink);
+      pi.setResultsPerPage(itemsPage.getItems().size());
+
+      // Check whether there is a response continuation token.
+      if (itemsPage.getContinuationToken() != null) {
+	// Yes.
+	pi.setContinuationToken(itemsPage.getContinuationToken()
+	    .toWebResponseContinuationToken());
+
+	String nextLink = request.getRequestURL().toString() + "?limit=" + limit
+	    + "&continuationToken=" + pi.getContinuationToken();
+	if (logger.isDebugEnabled()) logger.debug("nextLink = " + nextLink);
+
+	pi.setNextLink(nextLink);
+      }
+
+      result.setItems(itemsPage.getItems());
       if (logger.isDebugEnabled()) logger.debug("result = " + result);
 
       return new ResponseEntity<AuMetadataPageInfo>(result, HttpStatus.OK);
+    } catch (ConcurrentModificationException cme) {
+      String message = "Pagination invalid for auid '" + auid + "'";
+      logger.warn(message, cme);
+      return new ResponseEntity<String>(message, HttpStatus.CONFLICT);
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid '" + auid + "'";
       logger.warn(message, iae);
