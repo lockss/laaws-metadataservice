@@ -39,6 +39,7 @@ import org.lockss.app.LockssApp;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.PageInfo;
 import org.lockss.laaws.status.model.ApiStatus;
+import org.lockss.log.L4JLogger;
 import org.lockss.metadata.ItemMetadata;
 import org.lockss.metadata.ItemMetadataContinuationToken;
 import org.lockss.metadata.ItemMetadataPage;
@@ -46,8 +47,6 @@ import org.lockss.metadata.extractor.MetadataExtractorManager;
 import org.lockss.spring.auth.Roles;
 import org.lockss.spring.auth.SpringAuthenticationFilter;
 import org.lockss.spring.status.SpringLockssBaseApiController;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,8 +63,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MetadataApiController extends SpringLockssBaseApiController
     implements MetadataApi {
-  private static final Logger logger =
-      LoggerFactory.getLogger(MetadataApiController.class);
+  private static final L4JLogger log = L4JLogger.getLogger();
 
   @Autowired
   private HttpServletRequest request;
@@ -84,28 +82,27 @@ public class MetadataApiController extends SpringLockssBaseApiController
   method = RequestMethod.DELETE)
   public ResponseEntity<?> deleteMetadataAusAuid(
       @PathVariable("auid") String auid) {
-    if (logger.isDebugEnabled()) logger.debug("auid = " + auid);
+    log.debug2("auid = {}", () -> auid);
 
     // Check authorization.
     try {
       SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
     } catch (AccessControlException ace) {
-      logger.warn(ace.getMessage());
+      log.warn(ace.getMessage());
       return new ResponseEntity<String>(ace.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     try {
       Integer count = getMetadataExtractorManager().deleteAu(auid);
-      if (logger.isDebugEnabled()) logger.debug("count = " + count);
-
+      log.trace("count = {}", () -> count);
       return new ResponseEntity<Integer>(count, HttpStatus.OK);
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid '" + auid + "'";
-      logger.warn(message, iae);
+      log.warn(message, iae);
       return new ResponseEntity<String>(message, HttpStatus.NOT_FOUND);
     } catch (Exception e) {
       String message = "Cannot deleteMetadataAusAuid() for auid '" + auid + "'";
-      logger.warn(message, e);
+      log.error(message, e);
       return new ResponseEntity<String>(message,
 	  HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -134,19 +131,16 @@ public class MetadataApiController extends SpringLockssBaseApiController
       Integer limit,
       @RequestParam(value = "continuationToken", required = false)
       String continuationToken) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("auid = " + auid);
-      logger.debug("limit = " + limit);
-      logger.debug("continuationToken = " + continuationToken);
-    }
+    log.debug2("auid = {}", () -> auid);
+    log.debug2("limit = {}", () -> limit);
+    log.debug2("continuationToken = {}", () -> continuationToken);
 
     // Validation of requested page size.
     if (limit == null || limit.intValue() < 0) {
-      String message =
-	  "Limit of requested items must be a non-negative integer; it was '"
-	      + limit + "'";
-	logger.warn(message);
-	return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
+      String message = "Limit of requested items must be a non-negative "
+	  + "integer; it was '" + limit + "'";
+      log.warn(message);
+      return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
     }
 
     // Parse the request continuation token.
@@ -155,9 +149,8 @@ public class MetadataApiController extends SpringLockssBaseApiController
     try {
       imct = new ItemMetadataContinuationToken(continuationToken);
     } catch (IllegalArgumentException iae) {
-      String message =
-	  "Invalid continuation token '" + continuationToken + "'";
-      logger.warn(message, iae);
+      String message = "Invalid continuation token '" + continuationToken + "'";
+      log.warn(message, iae);
       return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
     }
 
@@ -165,17 +158,22 @@ public class MetadataApiController extends SpringLockssBaseApiController
       // Get the pageful of results.
       ItemMetadataPage itemsPage = getMetadataExtractorManager()
 	  .getAuMetadataDetail(auid, limit, imct);
-      if (logger.isDebugEnabled()) logger.debug("itemsPage = " + itemsPage);
+      log.trace("itemsPage = {}", () -> itemsPage);
 
       AuMetadataPageInfo result = new AuMetadataPageInfo();
       PageInfo pi = new PageInfo();
       result.setPageInfo(pi);
 
-      String curLink = request.getRequestURL().toString() + "?limit=" + limit
-	  + "&continuationToken=" + continuationToken;
-      if (logger.isDebugEnabled()) logger.debug("curLink = " + curLink);
+      StringBuffer curLinkBuffer = new StringBuffer(
+	  request.getRequestURL().toString()).append("?limit=").append(limit);
 
-      pi.setCurLink(curLink);
+      if (continuationToken != null) {
+	curLinkBuffer.append("&continuationToken=").append(continuationToken);
+      }
+
+      log.trace("curLink = {}", () -> curLinkBuffer.toString());
+
+      pi.setCurLink(curLinkBuffer.toString());
       pi.setResultsPerPage(itemsPage.getItems().size());
 
       // Check whether there is a response continuation token.
@@ -186,27 +184,27 @@ public class MetadataApiController extends SpringLockssBaseApiController
 
 	String nextLink = request.getRequestURL().toString() + "?limit=" + limit
 	    + "&continuationToken=" + pi.getContinuationToken();
-	if (logger.isDebugEnabled()) logger.debug("nextLink = " + nextLink);
+	log.trace("nextLink = {}", () -> nextLink);
 
 	pi.setNextLink(nextLink);
       }
 
       result.setItems(itemsPage.getItems());
-      if (logger.isDebugEnabled()) logger.debug("result = " + result);
 
+      log.debug2("result = {}", () -> result);
       return new ResponseEntity<AuMetadataPageInfo>(result, HttpStatus.OK);
     } catch (ConcurrentModificationException cme) {
       String message =
 	  "Pagination conflict for auid '" + auid + "': " + cme.getMessage();
-      logger.warn(message, cme);
+      log.warn(message, cme);
       return new ResponseEntity<String>(message, HttpStatus.CONFLICT);
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid '" + auid + "'";
-      logger.warn(message, iae);
+      log.warn(message, iae);
       return new ResponseEntity<String>(message, HttpStatus.NOT_FOUND);
     } catch (Exception e) {
       String message = "Cannot getMetadataAusAuid() for auid '" + auid + "'";
-      logger.warn(message, e);
+      log.error(message, e);
       return new ResponseEntity<String>(message,
 	  HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -226,24 +224,23 @@ public class MetadataApiController extends SpringLockssBaseApiController
   method = RequestMethod.POST)
   public ResponseEntity<?> postMetadataAusItem(
       @ApiParam(required=true) @RequestBody ItemMetadata item) {
-    if (logger.isDebugEnabled()) logger.debug("item = " + item);
+    log.debug2("item = {}", () -> item);
 
     // Check authorization.
     try {
       SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
     } catch (AccessControlException ace) {
-      logger.warn(ace.getMessage());
+      log.warn(ace.getMessage());
       return new ResponseEntity<String>(ace.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     try {
       Long mdItemSeq = getMetadataExtractorManager().storeAuItemMetadata(item);
-      if (logger.isDebugEnabled()) logger.debug("mdItemSeq = " + mdItemSeq);
-
+      log.debug2("mdItemSeq = {}", () -> mdItemSeq);
       return new ResponseEntity<Long>(mdItemSeq, HttpStatus.OK);
     } catch (Exception e) {
       String message = "Cannot postMetadataAusItem() for item '" + item + "'";
-      logger.warn(message, e);
+      log.error(message, e);
       return new ResponseEntity<String>(message,
 	  HttpStatus.INTERNAL_SERVER_ERROR);
     }

@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Board of Trustees of Leland Stanford Jr. University,
+# Copyright (c) 2016-2018 Board of Trustees of Leland Stanford Jr. University,
 # all rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,25 +22,29 @@
 # be used in advertising or otherwise to promote the sale, use or other dealings
 # in this Software without prior written authorization from Stanford University.
 #
-# initialize root logger with level ERROR for stdout and fout
-log4j.rootLogger=ERROR,CONSOLE,FOUT
+# Don't make local changes in this file; put local settings in lockss.opt
 
-# set the log level for these components
-log4j.logger.io.swagger=ERROR
-log4j.logger.org.lockss.laaws=INFO
-log4j.logger.org.lockss.laaws.mdq=DEBUG
+#org.lockss.log.default.level=debug
 
-# add a ConsoleAppender to the logger stdout to write to the console
-log4j.appender.CONSOLE=org.apache.log4j.ConsoleAppender
-log4j.appender.CONSOLE.layout=org.apache.log4j.PatternLayout
-log4j.appender.CONSOLE.layout.ConversionPattern=%d{ISO8601} %-5p %C{1}.%M() [%t] %m%n
+org.lockss.ui.access.ip.logForbidden=true
+org.lockss.proxy.access.ip.logForbidden=true
 
-# add a FileAppender to the logger fout
-log4j.appender.FOUT=org.apache.log4j.RollingFileAppender
-# create a log file
-log4j.appender.FOUT.File=logs/mdq.log
-log4j.appender.FOUT.Append=true
-log4j.appender.FOUT.layout=org.apache.log4j.PatternLayout
-log4j.appender.FOUT.layout.ConversionPattern=%d{ISO8601} %-5p %C{1}.%M() [%t] %m%n
-log4j.appender.FOUT.MaxFileSize=100MB
-log4j.appender.FOUT.MaxBackupIndex=10
+org.lockss.config.reloadInterval = 5m
+org.lockss.ui.allowPluginConfig=true
+
+org.lockss.ui.start=yes
+org.lockss.proxy.start=no
+
+# UI username-passwd = lockss-u/lockss-p
+org.lockss.platform.ui.username=lockss-u
+org.lockss.platform.ui.password=SHA1:ac4fc8fa9930a24c8d002d541c37ca993e1bc40f
+
+# UI username-passwd = content-admin/I'mContentAdmin
+org.lockss.ui.users.1.user=content-admin
+org.lockss.ui.users.1.password=SHA1:3edf8dd2b96a6a344bf70a2cc7794a3baffbbc7c
+org.lockss.ui.users.1.roles=contentAdminRole
+
+# UI username-passwd = access-content/I'mAccessContent
+org.lockss.ui.users.2.user=access-content
+org.lockss.ui.users.2.password=SHA1:3509beee5279f479d257178e8a0eddab4301d75a
+org.lockss.ui.users.2.roles=accessContentRole

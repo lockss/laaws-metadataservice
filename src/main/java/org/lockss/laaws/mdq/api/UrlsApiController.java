@@ -42,8 +42,7 @@ import org.lockss.app.LockssDaemon;
 import org.lockss.daemon.OpenUrlResolver;
 import org.lockss.daemon.OpenUrlResolver.OpenUrlInfo;
 import org.lockss.laaws.mdq.model.UrlInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.lockss.log.L4JLogger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,8 +55,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 public class UrlsApiController implements UrlsApi {
-  private static final Logger logger =
-      LoggerFactory.getLogger(UrlsApiController.class);
+  private static final L4JLogger log = L4JLogger.getLogger();
 
   /**
    * Provides the URL for a DOI given the DOI.
@@ -71,7 +69,7 @@ public class UrlsApiController implements UrlsApi {
   produces = { "application/json" },
   method = RequestMethod.GET)
   public ResponseEntity<?> getUrlsDoi(@RequestParam("doi") String doi) {
-    if (logger.isDebugEnabled()) logger.debug("doi = " + doi);
+    log.debug2("doi = {}", () -> doi);
 
     try {
       // Build an OpenURL query.
@@ -81,7 +79,7 @@ public class UrlsApiController implements UrlsApi {
       return new ResponseEntity<UrlInfo>(resolveOpenUrl(params), HttpStatus.OK);
     } catch (Exception e) {
       String message = "Cannot getUrlsDoi() for doi = '" + doi + "'";
-      logger.warn(message, e);
+      log.error(message, e);
       return new ResponseEntity<String>(message,
 	  HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -100,7 +98,7 @@ public class UrlsApiController implements UrlsApi {
   method = RequestMethod.GET)
   public ResponseEntity<?> getUrlsOpenUrl(
       @RequestParam("params") List<String> params) {
-    if (logger.isDebugEnabled()) logger.debug("params = " + params);
+    log.debug2("params = {}", () -> params);
 
     try {
       // Build the OpenURL query.
@@ -115,14 +113,13 @@ public class UrlsApiController implements UrlsApi {
 	}
       }
 
-      if (logger.isDebugEnabled())
-	logger.debug("openUrlParams = " + openUrlParams);
+      log.trace("openUrlParams = {}", () -> openUrlParams);
 
       return new ResponseEntity<UrlInfo>(resolveOpenUrl(openUrlParams),
 	  HttpStatus.OK);
     } catch (Exception e) {
       String message = "Cannot getUrlsOpenUrl() for params = '" + params + "'";
-      logger.warn(message, e);
+      log.error(message, e);
       return new ResponseEntity<String>(message,
 	  HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -136,7 +133,7 @@ public class UrlsApiController implements UrlsApi {
    * @return a UrlInfo with the results.
    */
   private UrlInfo resolveOpenUrl(Map<String, String> params) {
-    if (logger.isDebugEnabled()) logger.debug("params = " + params);
+    log.debug2("params = {}", () -> params);
 
     // The unique URLs that result from performing the query.
     Set<String> urls = new HashSet<String>();
@@ -145,17 +142,17 @@ public class UrlsApiController implements UrlsApi {
     OpenUrlInfo openUrlInfo =
 	new OpenUrlResolver(LockssDaemon.getLockssDaemon())
 	.resolveOpenUrl(params);
-    if (logger.isDebugEnabled()) logger.debug("openUrlInfo = " + openUrlInfo);
+    log.trace("openUrlInfo = {}", () -> openUrlInfo);
 
     // Loop through all the results.
     Iterator<OpenUrlInfo> iterator = openUrlInfo.iterator();
 
     while (iterator.hasNext()) {
       OpenUrlInfo next = iterator.next();
-      if (logger.isDebugEnabled()) logger.debug("next = " + next);
+      log.trace("next = {}", () -> next);
 
       String url = next.getResolvedUrl();
-      if (logger.isDebugEnabled()) logger.debug("url = " + url);
+      log.trace("url = {}", () -> url);
 
       if (url != null && !"null".equalsIgnoreCase(url)) {
 	// Accumulate the resulting unique URLs.
@@ -163,11 +160,10 @@ public class UrlsApiController implements UrlsApi {
       }
     }
 
-    if (logger.isDebugEnabled()) logger.debug("urls = " + urls);
+    log.trace("urls = {}", () -> urls);
 
     UrlInfo result = new UrlInfo(params, new ArrayList<String>(urls));
-    if (logger.isDebugEnabled()) logger.debug("result = " + result);
-
+    log.debug2("result = {}", () -> result);
     return result;
   }
 }
