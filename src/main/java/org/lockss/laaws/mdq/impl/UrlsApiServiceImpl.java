@@ -29,7 +29,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-package org.lockss.laaws.mdq.api;
+package org.lockss.laaws.mdq.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,20 +41,18 @@ import java.util.Set;
 import org.lockss.app.LockssDaemon;
 import org.lockss.daemon.OpenUrlResolver;
 import org.lockss.daemon.OpenUrlResolver.OpenUrlInfo;
+import org.lockss.laaws.mdq.api.UrlsApiDelegate;
 import org.lockss.laaws.mdq.model.UrlInfo;
 import org.lockss.log.L4JLogger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 
 /**
- * Controller for access to URLs.
+ * Service for access to URLs.
  */
-@RestController
-public class UrlsApiController implements UrlsApi {
+@Service
+public class UrlsApiServiceImpl implements UrlsApiDelegate {
   private static final L4JLogger log = L4JLogger.getLogger();
 
   /**
@@ -65,10 +63,7 @@ public class UrlsApiController implements UrlsApi {
    * @return a {@code ResponseEntity<UrlInfo>} with the URL information.
    */
   @Override
-  @RequestMapping(value = "/urls/doi",
-  produces = { "application/json" },
-  method = RequestMethod.GET)
-  public ResponseEntity<?> getUrlsDoi(@RequestParam("doi") String doi) {
+  public ResponseEntity<UrlInfo> getUrlsDoi(String doi) {
     log.debug2("doi = {}", () -> doi);
 
     try {
@@ -80,8 +75,7 @@ public class UrlsApiController implements UrlsApi {
     } catch (Exception e) {
       String message = "Cannot getUrlsDoi() for doi = '" + doi + "'";
       log.error(message, e);
-      return new ResponseEntity<String>(message,
-	  HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -93,11 +87,7 @@ public class UrlsApiController implements UrlsApi {
    * @return a {@code ResponseEntity<UrlInfo>} with the URL information.
    */
   @Override
-  @RequestMapping(value = "/urls/openurl",
-  produces = { "application/json" },
-  method = RequestMethod.GET)
-  public ResponseEntity<?> getUrlsOpenUrl(
-      @RequestParam("params") List<String> params) {
+  public ResponseEntity<UrlInfo> getUrlsOpenUrl(List<String> params) {
     log.debug2("params = {}", () -> params);
 
     try {
@@ -120,8 +110,7 @@ public class UrlsApiController implements UrlsApi {
     } catch (Exception e) {
       String message = "Cannot getUrlsOpenUrl() for params = '" + params + "'";
       log.error(message, e);
-      return new ResponseEntity<String>(message,
-	  HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -162,7 +151,9 @@ public class UrlsApiController implements UrlsApi {
 
     log.trace("urls = {}", () -> urls);
 
-    UrlInfo result = new UrlInfo(params, new ArrayList<String>(urls));
+    UrlInfo result = new UrlInfo();
+    result.setParams(params);
+    result.setUrls(new ArrayList<String>(urls));
     log.debug2("result = {}", () -> result);
     return result;
   }

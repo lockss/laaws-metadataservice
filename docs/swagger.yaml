@@ -28,49 +28,51 @@
 #
 swagger: "2.0"
 info:
-  description: "API of Metadata Service for LAAWS"
+  title: "LOCKSS Metadata Service REST API"
   version: "1.0.0"
-  title: "LAAWS Metadata Service API"
+  description: "API of the LOCKSS Metadata REST Service"
   termsOfService: "http://www.lockss.org/terms/"
   contact:
     name: "LOCKSS Support"
     url: "http://www.lockss.org/"
-    email: "support@lockss.org"
+    email: "lockss-support@lockss.org"
   license:
-    name: "Modified BSD License"
-    url: "http://www.lockss.org/support/open-source-license/"
+    name: "BSD-3-Clause"
+    url: "https://www.lockss.org/support/open-source-license/"
 host: "laaws.lockss.org:443"
 basePath: "/"
 tags:
-- name: metadata
-  description: "Operations related to metadata"
-- name: urls
-  description: "Operations that return URLs"
+  - name: Default
+    description: Default section
+  - name: metadata
+    description: "Operations related to metadata"
+  - name: urls
+    description: "Operations that return URLs"
 schemes:
-- "https"
+  - "https"
 produces:
-- "application/json"
+  - "application/json"
 security:
-- basicAuth: []
+  - basicAuth: []
 paths:
   /metadata/aus:
     post:
       tags:
-      - "metadata"
+        - "metadata"
       summary: "Store the metadata for an AU item"
       description: "Store the metadata for an item belonging to an AU"
       operationId: "postMetadataAusItem"
       consumes:
-      - "application/json"
+        - "application/json"
       produces:
-      - "application/json"
+        - "application/json"
       parameters:
-      - name: "item"
-        in: "body"
-        description: "The metadata of the AU item to be stored"
-        required: true
-        schema:
-          $ref: "#/definitions/itemMetadata"
+        - name: "item"
+          in: "body"
+          description: "The metadata of the AU item to be stored"
+          required: true
+          schema:
+            $ref: "#/definitions/itemMetadata"
       responses:
         200:
           description: "The key under which the metadata of the AU item has\
@@ -78,142 +80,146 @@ paths:
           schema:
             type: "integer"
             format: "int64"
+        400:
+          description: "Bad Request"
         401:
-          description: "Unauthorized request"
+          description: "Unauthorized"
         403:
-          description: "Forbidden request"
+          description: "Forbidden"
+        415:
+          description: Unsupported Media Type
         500:
-          description: "Internal server error"
-        503:
-          description: "Some or all of the system is not available"
+          description: "Internal Server Error"
   /metadata/aus/{auid}:
     get:
       tags:
-      - "metadata"
+        - "metadata"
       summary: "Get the metadata stored for an AU"
       description: "Get the full metadata stored for an AU given the AU\
         \ identifier or a pageful of the metadata defined by the continuation\
         \ token and size"
       operationId: "getMetadataAusAuid"
       produces:
-      - "application/json"
+        - "application/json"
       parameters:
-      - name: "auid"
-        in: "path"
-        description: "The identifier of the AU for which the metadata is\
-          \ requested"
-        required: true
-        type: "string"
-      - name: "limit"
-        in: "query"
-        required: false
-        type: "integer"
-        description: "The number of items per page"
-        default: 50
-      - name: "continuationToken"
-        in: "query"
-        required: false
-        type: "string"
-        description: "The continuation token of the next page of metadata to be\
-          \ returned"
+        - name: "auid"
+          in: "path"
+          description: "The identifier of the AU for which the metadata is\
+            \ requested"
+          required: true
+          type: "string"
+        - name: "limit"
+          in: "query"
+          required: false
+          type: "integer"
+          description: "The number of items per page"
+          default: 50
+        - name: "continuationToken"
+          in: "query"
+          required: false
+          type: "string"
+          description: "The continuation token of the next page of metadata to\
+            \ be returned"
       responses:
         200:
           description: "The metadata of the specified AU"
           schema:
             $ref: "#/definitions/auMetadataPageInfo"
+        400:
+          description: "Bad Request"
         401:
-          description: "Unauthorized request"
+          description: "Unauthorized"
         404:
-          description: "AU not found"
+          description: "Not found"
+        409:
+          description: "Conflict"
         500:
-          description: "Internal server error"
-        503:
-          description: "Some or all of the system is not available"
+          description: "Internal Server Error"
     delete:
       tags:
-      - "metadata"
+        - "metadata"
       summary: "Delete the metadata stored for an AU"
       description: "Delete the metadata stored for an AU given the AU identifier"
       operationId: "deleteMetadataAusAuid"
       produces:
-      - "application/json"
+        - "application/json"
       parameters:
-      - name: "auid"
-        in: "path"
-        description: "The identifier of the AU for which the metadata is to be\
-          \ deleted"
-        required: true
-        type: "string"
+        - name: "auid"
+          in: "path"
+          description: "The identifier of the AU for which the metadata is to\
+            \ be deleted"
+          required: true
+          type: "string"
       responses:
         200:
           description: "The number of deleted AU metadata items"
           schema:
             type: "integer"
+        400:
+          description: "Bad Request"
         401:
-          description: "Unauthorized request"
+          description: "Unauthorized"
         403:
-          description: "Forbidden request"
+          description: "Forbidden"
         404:
-          description: "AU not found"
+          description: "Not found"
         500:
-          description: "Internal server error"
-        503:
-          description: "Some or all of the system is not available"
+          description: "Internal Server Error"
   /urls/openurl:
     get:
       tags:
-      - "urls"
+        - "urls"
       summary: "Performs an OpenURL query"
       description: "Provides the URL that results from performing an OpenURL\
         \ query. With query parameters inline"
       operationId: "getUrlsOpenUrl"
       produces:
-      - "application/json"
+        - "application/json"
       parameters:
-      - name: "params"
-        in: "query"
-        description: "The OpenURL parameters"
-        required: true
-        type: "array"
-        items:
-          type: "string"
+        - name: "params"
+          in: "query"
+          description: "The OpenURL parameters"
+          required: true
+          type: "array"
+          items:
+            type: "string"
       responses:
         200:
           description: "The data related to the performed OpenURL query"
           schema:
             $ref: "#/definitions/urlInfo"
+        400:
+          description: "Bad Request"
         401:
-          description: "Unauthorized request"
+          description: "Unauthorized"
         500:
-          description: "Internal server error"
-        503:
-          description: "Some or all of the system is not available"
+          description: "Internal Server Error"
   /urls/doi:
     get:
       tags:
-      - "urls"
+        - "urls"
       summary: "Gets the URL for a DOI"
       description: "Provides the URL for a DOI given the DOI"
       operationId: "getUrlsDoi"
       produces:
-      - "application/json"
+        - "application/json"
       parameters:
-      - name: "doi"
-        in: "query"
-        required: true
-        type: "string"
-        description: "The DOI for which the URL is requested"
+        - name: "doi"
+          in: "query"
+          required: true
+          type: "string"
+          description: "The DOI for which the URL is requested"
       responses:
         200:
           description: "The URL for the specified DOI"
           schema:
             $ref: "#/definitions/urlInfo"
+        400:
+          description: "Bad Request"
         401:
-          description: "Unauthorized request"
+          description: "Unauthorized"
         500:
-          description: "Internal server error"
-        503:
-          description: "Some or all of the system is not available"
+          description: "Internal Server Error"
   /status:
     get:
       tags:
@@ -229,11 +235,9 @@ paths:
           schema:
             $ref: "#/definitions/apiStatus"
         401:
-          description: "Unauthorized request"
+          description: "Unauthorized"
         500:
-          description: "Internal server error"
-        503:
-          description: "Some or all of the system is not available"
+          description: "Internal Server Error"
 securityDefinitions:
   basicAuth:
     description: "HTTP Basic Authentication. Works over `HTTP` and `HTTPS`"
@@ -242,8 +246,8 @@ definitions:
   auMetadataPageInfo:
     type: "object"
     required:
-    - "items"
-    - "pageInfo"
+      - "items"
+      - "pageInfo"
     properties:
       items:
         type: "array"
@@ -262,6 +266,14 @@ definitions:
         additionalProperties:
           type: "string"
           description: "The scalar value of the metadata for the key"
+      setMap:
+        type: "object"
+        description: "The map of set-bound metadata elements for this item"
+        additionalProperties:
+          type: "array"
+          description: "The set value of the metadata for the key"
+          items:
+            type: "string"
       listMap:
         type: "object"
         description: "The map of listed metadata elements for this item"
@@ -282,11 +294,10 @@ definitions:
   pageInfo:
     type: "object"
     required:
-    - "totalCount"
-    - "resultsPerPage"
-    - "continuationToken"
-    - "curLink"
-    - "nextLink"
+      - "totalCount"
+      - "resultsPerPage"
+      - "continuationToken"
+      - "curLink"
     properties:
       totalCount:
         type: "integer"
@@ -309,8 +320,8 @@ definitions:
   urlInfo:
     type: "object"
     required:
-    - "params"
-    - "urls"
+      - "params"
+      - "urls"
     properties:
       params:
         type: "object"
@@ -327,8 +338,8 @@ definitions:
   apiStatus:
     type: "object"
     required:
-    - "version"
-    - "ready"
+      - "version"
+      - "ready"
     properties:
       version:
         type: "string"

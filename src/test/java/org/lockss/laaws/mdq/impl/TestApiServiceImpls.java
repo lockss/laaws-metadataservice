@@ -29,7 +29,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-package org.lockss.laaws.mdq.api;
+package org.lockss.laaws.mdq.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -75,12 +75,12 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * Test class for org.lockss.laaws.mdq.api.MetadataApiController and
- * org.lockss.laaws.mdq.api.UrlsApiController.
+ * Test class for org.lockss.laaws.mdq.api.MetadataApiServiceImpl and
+ * org.lockss.laaws.mdq.api.UrlsApiServiceImpl.
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class TestApiControllers extends SpringLockssTestCase {
+public class TestApiServiceImpls extends SpringLockssTestCase {
   private static final L4JLogger log = L4JLogger.getLogger();
 
   private static final String UI_PORT_CONFIGURATION_TEMPLATE =
@@ -186,7 +186,7 @@ public class TestApiControllers extends SpringLockssTestCase {
     log.debug2("port = {}", () -> port);
 
     // Set up the temporary directory where the test data will reside.
-    setUpTempDirectory(TestApiControllers.class.getCanonicalName());
+    setUpTempDirectory(TestApiServiceImpls.class.getCanonicalName());
 
     // Copy the necessary files to the test temporary directory.
     File srcTree = new File(new File("test"), "cache");
@@ -320,7 +320,7 @@ public class TestApiControllers extends SpringLockssTestCase {
     assertEquals(HttpStatus.OK, statusCode);
 
     String expectedBody = "{'swagger':'2.0',"
-	+ "'info':{'description':'API of Metadata Service for LAAWS'}}";
+	+ "'info':{'description':'API of the LOCKSS Metadata REST Service'}}";
 
     JSONAssert.assertEquals(expectedBody, successResponse.getBody(), false);
 

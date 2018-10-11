@@ -1,6 +1,6 @@
 {
   "CopyrightNotice":[
-  "Copyright (c) 2016-2017 Board of Trustees of Leland Stanford Jr. University,",
+  "Copyright (c) 2016-2018 Board of Trustees of Leland Stanford Jr. University,",
   "all rights reserved.",
   "",
   "Permission is hereby granted, free of charge, to any person obtaining a copy",
@@ -27,6 +27,8 @@
   "groupId":"org.lockss.laaws",
   "artifactId":"mdq",
   "artifactVersion":"1.0.0",
+  "basePackage":"org.lockss.laaws.mdq",
+  "configPackage":"org.lockss.laaws.mdq.config",
   "modelPackage":"org.lockss.laaws.mdq.model",
   "apiPackage":"org.lockss.laaws.mdq.api",
   "invokerPackage":"org.lockss.laaws.mdq",
@@ -34,5 +36,7 @@
   "dateLibrary":"java8",
   "title": "LAAWS Metadata Service",
   "java8": true,
-  "library":"spring-boot"
+  "delegatePattern": true,
+  "sourceFolder": "src/generated/java",
+  "swaggerDocketConfig": true
 }

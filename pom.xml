@@ -101,6 +101,86 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     </dependency>
   </dependencies>
 
+  <build>
+
+    <plugins>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/generated</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>io.swagger</groupId>
+        <artifactId>swagger-codegen-maven-plugin</artifactId>
+        <version>2.3.1</version>
+        <executions>
+          <execution>
+            <id>generate-swagger-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/docs/swagger.yaml</inputSpec>
+              <language>spring</language>
+              <output>${project.basedir}</output>
+              <configOptions>
+                <basePackage>org.lockss.laaws.mdq</basePackage>
+                <apiPackage>org.lockss.laaws.mdq.api</apiPackage>
+                <configPackage>org.lockss.laaws.mdq.config</configPackage>
+                <invokerPackage>org.lockss.laaws.mdq</invokerPackage>
+                <modelPackage>org.lockss.laaws.mdq.model</modelPackage>
+                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                <java8>true</java8>
+                <delegatePattern>true</delegatePattern>
+                <sourceFolder>src/generated/java</sourceFolder>
+                <swaggerDocketConfig>true</swaggerDocketConfig>
+              </configOptions>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.6.0</version>
+        <executions>
+          <execution>
+            <id>fix-generated-swagger-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <skip>${skipCodegenFix}</skip>
+              <workingDirectory>${project.basedir}</workingDirectory>
+              <executable>${project.basedir}/scripts/swaggerProcessing.sh</executable>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+
+  </build>
+
   <repositories>
     <repository>
       <id>lockss-legacy</id>

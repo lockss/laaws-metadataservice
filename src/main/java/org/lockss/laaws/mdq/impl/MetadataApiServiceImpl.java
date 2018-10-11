@@ -29,13 +29,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-package org.lockss.laaws.mdq.api;
+package org.lockss.laaws.mdq.impl;
 
-import io.swagger.annotations.ApiParam;
 import java.security.AccessControlException;
 import java.util.ConcurrentModificationException;
 import javax.servlet.http.HttpServletRequest;
 import org.lockss.app.LockssApp;
+import org.lockss.laaws.mdq.api.MetadataApiDelegate;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.PageInfo;
 import org.lockss.laaws.status.model.ApiStatus;
@@ -50,19 +50,14 @@ import org.lockss.spring.status.SpringLockssBaseApiController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 
 /**
- * Controller for access to the metadata of an AU.
+ * Service for access to the metadata of an AU.
  */
-@RestController
-public class MetadataApiController extends SpringLockssBaseApiController
-    implements MetadataApi {
+@Service
+public class MetadataApiServiceImpl extends SpringLockssBaseApiController
+    implements MetadataApiDelegate {
   private static final L4JLogger log = L4JLogger.getLogger();
 
   @Autowired
@@ -77,11 +72,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
    *         deleted.
    */
   @Override
-  @RequestMapping(value = "/metadata/aus/{auid}",
-  produces = { "application/json" },
-  method = RequestMethod.DELETE)
-  public ResponseEntity<?> deleteMetadataAusAuid(
-      @PathVariable("auid") String auid) {
+  public ResponseEntity<Integer> deleteMetadataAusAuid(String auid) {
     log.debug2("auid = {}", () -> auid);
 
     // Check authorization.
@@ -89,7 +80,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
       SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
     } catch (AccessControlException ace) {
       log.warn(ace.getMessage());
-      return new ResponseEntity<String>(ace.getMessage(), HttpStatus.FORBIDDEN);
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
 
     try {
@@ -99,12 +90,11 @@ public class MetadataApiController extends SpringLockssBaseApiController
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid '" + auid + "'";
       log.warn(message, iae);
-      return new ResponseEntity<String>(message, HttpStatus.NOT_FOUND);
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } catch (Exception e) {
       String message = "Cannot deleteMetadataAusAuid() for auid '" + auid + "'";
       log.error(message, e);
-      return new ResponseEntity<String>(message,
-	  HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -123,14 +113,8 @@ public class MetadataApiController extends SpringLockssBaseApiController
    * @return a {@code ResponseEntity<AuMetadataPageInfo>} with the metadata.
    */
   @Override
-  @RequestMapping(value = "/metadata/aus/{auid}",
-  produces = { "application/json" },
-  method = RequestMethod.GET)
-  public ResponseEntity<?> getMetadataAusAuid(@PathVariable("auid") String auid,
-      @RequestParam(value = "limit", required = false, defaultValue="50")
-      Integer limit,
-      @RequestParam(value = "continuationToken", required = false)
-      String continuationToken) {
+  public ResponseEntity<AuMetadataPageInfo> getMetadataAusAuid(String auid,
+      Integer limit, String continuationToken) {
     log.debug2("auid = {}", () -> auid);
     log.debug2("limit = {}", () -> limit);
     log.debug2("continuationToken = {}", () -> continuationToken);
@@ -140,7 +124,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
       String message = "Limit of requested items must be a non-negative "
 	  + "integer; it was '" + limit + "'";
       log.warn(message);
-      return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
     // Parse the request continuation token.
@@ -151,7 +135,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
     } catch (IllegalArgumentException iae) {
       String message = "Invalid continuation token '" + continuationToken + "'";
       log.warn(message, iae);
-      return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
     try {
@@ -197,16 +181,15 @@ public class MetadataApiController extends SpringLockssBaseApiController
       String message =
 	  "Pagination conflict for auid '" + auid + "': " + cme.getMessage();
       log.warn(message, cme);
-      return new ResponseEntity<String>(message, HttpStatus.CONFLICT);
+      return new ResponseEntity<>(HttpStatus.CONFLICT);
     } catch (IllegalArgumentException iae) {
       String message = "No Archival Unit found for auid '" + auid + "'";
       log.warn(message, iae);
-      return new ResponseEntity<String>(message, HttpStatus.NOT_FOUND);
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } catch (Exception e) {
       String message = "Cannot getMetadataAusAuid() for auid '" + auid + "'";
       log.error(message, e);
-      return new ResponseEntity<String>(message,
-	  HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -219,11 +202,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
    *         metadata.
    */
   @Override
-  @RequestMapping(value = "/metadata/aus",
-  produces = { "application/json" }, consumes = { "application/json" },
-  method = RequestMethod.POST)
-  public ResponseEntity<?> postMetadataAusItem(
-      @ApiParam(required=true) @RequestBody ItemMetadata item) {
+  public ResponseEntity<Long> postMetadataAusItem(ItemMetadata item) {
     log.debug2("item = {}", () -> item);
 
     // Check authorization.
@@ -231,7 +210,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
       SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
     } catch (AccessControlException ace) {
       log.warn(ace.getMessage());
-      return new ResponseEntity<String>(ace.getMessage(), HttpStatus.FORBIDDEN);
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
 
     try {
@@ -241,8 +220,7 @@ public class MetadataApiController extends SpringLockssBaseApiController
     } catch (Exception e) {
       String message = "Cannot postMetadataAusItem() for item '" + item + "'";
       log.error(message, e);
-      return new ResponseEntity<String>(message,
-	  HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
