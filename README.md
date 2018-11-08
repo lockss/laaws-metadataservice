@@ -83,7 +83,7 @@ link at
 ### Run the web service:
 `./scripts/runService`
 
-This will use port 49520. To use another port, edit the value of the
+This will use port 24650. To use another port, edit the value of the
 `server.port` property in file
 `src/main/resources/application.properties`.
 
@@ -92,12 +92,12 @@ The log is at `./logs/mdq.log`
 ### Build and run the web service:
 `./scripts/buildAndRunService`
 
-This will use port 49520. To use another port, edit the value of the
+This will use port 24650. To use another port, edit the value of the
 `server.port` property in file
 `src/main/resources/application.properties`.
 
 ### API is documented at:
-#### http://localhost:49520/swagger-ui.html
+#### http://localhost:24650/swagger-ui.html
 
 ### The status of the web service may be obtained at:
-#### http://localhost:49520/status
+#### http://localhost:24650/status

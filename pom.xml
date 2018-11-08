@@ -59,7 +59,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <!-- GitHub project does not match artifactId -->
     <gitProjectId>laaws-metadataservice</gitProjectId>
     <skipSpringBootRepackage>false</skipSpringBootRepackage>
-    <springServicePort>49520</springServicePort>
+    <springServicePort>24650</springServicePort>
     <!-- The main class to start by executing java -jar -->
     <start-class>org.lockss.laaws.mdq.MdqApplication</start-class>
     <skipDocker>false</skipDocker>
