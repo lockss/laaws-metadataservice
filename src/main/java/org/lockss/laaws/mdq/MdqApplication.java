@@ -61,7 +61,6 @@ public class MdqApplication extends BaseSpringBootApplication
   // which managers are initialized and started.
   private static final ManagerDesc[] myManagerDescs = {
     ACCOUNT_MANAGER_DESC,
-    CONFIG_DB_MANAGER_DESC,
     // start plugin manager after generic services
     PLUGIN_MANAGER_DESC,
     REPOSITORY_MANAGER_DESC,
