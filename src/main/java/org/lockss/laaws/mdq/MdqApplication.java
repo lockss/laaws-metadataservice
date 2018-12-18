@@ -36,6 +36,7 @@ import org.lockss.app.LockssApp;
 import org.lockss.app.LockssApp.AppSpec;
 import org.lockss.app.LockssApp.ManagerDesc;
 import org.lockss.app.LockssDaemon;
+import org.lockss.plugin.PluginManager;
 import org.lockss.metadata.extractor.MetadataExtractorManager;
 import org.lockss.metadata.extractor.job.JobDbManager;
 import org.lockss.metadata.extractor.job.JobManager;
@@ -117,6 +118,8 @@ public class MdqApplication extends BaseSpringBootApplication
       AppSpec spec = new AppSpec()
 	.setName("Metadata Query Service")
 	.setArgs(args)
+	.addAppConfig(LockssDaemon.PARAM_START_PLUGINS, "true")
+	.addAppConfig(PluginManager.PARAM_START_ALL_AUS, "false")
 	.setAppManagers(myManagerDescs);
       LockssApp.startStatic(LockssDaemon.class, spec);
     } else {
