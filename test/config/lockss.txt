@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2019 Board of Trustees of Leland Stanford Jr. University,
+# Copyright (c) 2016-2018 Board of Trustees of Leland Stanford Jr. University,
 # all rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -48,6 +48,3 @@ org.lockss.ui.users.1.roles=contentAdminRole
 org.lockss.ui.users.2.user=access-content
 org.lockss.ui.users.2.password=SHA1:3509beee5279f479d257178e8a0eddab4301d75a
 org.lockss.ui.users.2.roles=accessContentRole
-
-# Allow loading of Archival Units on demand.
-org.lockss.plugin.startAllAus=false
