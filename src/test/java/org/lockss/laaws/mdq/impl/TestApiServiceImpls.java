@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2000-2018 Board of Trustees of Leland Stanford Jr. University,
+Copyright (c) 2000-2019 Board of Trustees of Leland Stanford Jr. University,
 all rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -55,6 +55,7 @@ import org.lockss.metadata.MetadataDbManager;
 import org.lockss.metadata.extractor.MetadataExtractorManager;
 import org.lockss.plugin.Plugin;
 import org.lockss.plugin.definable.DefinablePlugin;
+import org.lockss.rs.RestUtil;
 import org.lockss.test.SpringLockssTestCase;
 import org.lockss.util.ListUtil;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -238,6 +239,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
 
     getSwaggerDocsTest();
     getStatusTest();
+    runMethodsNotAllowedUnAuthenticatedTest();
     getMetadataAusAuidUnAuthenticatedTest();
     deleteMetadataAusAuidUnAuthenticatedTest();
     postMetadataAusItemUnAuthenticatedTest();
@@ -267,6 +269,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
 
     getSwaggerDocsTest();
     getStatusTest();
+    runMethodsNotAllowedAuthenticatedTest();
     getMetadataAusAuidAuthenticatedTest();
     deleteMetadataAusAuidAuthenticatedTest();
     postMetadataAusItemAuthenticatedTest();
@@ -347,6 +350,169 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     JSONAssert.assertEquals(expectedBody, successResponse.getBody(), false);
 
     log.debug2("Done");
+  }
+
+  /**
+   * Runs the invalid method-related un-authenticated-specific tests.
+   */
+  private void runMethodsNotAllowedUnAuthenticatedTest() {
+    log.debug2("Invoked");
+
+    // No AUId: Spring reports it cannot find a match to an endpoint.
+    runTestMethodNotAllowed(null, null, HttpMethod.PUT, HttpStatus.NOT_FOUND);
+
+    // Empty AUId: Spring reports it cannot find a match to an endpoint.
+    runTestMethodNotAllowed(EMPTY_STRING, ANYBODY, HttpMethod.PATCH,
+	HttpStatus.NOT_FOUND);
+
+    // Unknown AUId.
+    runTestMethodNotAllowed(UNKNOWN_AUID, ANYBODY, HttpMethod.PUT,
+	HttpStatus.METHOD_NOT_ALLOWED);
+
+    runTestMethodNotAllowed(UNKNOWN_AUID, null, HttpMethod.PATCH,
+	HttpStatus.METHOD_NOT_ALLOWED);
+
+    // Good AUId.
+    runTestMethodNotAllowed(AUID_1, null, HttpMethod.PATCH,
+	HttpStatus.METHOD_NOT_ALLOWED);
+
+    runTestMethodNotAllowed(AUID_2, ANYBODY, HttpMethod.PUT,
+	HttpStatus.METHOD_NOT_ALLOWED);
+
+    runMethodsNotAllowedCommonTest();
+
+    log.debug2("Done");
+  }
+
+  /**
+   * Runs the invalid method-related authenticated-specific tests.
+   */
+  private void runMethodsNotAllowedAuthenticatedTest() {
+    log.debug2("Invoked");
+
+    // No AUId.
+    runTestMethodNotAllowed(null, ANYBODY, HttpMethod.PUT,
+	HttpStatus.UNAUTHORIZED);
+
+    // Empty AUId.
+    runTestMethodNotAllowed(EMPTY_STRING, null, HttpMethod.PATCH,
+	HttpStatus.UNAUTHORIZED);
+
+    // Unknown AUId.
+    runTestMethodNotAllowed(UNKNOWN_AUID, ANYBODY, HttpMethod.PUT,
+	HttpStatus.UNAUTHORIZED);
+
+    // No credentials.
+    runTestMethodNotAllowed(AUID_1, null, HttpMethod.PATCH,
+	HttpStatus.UNAUTHORIZED);
+
+    // Bad credentials.
+    runTestMethodNotAllowed(AUID_2, ANYBODY, HttpMethod.PUT,
+	HttpStatus.UNAUTHORIZED);
+
+    runMethodsNotAllowedCommonTest();
+
+    log.debug2("Done");
+  }
+
+  /**
+   * Runs the invalid method-related authentication-independent tests.
+   */
+  private void runMethodsNotAllowedCommonTest() {
+    log.debug2("Invoked");
+
+    // No AUId: Spring reports it cannot find a match to an endpoint.
+    runTestMethodNotAllowed(null, USER_ADMIN, HttpMethod.PUT,
+	HttpStatus.NOT_FOUND);
+
+    // Empty AUId: Spring reports it cannot find a match to an endpoint.
+    runTestMethodNotAllowed(EMPTY_STRING, CONTENT_ADMIN, HttpMethod.PATCH,
+	HttpStatus.NOT_FOUND);
+
+    // Unknown AUId.
+    runTestMethodNotAllowed(UNKNOWN_AUID, ACCESS_CONTENT, HttpMethod.PUT,
+	HttpStatus.METHOD_NOT_ALLOWED);
+
+    // Good AUId.
+    runTestMethodNotAllowed(AUID_2, USER_ADMIN, HttpMethod.PUT,
+	HttpStatus.METHOD_NOT_ALLOWED);
+
+    runTestMethodNotAllowed(AUID_1, CONTENT_ADMIN, HttpMethod.PATCH,
+	HttpStatus.METHOD_NOT_ALLOWED);
+
+    log.debug2("Done");
+  }
+
+  /**
+   * Performs an operation using a method that is not allowed.
+   * 
+   * @param auId
+   *          A String with the Archival Unit identifier.
+   * @param credentials
+   *          A Credentials with the request credentials.
+   * @param method
+   *          An HttpMethod with the request method.
+   * @param expectedStatus
+   *          An HttpStatus with the HTTP status of the result.
+   */
+  private void runTestMethodNotAllowed(String auId, Credentials credentials,
+      HttpMethod method, HttpStatus expectedStatus) {
+    log.debug2("auId = {}", auId);
+    log.debug2("credentials = {}", credentials);
+    log.debug2("method = {}", method);
+    log.debug2("expectedStatus = {}", expectedStatus);
+
+    // Get the test URL template.
+    String template = getTestUrlTemplate("/metadata/aus/{auid}");
+
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("auid", auId));
+
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
+    log.trace("uri = {}", uri);
+
+    // Initialize the request to the REST service.
+    RestTemplate restTemplate = new RestTemplate();
+
+    HttpEntity<String> requestEntity = null;
+
+    // Get the individual credentials elements.
+    String user = null;
+    String password = null;
+
+    if (credentials != null) {
+      user = credentials.getUser();
+      password = credentials.getPassword();
+    }
+
+    // Check whether there are any custom headers to be specified in the
+    // request.
+    if (user != null || password != null) {
+
+      // Initialize the request headers.
+      HttpHeaders headers = new HttpHeaders();
+
+      // Set up the authentication credentials, if necessary.
+      if (credentials != null) {
+	credentials.setUpBasicAuthentication(headers);
+      }
+
+      log.trace("requestHeaders = {}", () -> headers.toSingleValueMap());
+
+      // Create the request entity.
+      requestEntity = new HttpEntity<String>(null, headers);
+    }
+
+    // Make the request and get the response. 
+    ResponseEntity<String> response = new TestRestTemplate(restTemplate)
+	.exchange(uri, method, requestEntity, String.class);
+
+    // Get the response status.
+    HttpStatus statusCode = response.getStatusCode();
+    assertFalse(RestUtil.isSuccess(statusCode));
+    assertEquals(expectedStatus, statusCode);
   }
 
   /**
@@ -728,25 +894,13 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
 
     AuMetadataPageInfo result = null;
 
-    if (isSuccess(statusCode)) {
+    if (RestUtil.isSuccess(statusCode)) {
       result = new ObjectMapper().readValue(response.getBody(),
 	  AuMetadataPageInfo.class);
     }
 
     if (log.isDebug2Enabled()) log.debug2("result = {}", result);
     return result;
-  }
-
-  /**
-   * Provides an indication of whether a successful response has been obtained.
-   * 
-   * @param statusCode
-   *          An HttpStatus with the response status code.
-   * @return a boolean with <code>true</code> if a successful response has been
-   *         obtained, <code>false</code> otherwise.
-   */
-  private boolean isSuccess(HttpStatus statusCode) {
-    return statusCode.is2xxSuccessful();
   }
 
   /**
@@ -1020,7 +1174,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     HttpStatus statusCode = response.getStatusCode();
     assertEquals(expectedStatus, statusCode);
 
-    if (isSuccess(statusCode)) {
+    if (RestUtil.isSuccess(statusCode)) {
       // Verify the count of deleted items.
       assertEquals(expectedDeletedCount, Integer.parseInt(response.getBody()));
 
@@ -1459,7 +1613,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     assertEquals(expectedStatus, statusCode);
 
     // Verify.
-    if (isSuccess(statusCode)) {
+    if (RestUtil.isSuccess(statusCode)) {
       UrlInfo result = response.getBody();
 
       // Parameters.
@@ -1725,7 +1879,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     assertEquals(expectedStatus, statusCode);
 
     // Verify.
-    if (isSuccess(statusCode)) {
+    if (RestUtil.isSuccess(statusCode)) {
       UrlInfo result = response.getBody();
 
       // Parameters.
