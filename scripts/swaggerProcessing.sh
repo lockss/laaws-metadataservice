@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2018 Board of Trustees of Leland Stanford Jr. University,
+# Copyright (c) 2018-2019 Board of Trustees of Leland Stanford Jr. University,
 # all rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,7 +29,7 @@
 
 # Edit the ApiDelegate.
 API_DELEGATE=src/generated/java/org/lockss/laaws/mdq/api/MetadataApiDelegate.java
-sed -i "s/import org.lockss.laaws.mdq.model.ItemMetadata;/import org.lockss.metadata.ItemMetadata;/" $API_DELEGATE
+sed -i.backup "s/import org.lockss.laaws.mdq.model.ItemMetadata;/import org.lockss.metadata.ItemMetadata;/" $API_DELEGATE && rm $API_DELEGATE.backup
 
 TEMPFILE="$(mktemp)"
 sed -e "s/^}$//" $API_DELEGATE > "$TEMPFILE" && cat <<EOF_API_DELEGATE_EDIT >> "$TEMPFILE" && mv "$TEMPFILE" $API_DELEGATE
@@ -59,8 +59,8 @@ EOF_API_DELEGATE_EDIT
 
 # Edit the Api.
 API=src/generated/java/org/lockss/laaws/mdq/api/MetadataApi.java
-sed -i "s/import org.lockss.laaws.mdq.model.ItemMetadata;/import org.lockss.metadata.ItemMetadata;/" $API
-sed -i "s/public interface MetadataApi/public interface MetadataApi extends org.lockss.spring.status.SpringLockssBaseApi/" $API
+sed -i.backup "s/import org.lockss.laaws.mdq.model.ItemMetadata;/import org.lockss.metadata.ItemMetadata;/" $API && rm $API.backup
+sed -i.backup "s/public interface MetadataApi/public interface MetadataApi extends org.lockss.spring.status.SpringLockssBaseApi/" $API && rm $API.backup
 
 TEMPFILE="$(mktemp)"
 sed -e "s/^}$//" $API > "$TEMPFILE" && cat <<EOF_API_EDIT >> "$TEMPFILE" && mv "$TEMPFILE" $API
@@ -73,4 +73,4 @@ EOF_API_EDIT
 
 # Edit AuMetadataPageInfo.java.
 CLASS=src/generated/java/org/lockss/laaws/mdq/model/AuMetadataPageInfo.java
-sed -i "s/import org.lockss.laaws.mdq.model.ItemMetadata;/import org.lockss.metadata.ItemMetadata;/" $CLASS
+sed -i.backup "s/import org.lockss.laaws.mdq.model.ItemMetadata;/import org.lockss.metadata.ItemMetadata;/" $CLASS && rm $CLASS.backup
