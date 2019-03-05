@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2018 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2018-2019 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -35,8 +35,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+/**
+ * Client for the getStatus() operation.
+ */
 public class GetStatusClient extends BaseClient {
 
+  /**
+   * Entry point.
+   * 
+   * @param args A String[] with the command line arguments.
+   * @throws Exception if there are errors.
+   */
   public static void main(String[] args) throws Exception {
     String template = baseUri + "/status";
 

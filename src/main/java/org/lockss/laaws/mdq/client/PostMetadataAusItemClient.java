@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2017-2018 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2017-2019 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -40,6 +40,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class PostMetadataAusItemClient extends BaseClient {
 
+  /**
+   * Entry point.
+   * 
+   * @param args A String[] with the command line arguments.
+   * @throws Exception if there are errors.
+   */
   public static void main(String[] args) throws Exception {
     for (int i = 0; i < args.length; i++) {
       System.out.println("args[" + i + "] = " + args[i]);
