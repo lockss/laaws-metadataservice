@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2000-2018 Board of Trustees of Leland Stanford Jr. University,
+Copyright (c) 2000-2019 Board of Trustees of Leland Stanford Jr. University,
 all rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -44,6 +44,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.lockss.app.LockssDaemon;
 import org.lockss.config.Configuration;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.PageInfo;
@@ -55,6 +56,7 @@ import org.lockss.metadata.MetadataDbManager;
 import org.lockss.metadata.extractor.MetadataExtractorManager;
 import org.lockss.plugin.Plugin;
 import org.lockss.plugin.definable.DefinablePlugin;
+import org.lockss.test.MockArchivalUnit;
 import org.lockss.test.SpringLockssTestCase;
 import org.lockss.util.ListUtil;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -207,15 +209,37 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     // Populate the test database.
     MetadataExtractorManager mem = new MetadataExtractorManager(testDbManager);
     Plugin plugin = new DefinablePlugin();
+    plugin.initPlugin(LockssDaemon.getLockssDaemon());
 
-    mem.storeAuItemMetadataForTesting(ITEM_METADATA_1_1, plugin);
-    mem.storeAuItemMetadataForTesting(ITEM_METADATA_1_2, plugin);
-    mem.storeAuItemMetadataForTesting(ITEM_METADATA_1_3, plugin);
-    mem.storeAuItemMetadataForTesting(ITEM_METADATA_1_4, plugin);
-    mem.storeAuItemMetadataForTesting(ITEM_METADATA_1_5, plugin);
-    mem.storeAuItemMetadataForTesting(ITEM_METADATA_2_1, plugin);
+    populateMetadata(mem, plugin, ITEM_METADATA_1_1);
+    populateMetadata(mem, plugin, ITEM_METADATA_1_2);
+    populateMetadata(mem, plugin, ITEM_METADATA_1_3);
+    populateMetadata(mem, plugin, ITEM_METADATA_1_4);
+    populateMetadata(mem, plugin, ITEM_METADATA_1_5);
+    populateMetadata(mem, plugin, ITEM_METADATA_2_1);
 
     log.debug2("Done");
+  }
+
+  /**
+   * Populates in the database the metadata of one Archival Unit item.
+   * 
+   * @param mem
+   *          A MetadataExtractorManager with the metadata extractor manager.
+   * @param plugin
+   *          A Plugin with the Archival Unit plugin.
+   * @param itemMetadata
+   *          An ItemMetadata with the metadata of the item.
+   * @throws Exception
+   *           if there are problems.
+   */
+  private void populateMetadata(MetadataExtractorManager mem, Plugin plugin,
+      ItemMetadata itemMetadata) throws Exception {
+    String auId = itemMetadata.getScalarMap().get("au_id");
+    log.trace("auId = {}", auId);
+
+    mem.storeAuItemMetadataForTesting(itemMetadata,
+	new MockArchivalUnit(plugin, auId));
   }
 
   /**
