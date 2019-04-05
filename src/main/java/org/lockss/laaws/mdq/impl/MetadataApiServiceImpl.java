@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2000-2018 Board of Trustees of Leland Stanford Jr. University,
+Copyright (c) 2000-2019 Board of Trustees of Leland Stanford Jr. University,
 all rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -224,8 +224,6 @@ public class MetadataApiServiceImpl extends SpringLockssBaseApiController
     }
   }
 
-  private static final String API_VERSION = "1.0.0";
-
   /**
    * Provides the status object.
    * 
@@ -233,9 +231,8 @@ public class MetadataApiServiceImpl extends SpringLockssBaseApiController
    */
   @Override
   public ApiStatus getApiStatus() {
-    return new ApiStatus()
-      .setVersion(API_VERSION)
-      .setReady(LockssApp.getLockssApp().isAppRunning());
+    return new ApiStatus("swagger/swagger.yaml")
+	.setReady(LockssApp.getLockssApp().isAppRunning());
   }
 
   /**
