@@ -59,6 +59,7 @@ import org.lockss.plugin.definable.DefinablePlugin;
 import org.lockss.test.MockArchivalUnit;
 import org.lockss.test.SpringLockssTestCase;
 import org.lockss.util.ListUtil;
+import org.json.JSONObject;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -366,9 +367,13 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     HttpStatus statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
 
-    String expectedBody = "{\"version\":\"2.0.0\",\"ready\":true}}";
-
-    JSONAssert.assertEquals(expectedBody, successResponse.getBody(), false);
+    JSONObject expected = new JSONObject().put("apiVersion", "2.0.0")
+                                          .put("componentName", "1.75.0") // FIXME
+                                          .put("componentVersion", "1.75.0") // FIXME
+                                          .put("lockssVersion", "1.75.0") // FIXME
+                                          .put("ready", true)
+                                          .put("serviceName", "LOCKSS Metadata Service REST API");
+    JSONAssert.assertEquals(expected.toString(), successResponse.getBody(), false);
 
     log.debug2("Done");
   }
