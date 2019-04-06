@@ -29,16 +29,15 @@
 swagger: "2.0"
 info:
   title: "LOCKSS Metadata Service REST API"
-  version: "1.0.0"
-  description: "API of the LOCKSS Metadata REST Service"
-  termsOfService: "http://www.lockss.org/terms/"
+  version: "2.0.0"
+  description: "REST API of the LOCKSS Metadata Service"
   contact:
     name: "LOCKSS Support"
     url: "http://www.lockss.org/"
     email: "lockss-support@lockss.org"
   license:
     name: "BSD-3-Clause"
-    url: "https://www.lockss.org/support/open-source-license/"
+    url: "https://opensource.org/licenses/BSD-3-Clause"
 host: "laaws.lockss.org:443"
 basePath: "/"
 tags:

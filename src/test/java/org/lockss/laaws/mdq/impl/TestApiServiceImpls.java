@@ -344,7 +344,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     assertEquals(HttpStatus.OK, statusCode);
 
     String expectedBody = "{'swagger':'2.0',"
-	+ "'info':{'description':'API of the LOCKSS Metadata REST Service'}}";
+	+ "'info':{'description':'REST API of the LOCKSS Metadata Service'}}";
 
     JSONAssert.assertEquals(expectedBody, successResponse.getBody(), false);
 
@@ -366,7 +366,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     HttpStatus statusCode = successResponse.getStatusCode();
     assertEquals(HttpStatus.OK, statusCode);
 
-    String expectedBody = "{\"version\":\"1.0.0\",\"ready\":true}}";
+    String expectedBody = "{\"version\":\"2.0.0\",\"ready\":true}}";
 
     JSONAssert.assertEquals(expectedBody, successResponse.getBody(), false);
 
