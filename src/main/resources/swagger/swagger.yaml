@@ -1,4 +1,4 @@
-# Copyright (c) 2000-2018 Board of Trustees of Leland Stanford Jr. University,
+# Copyright (c) 2000-2019 Board of Trustees of Leland Stanford Jr. University,
 # all rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,7 @@ paths:
           description: "The metadata of the AU item to be stored"
           required: true
           schema:
-            $ref: "#/definitions/itemMetadata"
+            $ref: "ItemMetadata.yaml"
       responses:
         200:
           description: "The key under which the metadata of the AU item has\
@@ -186,7 +186,7 @@ paths:
         200:
           description: "The data related to the performed OpenURL query"
           schema:
-            $ref: "#/definitions/urlInfo"
+            $ref: "definitions.yaml#/urlInfo"
         400:
           description: "Bad Request"
         401:
@@ -212,7 +212,7 @@ paths:
         200:
           description: "The URL for the specified DOI"
           schema:
-            $ref: "#/definitions/urlInfo"
+            $ref: "definitions.yaml#/urlInfo"
         400:
           description: "Bad Request"
         401:
@@ -220,23 +220,7 @@ paths:
         500:
           description: "Internal Server Error"
   /status:
-    get:
-      tags:
-      - "status"
-      summary: "Get the status of the service"
-      description: "Get the status of the service"
-      operationId: "getStatus"
-      produces:
-      - "application/json"
-      responses:
-        200:
-          description: "The status of the service"
-          schema:
-            $ref: "#/definitions/apiStatus"
-        401:
-          description: "Unauthorized"
-        500:
-          description: "Internal Server Error"
+    $ref: "path-status.yaml#/status"
 securityDefinitions:
   basicAuth:
     description: "HTTP Basic Authentication. Works over `HTTP` and `HTTPS`"
@@ -252,98 +236,7 @@ definitions:
         type: "array"
         description: "The metadata for the AU items in the page"
         items:
-          $ref: "#/definitions/itemMetadata"
+          $ref: "ItemMetadata.yaml"
       pageInfo:
-        $ref: "#/definitions/pageInfo"
+        $ref: "definitions.yaml#/pageInfo"
     description: "The display page of AU metadata"
-  itemMetadata:
-    type: "object"
-    properties:
-      scalarMap:
-        type: "object"
-        description: "The map of scalar metadata elements for this item"
-        additionalProperties:
-          type: "string"
-          description: "The scalar value of the metadata for the key"
-      setMap:
-        type: "object"
-        description: "The map of set-bound metadata elements for this item"
-        additionalProperties:
-          type: "array"
-          description: "The set value of the metadata for the key"
-          items:
-            type: "string"
-      listMap:
-        type: "object"
-        description: "The map of listed metadata elements for this item"
-        additionalProperties:
-          type: "array"
-          description: "The list value of the metadata for the key"
-          items:
-            type: "string"
-      mapMap:
-        type: "object"
-        description: "The map of mapped metadata elements for this item"
-        additionalProperties:
-          type: "object"
-          description: "The map value of the metadata for the key"
-          additionalProperties:
-            type: "string"
-    description: "The metadata generated for a single item"
-  pageInfo:
-    type: "object"
-    required:
-      - "totalCount"
-      - "resultsPerPage"
-      - "continuationToken"
-      - "curLink"
-    properties:
-      totalCount:
-        type: "integer"
-        format: "int32"
-        description: "The total number of elements to be paginated"
-      resultsPerPage:
-        type: "integer"
-        format: "int32"
-        description: "The number of results per page"
-      continuationToken:
-        type: "string"
-        description: "The continuation token"
-      curLink:
-        type: "string"
-        description: "The link to the current page"
-      nextLink:
-        type: "string"
-        description: "The link to the next page"
-    description: "The information related to pagination of content"
-  urlInfo:
-    type: "object"
-    required:
-      - "params"
-      - "urls"
-    properties:
-      params:
-        type: "object"
-        description: "The parameters that define the resulting URLs"
-        additionalProperties:
-          type: "string"
-          description: "The value of the parameter for the parameter name"
-      urls:
-        type: "array"
-        description: "The URLs"
-        items:
-          type: "string"
-    description: "The information related to a resulting list of URLs"
-  apiStatus:
-    type: "object"
-    required:
-      - "version"
-      - "ready"
-    properties:
-      version:
-        type: "string"
-        description: "The version of the service"
-      ready:
-        type: "boolean"
-        description: "The indication of whether the service is available"
-    description: "The status information of the service"
