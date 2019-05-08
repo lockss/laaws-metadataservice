@@ -1,0 +1,349 @@
+# Copyright (c) 2000-2018 Board of Trustees of Leland Stanford Jr. University,
+# all rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its contributors
+# may be used to endorse or promote products derived from this software without
+# specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+swagger: "2.0"
+info:
+  title: "LOCKSS Metadata Service REST API"
+  version: "2.0.0"
+  description: "REST API of the LOCKSS Metadata Service"
+  contact:
+    name: "LOCKSS Support"
+    url: "http://www.lockss.org/"
+    email: "lockss-support@lockss.org"
+  license:
+    name: "BSD-3-Clause"
+    url: "https://opensource.org/licenses/BSD-3-Clause"
+host: "laaws.lockss.org:443"
+basePath: "/"
+tags:
+  - name: Default
+    description: Default section
+  - name: metadata
+    description: "Operations related to metadata"
+  - name: urls
+    description: "Operations that return URLs"
+schemes:
+  - "https"
+produces:
+  - "application/json"
+security:
+  - basicAuth: []
+paths:
+  /metadata/aus:
+    post:
+      tags:
+        - "metadata"
+      summary: "Store the metadata for an AU item"
+      description: "Store the metadata for an item belonging to an AU"
+      operationId: "postMetadataAusItem"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "item"
+          in: "body"
+          description: "The metadata of the AU item to be stored"
+          required: true
+          schema:
+            $ref: "#/definitions/itemMetadata"
+      responses:
+        200:
+          description: "The key under which the metadata of the AU item has\
+            \ been stored"
+          schema:
+            type: "integer"
+            format: "int64"
+        400:
+          description: "Bad Request"
+        401:
+          description: "Unauthorized"
+        403:
+          description: "Forbidden"
+        415:
+          description: Unsupported Media Type
+        500:
+          description: "Internal Server Error"
+  /metadata/aus/{auid}:
+    get:
+      tags:
+        - "metadata"
+      summary: "Get the metadata stored for an AU"
+      description: "Get the full metadata stored for an AU given the AU\
+        \ identifier or a pageful of the metadata defined by the continuation\
+        \ token and size"
+      operationId: "getMetadataAusAuid"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "auid"
+          in: "path"
+          description: "The identifier of the AU for which the metadata is\
+            \ requested"
+          required: true
+          type: "string"
+        - name: "limit"
+          in: "query"
+          required: false
+          type: "integer"
+          description: "The number of items per page"
+          default: 50
+        - name: "continuationToken"
+          in: "query"
+          required: false
+          type: "string"
+          description: "The continuation token of the next page of metadata to\
+            \ be returned"
+      responses:
+        200:
+          description: "The metadata of the specified AU"
+          schema:
+            $ref: "#/definitions/auMetadataPageInfo"
+        400:
+          description: "Bad Request"
+        401:
+          description: "Unauthorized"
+        404:
+          description: "Not found"
+        409:
+          description: "Conflict"
+        500:
+          description: "Internal Server Error"
+    delete:
+      tags:
+        - "metadata"
+      summary: "Delete the metadata stored for an AU"
+      description: "Delete the metadata stored for an AU given the AU identifier"
+      operationId: "deleteMetadataAusAuid"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "auid"
+          in: "path"
+          description: "The identifier of the AU for which the metadata is to\
+            \ be deleted"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "The number of deleted AU metadata items"
+          schema:
+            type: "integer"
+        400:
+          description: "Bad Request"
+        401:
+          description: "Unauthorized"
+        403:
+          description: "Forbidden"
+        404:
+          description: "Not found"
+        500:
+          description: "Internal Server Error"
+  /urls/openurl:
+    get:
+      tags:
+        - "urls"
+      summary: "Performs an OpenURL query"
+      description: "Provides the URL that results from performing an OpenURL\
+        \ query. With query parameters inline"
+      operationId: "getUrlsOpenUrl"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "params"
+          in: "query"
+          description: "The OpenURL parameters"
+          required: true
+          type: "array"
+          items:
+            type: "string"
+      responses:
+        200:
+          description: "The data related to the performed OpenURL query"
+          schema:
+            $ref: "#/definitions/urlInfo"
+        400:
+          description: "Bad Request"
+        401:
+          description: "Unauthorized"
+        500:
+          description: "Internal Server Error"
+  /urls/doi:
+    get:
+      tags:
+        - "urls"
+      summary: "Gets the URL for a DOI"
+      description: "Provides the URL for a DOI given the DOI"
+      operationId: "getUrlsDoi"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "doi"
+          in: "query"
+          required: true
+          type: "string"
+          description: "The DOI for which the URL is requested"
+      responses:
+        200:
+          description: "The URL for the specified DOI"
+          schema:
+            $ref: "#/definitions/urlInfo"
+        400:
+          description: "Bad Request"
+        401:
+          description: "Unauthorized"
+        500:
+          description: "Internal Server Error"
+  /status:
+    get:
+      tags:
+      - "status"
+      summary: "Get the status of the service"
+      description: "Get the status of the service"
+      operationId: "getStatus"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "The status of the service"
+          schema:
+            $ref: "#/definitions/apiStatus"
+        401:
+          description: "Unauthorized"
+        500:
+          description: "Internal Server Error"
+securityDefinitions:
+  basicAuth:
+    description: "HTTP Basic Authentication. Works over `HTTP` and `HTTPS`"
+    type: "basic"
+definitions:
+  auMetadataPageInfo:
+    type: "object"
+    required:
+      - "items"
+      - "pageInfo"
+    properties:
+      items:
+        type: "array"
+        description: "The metadata for the AU items in the page"
+        items:
+          $ref: "#/definitions/itemMetadata"
+      pageInfo:
+        $ref: "#/definitions/pageInfo"
+    description: "The display page of AU metadata"
+  itemMetadata:
+    type: "object"
+    properties:
+      scalarMap:
+        type: "object"
+        description: "The map of scalar metadata elements for this item"
+        additionalProperties:
+          type: "string"
+          description: "The scalar value of the metadata for the key"
+      setMap:
+        type: "object"
+        description: "The map of set-bound metadata elements for this item"
+        additionalProperties:
+          type: "array"
+          description: "The set value of the metadata for the key"
+          items:
+            type: "string"
+      listMap:
+        type: "object"
+        description: "The map of listed metadata elements for this item"
+        additionalProperties:
+          type: "array"
+          description: "The list value of the metadata for the key"
+          items:
+            type: "string"
+      mapMap:
+        type: "object"
+        description: "The map of mapped metadata elements for this item"
+        additionalProperties:
+          type: "object"
+          description: "The map value of the metadata for the key"
+          additionalProperties:
+            type: "string"
+    description: "The metadata generated for a single item"
+  pageInfo:
+    type: "object"
+    required:
+      - "totalCount"
+      - "resultsPerPage"
+      - "continuationToken"
+      - "curLink"
+    properties:
+      totalCount:
+        type: "integer"
+        format: "int32"
+        description: "The total number of elements to be paginated"
+      resultsPerPage:
+        type: "integer"
+        format: "int32"
+        description: "The number of results per page"
+      continuationToken:
+        type: "string"
+        description: "The continuation token"
+      curLink:
+        type: "string"
+        description: "The link to the current page"
+      nextLink:
+        type: "string"
+        description: "The link to the next page"
+    description: "The information related to pagination of content"
+  urlInfo:
+    type: "object"
+    required:
+      - "params"
+      - "urls"
+    properties:
+      params:
+        type: "object"
+        description: "The parameters that define the resulting URLs"
+        additionalProperties:
+          type: "string"
+          description: "The value of the parameter for the parameter name"
+      urls:
+        type: "array"
+        description: "The URLs"
+        items:
+          type: "string"
+    description: "The information related to a resulting list of URLs"
+  apiStatus:
+    type: "object"
+    required:
+      - "version"
+      - "ready"
+    properties:
+      version:
+        type: "string"
+        description: "The version of the service"
+      ready:
+        type: "boolean"
+        description: "The indication of whether the service is available"
+    description: "The status information of the service"

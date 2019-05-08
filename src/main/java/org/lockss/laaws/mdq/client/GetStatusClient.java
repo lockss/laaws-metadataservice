@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2017-2019 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2018-2019 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,17 +28,17 @@
 package org.lockss.laaws.mdq.client;
 
 import java.net.URI;
-import org.lockss.metadata.ItemMetadata;
+import org.lockss.laaws.status.model.ApiStatus;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Client for the postMetadataAusItem() operation.
+ * Client for the getStatus() operation.
  */
-public class PostMetadataAusItemClient extends BaseClient {
+public class GetStatusClient extends BaseClient {
 
   /**
    * Entry point.
@@ -47,34 +47,25 @@ public class PostMetadataAusItemClient extends BaseClient {
    * @throws Exception if there are errors.
    */
   public static void main(String[] args) throws Exception {
-    for (int i = 0; i < args.length; i++) {
-      System.out.println("args[" + i + "] = " + args[i]);
-    }
-
-    if (args.length < 1) {
-      System.err.println("ERROR: Missing command line arguments with the "
-	  + "metadata to be posted.");
-    }
-
-    ItemMetadata metadata =
-	new ObjectMapper().readValue(args[0], ItemMetadata.class);
-    System.out.println("metadata = '" + metadata + "'");
-
-    String template = baseUri + "/metadata/aus";
+    String template = baseUri + "/status";
 
     // Create the URI of the request to the REST service.
-    URI uri = UriComponentsBuilder.newInstance().uriComponents(
-	UriComponentsBuilder.fromUriString(template).build())
-	.build().encode().toUri();
+    UriComponents uriComponents =
+	UriComponentsBuilder.fromUriString(template).build();
+
+    UriComponentsBuilder builder =
+	UriComponentsBuilder.newInstance().uriComponents(uriComponents);
+
+    URI uri = builder.build().encode().toUri();
     System.out.println("uri = " + uri);
 
-    ResponseEntity<Long> response = getRestTemplate().exchange(uri,
-	HttpMethod.POST, new HttpEntity<ItemMetadata>(metadata,
-	    getHttpHeaders()), Long.class);
+    ResponseEntity<ApiStatus> response = getRestTemplate().exchange(uri,
+	HttpMethod.GET, new HttpEntity<String>(null, getHttpHeaders()),
+	ApiStatus.class);
 
     int status = response.getStatusCodeValue();
     System.out.println("status = " + status);
-    Long result = response.getBody();
+    ApiStatus result = response.getBody();
     System.out.println("result = " + result);
   }
 }

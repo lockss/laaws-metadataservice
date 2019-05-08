@@ -1,6 +1,6 @@
 <!--
 
-Copyright (c) 2000-2017 Board of Trustees of Leland Stanford Jr. University,
+Copyright (c) 2000-2019 Board of Trustees of Leland Stanford Jr. University,
 all rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -29,74 +29,51 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --> 
-# laaws-metadata-query [![Build Status](https://travis-ci.org/lockss/laaws-mdq.svg?branch=master)](https://travis-ci.org/lockss/laaws-mdq)
-The wrapper around the Metadata Query Service.
+# LOCKSS Metadata Service [![Build Status](https://travis-ci.org/lockss/laaws-metadataservice.svg?branch=master)](https://travis-ci.org/lockss/laaws-metadataservice)
+This is the REST Web Service that provides access to the extracted metadata of
+Archival Units.
 
+## Note on branches
+The `master` branch is for stable releases and the `develop` branch is for
+ongoing development.
+
+## Standard build and deployment
+The LOCKSS cluster, including this project, is normally built and deployed using
+the LOCKSS Installer, which uses `docker`.
+
+You can find more information about the installation of the LOCKSS system in the
+[LOCKSS system manual](https://lockss.github.io/software/manual).
+
+## Development build and deployment
 ### Clone the repo
-`git clone --recursive ssh://git@gitlab.lockss.org/laaws/laaws-metadataservice.git`
+`git clone -b develop ssh://github.com/lockss/laaws-metadataservice.git`
 
 ### Create the Eclipse project (if so desired)
 `File` -> `Import...` -> `Maven` -> `Existing Maven Projects`
 
-### Specify the Repository REST web service
-This web service requires that an external Repository REST web service is
-running so as to provide an indication of whether a URL is cached or not.
-
-To specify the properties of such external REST web service, edit in
-`config/lockss.txt` the following options and specify the appropriate values:
-
-org.lockss.plugin.auContentFromWs.urlArtifactWs.password=the-correct-password
-org.lockss.plugin.auContentFromWs.urlArtifactWs.restServiceLocation=http://localhost:the-correct-port/repos/demorepo/artifacts?committed=false&uri={uri}
-org.lockss.plugin.auContentFromWs.urlArtifactWs.timeoutValue=600
-org.lockss.plugin.auContentFromWs.urlArtifactWs.userName=the-correct-user
-
-### Optional Configuration REST web service
-The default configuration of this web service requires that a Configuration REST
-web service is running. The specification of this Configuration REST web service
-is in the script
-
-`./runLaawsMdq`
-
-To run this web service without a Configuration REST web service, remove
-
-`-c,http://lockss-u:lockss-p@localhost:54420,-p,http://localhost:54420/config/file/cluster,`
-
-from the script.
-
-To run this web service with a Configuration REST web service at a different
-location than the default, change `localhost` and/or `54420` accordingly.
-
 ### Build the web service:
-`./buildLaawsMdq`
+In the home directory of this project, where this `README.md` file resides,
+run `mvn clean install`.
 
 This will run the tests as a pre-requisite for the build.
 
 The result of the build is a so-called "uber JAR" file which includes the
-project code plus all its dependencies and which is located at
+project code plus all its dependencies and which can be located via the symbolic
+link at
 
-`./target/laaws-metadata-service-0.0.1-SNAPSHOT.jar`
+`./target/current-with-deps.jar`
 
 ### Run the web service:
-`./runLaawsMdq`
+Run the
+[LOCKSS Development Scripts](https://github.com/lockss/laaws-dev-scripts)
+project `bin/runservice` script in the home directory of this project, where
+this `README.md` file resides.
 
-This will use port 49520. To use another port, edit the value of the
-`server.port` property in file
-`src/main/resources/application.properties`.
+The log is at `./logs/app.log`.
 
-The log is at `./logs/mdq.log`
+The API is documented at <http://127.0.0.1:24650/swagger-ui.html>.
 
-### Build and run the web service:
-`./buildAndRunLaawsMdq`
+The status of the web service may be obtained at
+<http://127.0.0.1:24650/status>.
 
-This will use port 49520. To use another port, edit the value of the
-`server.port` property in file
-`src/main/resources/application.properties`.
-
-### API is documented at:
-#### http://localhost:49520/swagger-ui.html
-
-### The status of the web service may be obtained at:
-#### http://localhost:49520/status
-
-### Stop the web service:
-`./stopLaawsMdq`
+The administration UI of the web service is at <http://127.0.0.1:24651>.
