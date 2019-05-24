@@ -41,7 +41,7 @@ import org.lockss.laaws.status.model.ApiStatus;
 import org.lockss.log.L4JLogger;
 import org.lockss.metadata.ItemMetadataContinuationToken;
 import org.lockss.metadata.ItemMetadataPage;
-import org.lockss.metadata.extractor.MetadataExtractorManager;
+import org.lockss.metadata.query.MetadataQueryManager;
 import org.lockss.spring.status.SpringLockssBaseApiController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -101,8 +101,8 @@ public class MetadataApiServiceImpl extends SpringLockssBaseApiController
 
     try {
       // Get the pageful of results.
-      ItemMetadataPage itemsPage = getMetadataExtractorManager()
-	  .getAuMetadataDetail(auid, limit, imct);
+      ItemMetadataPage itemsPage = LockssApp.getManagerByTypeStatic(
+	  MetadataQueryManager.class).getAuMetadataDetail(auid, limit, imct);
       log.trace("itemsPage = {}", () -> itemsPage);
 
       AuMetadataPageInfo result = new AuMetadataPageInfo();
@@ -163,14 +163,5 @@ public class MetadataApiServiceImpl extends SpringLockssBaseApiController
   public ApiStatus getApiStatus() {
     return new ApiStatus("swagger/swagger.yaml")
 	.setReady(LockssApp.getLockssApp().isAppRunning());
-  }
-
-  /**
-   * Provides the metadata extractor manager.
-   * 
-   * @return a MetadataExtractorManager with the metadata extractor manager.
-   */
-  private MetadataExtractorManager getMetadataExtractorManager() {
-    return LockssApp.getManagerByTypeStatic(MetadataExtractorManager.class);
   }
 }

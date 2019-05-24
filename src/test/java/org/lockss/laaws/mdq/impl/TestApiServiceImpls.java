@@ -55,7 +55,7 @@ import org.lockss.log.L4JLogger;
 import org.lockss.metadata.ItemMetadata;
 import org.lockss.metadata.ItemMetadataContinuationToken;
 import org.lockss.metadata.MetadataDbManager;
-import org.lockss.metadata.extractor.MetadataExtractorManager;
+import org.lockss.metadata.query.MetadataQueryManager;
 import org.lockss.plugin.Plugin;
 import org.lockss.plugin.definable.DefinablePlugin;
 import org.lockss.test.MockArchivalUnit;
@@ -209,16 +209,16 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     testDbManager.startService();
 
     // Populate the test database.
-    MetadataExtractorManager mem = new MetadataExtractorManager(testDbManager);
+    MetadataQueryManager mqm = new MetadataQueryManager(testDbManager);
     Plugin plugin = new DefinablePlugin();
     plugin.initPlugin(LockssDaemon.getLockssDaemon());
 
-    populateMetadata(mem, plugin, ITEM_METADATA_1_1);
-    populateMetadata(mem, plugin, ITEM_METADATA_1_2);
-    populateMetadata(mem, plugin, ITEM_METADATA_1_3);
-    populateMetadata(mem, plugin, ITEM_METADATA_1_4);
-    populateMetadata(mem, plugin, ITEM_METADATA_1_5);
-    populateMetadata(mem, plugin, ITEM_METADATA_2_1);
+    populateMetadata(mqm, plugin, ITEM_METADATA_1_1);
+    populateMetadata(mqm, plugin, ITEM_METADATA_1_2);
+    populateMetadata(mqm, plugin, ITEM_METADATA_1_3);
+    populateMetadata(mqm, plugin, ITEM_METADATA_1_4);
+    populateMetadata(mqm, plugin, ITEM_METADATA_1_5);
+    populateMetadata(mqm, plugin, ITEM_METADATA_2_1);
 
     log.debug2("Done");
   }
@@ -226,8 +226,8 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
   /**
    * Populates in the database the metadata of one Archival Unit item.
    * 
-   * @param mem
-   *          A MetadataExtractorManager with the metadata extractor manager.
+   * @param mqm
+   *          A MetadataQueryManager with the metadata query manager.
    * @param plugin
    *          A Plugin with the Archival Unit plugin.
    * @param itemMetadata
@@ -235,12 +235,12 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
    * @throws Exception
    *           if there are problems.
    */
-  private void populateMetadata(MetadataExtractorManager mem, Plugin plugin,
+  private void populateMetadata(MetadataQueryManager mqm, Plugin plugin,
       ItemMetadata itemMetadata) throws Exception {
     String auId = itemMetadata.getScalarMap().get("au_id");
     log.trace("auId = {}", auId);
 
-    mem.storeAuItemMetadataForTesting(itemMetadata,
+    mqm.storeAuItemMetadataForTesting(itemMetadata,
 	new MockArchivalUnit(plugin, auId));
   }
 
