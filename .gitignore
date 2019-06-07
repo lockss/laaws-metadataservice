@@ -87,7 +87,6 @@ gradle-app.setting
 .idea/dictionaries
 .idea/vcs.xml
 .idea/jsLibraryMappings.xml
-.idea/
 
 # Sensitive or high-churn files:
 .idea/dataSources.ids
@@ -105,7 +104,6 @@ gradle-app.setting
 
 ## File-based project format:
 *.iws
-*.iml
 
 ## Plugin-specific files:
 

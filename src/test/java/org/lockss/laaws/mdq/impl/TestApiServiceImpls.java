@@ -89,6 +89,9 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
   private static final String UI_PORT_CONFIGURATION_TEMPLATE =
       "UiPortConfigTemplate.txt";
   private static final String UI_PORT_CONFIGURATION_FILE = "UiPort.txt";
+  private static final String DB_CONFIGURATION_TEMPLATE =
+      "DbConfigTemplate.txt";
+  private static final String DB_CONFIGURATION_FILE = "DbConfig.txt";
 
   private static final String EMPTY_STRING = "";
 
@@ -197,6 +200,9 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     // Set up the UI port.
     setUpUiPort(UI_PORT_CONFIGURATION_TEMPLATE, UI_PORT_CONFIGURATION_FILE);
 
+    // Set up the database configuration.
+    setUpDbConfig(DB_CONFIGURATION_TEMPLATE, DB_CONFIGURATION_FILE);
+
     // Create the embedded Derby database to use during the tests.
     TestDerbyMetadataDbManager testDbManager = new TestDerbyMetadataDbManager();
     testDbManager.startService();
@@ -299,8 +305,10 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
    * Provides the standard command line arguments to start the server.
    * 
    * @return a List<String> with the command line arguments.
+   * @throws IOException
+   *           if there are problems.
    */
-  private List<String> getCommandLineArguments() {
+  private List<String> getCommandLineArguments() throws IOException {
     log.debug2("Invoked");
 
     List<String> cmdLineArgs = new ArrayList<String>();
@@ -310,6 +318,8 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     cmdLineArgs.add("config/common.xml");
     cmdLineArgs.add("-p");
     cmdLineArgs.add(getUiPortConfigFile().getAbsolutePath());
+    cmdLineArgs.add("-p");
+    cmdLineArgs.add(getDbConfigFile().getAbsolutePath());
     cmdLineArgs.add("-p");
     cmdLineArgs.add("test/config/lockss.txt");
     cmdLineArgs.add("-p");
@@ -321,8 +331,11 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
 
   /**
    * Runs the Swagger-related tests.
+   * 
+   * @throws Exception
+   *           if there are problems.
    */
-  private void getSwaggerDocsTest() {
+  private void getSwaggerDocsTest() throws Exception {
     log.debug2("Invoked");
 
     ResponseEntity<String> successResponse = new TestRestTemplate().exchange(
@@ -341,8 +354,11 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
 
   /**
    * Runs the status-related tests.
+   * 
+   * @throws Exception
+   *           if there are problems.
    */
-  private void getStatusTest() {
+  private void getStatusTest() throws Exception {
     log.debug2("Invoked");
 
     ResponseEntity<String> successResponse = new TestRestTemplate().exchange(
@@ -496,8 +512,10 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
   /**
    * Performs pagination tests.
    * 
-   * @param credentials
-   *          A Credentials with the request credentials.
+   * @param user
+   *          A String with the request username.
+   * @param password
+   *          A String with the request password.
    * @throws Exception
    *           if there are problems.
    */
@@ -717,8 +735,10 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
       // Initialize the request headers.
       HttpHeaders headers = new HttpHeaders();
 
-      // Set up the authentication credentials.
-      credentials.setUpBasicAuthentication(headers);
+      // Set up the authentication credentials, if necessary.
+      if (credentials != null) {
+	credentials.setUpBasicAuthentication(headers);
+      }
 
       log.trace("requestHeaders = {}", () -> headers.toSingleValueMap());
 
@@ -1008,8 +1028,10 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
       // Initialize the request headers.
       HttpHeaders headers = new HttpHeaders();
 
-      // Set up the authentication credentials.
-      credentials.setUpBasicAuthentication(headers);
+      // Set up the authentication credentials, if necessary.
+      if (credentials != null) {
+	credentials.setUpBasicAuthentication(headers);
+      }
 
       log.trace("requestHeaders = {}", () -> headers.toSingleValueMap());
 
@@ -1446,8 +1468,10 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
       // Initialize the request headers.
       HttpHeaders headers = new HttpHeaders();
 
-      // Set up the authentication credentials.
-      credentials.setUpBasicAuthentication(headers);
+      // Set up the authentication credentials, if necessary.
+      if (credentials != null) {
+	credentials.setUpBasicAuthentication(headers);
+      }
 
       log.trace("requestHeaders = {}", () -> headers.toSingleValueMap());
 
@@ -1710,8 +1734,10 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
       // Initialize the request headers.
       HttpHeaders headers = new HttpHeaders();
 
-      // Set up the authentication credentials.
-      credentials.setUpBasicAuthentication(headers);
+      // Set up the authentication credentials, if necessary.
+      if (credentials != null) {
+	credentials.setUpBasicAuthentication(headers);
+      }
 
       log.trace("requestHeaders = {}", () -> headers.toSingleValueMap());
 
