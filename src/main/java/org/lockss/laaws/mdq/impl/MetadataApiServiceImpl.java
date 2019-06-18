@@ -37,12 +37,10 @@ import org.lockss.app.LockssApp;
 import org.lockss.laaws.mdq.api.MetadataApiDelegate;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.PageInfo;
-import org.lockss.laaws.status.model.ApiStatus;
 import org.lockss.log.L4JLogger;
 import org.lockss.metadata.ItemMetadataContinuationToken;
 import org.lockss.metadata.ItemMetadataPage;
 import org.lockss.metadata.query.MetadataQueryManager;
-import org.lockss.spring.status.SpringLockssBaseApiController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,8 +50,7 @@ import org.springframework.stereotype.Service;
  * Service for access to the metadata of an AU.
  */
 @Service
-public class MetadataApiServiceImpl extends SpringLockssBaseApiController
-    implements MetadataApiDelegate {
+public class MetadataApiServiceImpl implements MetadataApiDelegate {
   private static final L4JLogger log = L4JLogger.getLogger();
 
   @Autowired
@@ -152,16 +149,5 @@ public class MetadataApiServiceImpl extends SpringLockssBaseApiController
       log.error(message, e);
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  /**
-   * Provides the status object.
-   * 
-   * @return an ApiStatus with the status.
-   */
-  @Override
-  public ApiStatus getApiStatus() {
-    return new ApiStatus("swagger/swagger.yaml")
-	.setReady(LockssApp.getLockssApp().isAppRunning());
   }
 }

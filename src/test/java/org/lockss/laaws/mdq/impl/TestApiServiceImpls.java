@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.lockss.laaws.mdq.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +49,6 @@ import org.lockss.config.Configuration;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.PageInfo;
 import org.lockss.laaws.mdq.model.UrlInfo;
-import org.lockss.laaws.status.model.ApiStatus;
 import org.lockss.log.L4JLogger;
 import org.lockss.metadata.ItemMetadata;
 import org.lockss.metadata.ItemMetadataContinuationToken;
@@ -263,7 +261,6 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
 
     getSwaggerDocsTest();
-    getStatusTest();
     getMetadataAusAuidUnAuthenticatedTest();
     getUrlsDoiUnAuthenticatedTest();
     getUrlsOpenUrlUnAuthenticatedTest();
@@ -290,7 +287,6 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
 
     getSwaggerDocsTest();
-    getStatusTest();
     getMetadataAusAuidAuthenticatedTest();
     getUrlsDoiAuthenticatedTest();
     getUrlsOpenUrlAuthenticatedTest();
@@ -345,31 +341,6 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
 	+ "'info':{'description':'REST API of the LOCKSS Metadata Service'}}";
 
     JSONAssert.assertEquals(expectedBody, successResponse.getBody(), false);
-
-    log.debug2("Done");
-  }
-
-  /**
-   * Runs the status-related tests.
-   * 
-   * @throws JsonProcessingException
-   *           if there are problems getting the expected status in JSON format.
-   */
-  private void getStatusTest() throws JsonProcessingException {
-    log.debug2("Invoked");
-
-    ResponseEntity<String> successResponse = new TestRestTemplate().exchange(
-	getTestUrlTemplate("/status"), HttpMethod.GET, null, String.class);
-
-    HttpStatus statusCode = successResponse.getStatusCode();
-    assertEquals(HttpStatus.OK, statusCode);
-
-    // Get the expected result.
-    ApiStatus expected = new ApiStatus("swagger/swagger.yaml");
-    expected.setReady(true);
-
-    JSONAssert.assertEquals(expected.toJson(), successResponse.getBody(),
-	false);
 
     log.debug2("Done");
   }
