@@ -636,6 +636,8 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     log.debug2("credentials = {}", () -> credentials);
     log.debug2("expectedStatus = {}", () -> expectedStatus);
 
+    startAuIfNecessary(auId);
+
     // Get the test URL template.
     String template = getTestUrlTemplate("/metadata/aus/{auid}");
 
