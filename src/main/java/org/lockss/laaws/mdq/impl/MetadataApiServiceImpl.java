@@ -41,6 +41,7 @@ import org.lockss.log.L4JLogger;
 import org.lockss.metadata.ItemMetadataContinuationToken;
 import org.lockss.metadata.ItemMetadataPage;
 import org.lockss.metadata.query.MetadataQueryManager;
+import org.lockss.spring.base.BaseSpringApiServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +51,8 @@ import org.springframework.stereotype.Service;
  * Service for access to the metadata of an AU.
  */
 @Service
-public class MetadataApiServiceImpl implements MetadataApiDelegate {
+public class MetadataApiServiceImpl extends BaseSpringApiServiceImpl
+    implements MetadataApiDelegate {
   private static final L4JLogger log = L4JLogger.getLogger();
 
   @Autowired
@@ -76,6 +78,12 @@ public class MetadataApiServiceImpl implements MetadataApiDelegate {
     log.debug2("auid = {}", () -> auid);
     log.debug2("limit = {}", () -> limit);
     log.debug2("continuationToken = {}", () -> continuationToken);
+
+    // Check whether the service has not been fully initialized.
+    if (!waitReady()) {
+      // Yes: Notify the client.
+      return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
+    }
 
     // Validation of requested page size.
     if (limit == null || limit.intValue() < 0) {

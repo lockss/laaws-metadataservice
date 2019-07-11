@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2000-2018 Board of Trustees of Leland Stanford Jr. University,
+Copyright (c) 2000-2019 Board of Trustees of Leland Stanford Jr. University,
 all rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -44,6 +44,7 @@ import org.lockss.daemon.OpenUrlResolver.OpenUrlInfo;
 import org.lockss.laaws.mdq.api.UrlsApiDelegate;
 import org.lockss.laaws.mdq.model.UrlInfo;
 import org.lockss.log.L4JLogger;
+import org.lockss.spring.base.BaseSpringApiServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -52,7 +53,8 @@ import org.springframework.stereotype.Service;
  * Service for access to URLs.
  */
 @Service
-public class UrlsApiServiceImpl implements UrlsApiDelegate {
+public class UrlsApiServiceImpl extends BaseSpringApiServiceImpl
+    implements UrlsApiDelegate {
   private static final L4JLogger log = L4JLogger.getLogger();
 
   /**
@@ -64,7 +66,13 @@ public class UrlsApiServiceImpl implements UrlsApiDelegate {
    */
   @Override
   public ResponseEntity<UrlInfo> getUrlsDoi(String doi) {
-    log.debug2("doi = {}", () -> doi);
+    log.debug2("doi = {}", doi);
+
+    // Check whether the service has not been fully initialized.
+    if (!waitReady()) {
+      // Yes: Notify the client.
+      return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
+    }
 
     try {
       // Build an OpenURL query.
@@ -88,7 +96,13 @@ public class UrlsApiServiceImpl implements UrlsApiDelegate {
    */
   @Override
   public ResponseEntity<UrlInfo> getUrlsOpenUrl(List<String> params) {
-    log.debug2("params = {}", () -> params);
+    log.debug2("params = {}", params);
+
+    // Check whether the service has not been fully initialized.
+    if (!waitReady()) {
+      // Yes: Notify the client.
+      return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
+    }
 
     try {
       // Build the OpenURL query.
@@ -103,7 +117,7 @@ public class UrlsApiServiceImpl implements UrlsApiDelegate {
 	}
       }
 
-      log.trace("openUrlParams = {}", () -> openUrlParams);
+      log.trace("openUrlParams = {}", openUrlParams);
 
       return new ResponseEntity<UrlInfo>(resolveOpenUrl(openUrlParams),
 	  HttpStatus.OK);
@@ -122,7 +136,7 @@ public class UrlsApiServiceImpl implements UrlsApiDelegate {
    * @return a UrlInfo with the results.
    */
   private UrlInfo resolveOpenUrl(Map<String, String> params) {
-    log.debug2("params = {}", () -> params);
+    log.debug2("params = {}", params);
 
     // The unique URLs that result from performing the query.
     Set<String> urls = new HashSet<String>();
@@ -131,17 +145,17 @@ public class UrlsApiServiceImpl implements UrlsApiDelegate {
     OpenUrlInfo openUrlInfo =
 	new OpenUrlResolver(LockssDaemon.getLockssDaemon())
 	.resolveOpenUrl(params);
-    log.trace("openUrlInfo = {}", () -> openUrlInfo);
+    log.trace("openUrlInfo = {}", openUrlInfo);
 
     // Loop through all the results.
     Iterator<OpenUrlInfo> iterator = openUrlInfo.iterator();
 
     while (iterator.hasNext()) {
       OpenUrlInfo next = iterator.next();
-      log.trace("next = {}", () -> next);
+      log.trace("next = {}", next);
 
       String url = next.getResolvedUrl();
-      log.trace("url = {}", () -> url);
+      log.trace("url = {}", url);
 
       if (url != null && !"null".equalsIgnoreCase(url)) {
 	// Accumulate the resulting unique URLs.
@@ -149,12 +163,12 @@ public class UrlsApiServiceImpl implements UrlsApiDelegate {
       }
     }
 
-    log.trace("urls = {}", () -> urls);
+    log.trace("urls = {}", urls);
 
     UrlInfo result = new UrlInfo();
     result.setParams(params);
     result.setUrls(new ArrayList<String>(urls));
-    log.debug2("result = {}", () -> result);
+    log.debug2("result = {}", result);
     return result;
   }
 }
