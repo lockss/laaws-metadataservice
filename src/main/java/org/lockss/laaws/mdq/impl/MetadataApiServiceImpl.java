@@ -31,22 +31,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.lockss.laaws.mdq.impl;
 
-import java.security.AccessControlException;
 import java.util.ConcurrentModificationException;
 import javax.servlet.http.HttpServletRequest;
 import org.lockss.app.LockssApp;
 import org.lockss.laaws.mdq.api.MetadataApiDelegate;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.PageInfo;
-import org.lockss.laaws.status.model.ApiStatus;
 import org.lockss.log.L4JLogger;
-import org.lockss.metadata.ItemMetadata;
 import org.lockss.metadata.ItemMetadataContinuationToken;
 import org.lockss.metadata.ItemMetadataPage;
-import org.lockss.metadata.extractor.MetadataExtractorManager;
-import org.lockss.spring.auth.Roles;
-import org.lockss.spring.auth.SpringAuthenticationFilter;
-import org.lockss.spring.status.SpringLockssBaseApiController;
+import org.lockss.metadata.query.MetadataQueryManager;
+import org.lockss.spring.base.BaseSpringApiServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,47 +51,12 @@ import org.springframework.stereotype.Service;
  * Service for access to the metadata of an AU.
  */
 @Service
-public class MetadataApiServiceImpl extends SpringLockssBaseApiController
+public class MetadataApiServiceImpl extends BaseSpringApiServiceImpl
     implements MetadataApiDelegate {
   private static final L4JLogger log = L4JLogger.getLogger();
 
   @Autowired
   private HttpServletRequest request;
-
-  /**
-   * Deletes from the database an Archival Unit given its identifier.
-   * 
-   * @param auid
-   *          A String with the AU identifier.
-   * @return a {@code ResponseEntity<Integer>} with the count of metadata items
-   *         deleted.
-   */
-  @Override
-  public ResponseEntity<Integer> deleteMetadataAusAuid(String auid) {
-    log.debug2("auid = {}", () -> auid);
-
-    // Check authorization.
-    try {
-      SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
-    } catch (AccessControlException ace) {
-      log.warn(ace.getMessage());
-      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-    }
-
-    try {
-      Integer count = getMetadataExtractorManager().deleteAu(auid);
-      log.trace("count = {}", () -> count);
-      return new ResponseEntity<Integer>(count, HttpStatus.OK);
-    } catch (IllegalArgumentException iae) {
-      String message = "No Archival Unit found for auid '" + auid + "'";
-      log.warn(message, iae);
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    } catch (Exception e) {
-      String message = "Cannot deleteMetadataAusAuid() for auid '" + auid + "'";
-      log.error(message, e);
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
 
   /**
    * Provides the full metadata stored for an AU given the AU identifier or a
@@ -119,6 +79,12 @@ public class MetadataApiServiceImpl extends SpringLockssBaseApiController
     log.debug2("limit = {}", () -> limit);
     log.debug2("continuationToken = {}", () -> continuationToken);
 
+    // Check whether the service has not been fully initialized.
+    if (!waitReady()) {
+      // Yes: Notify the client.
+      return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
     // Validation of requested page size.
     if (limit == null || limit.intValue() < 0) {
       String message = "Limit of requested items must be a non-negative "
@@ -140,8 +106,8 @@ public class MetadataApiServiceImpl extends SpringLockssBaseApiController
 
     try {
       // Get the pageful of results.
-      ItemMetadataPage itemsPage = getMetadataExtractorManager()
-	  .getAuMetadataDetail(auid, limit, imct);
+      ItemMetadataPage itemsPage = LockssApp.getManagerByTypeStatic(
+	  MetadataQueryManager.class).getAuMetadataDetail(auid, limit, imct);
       log.trace("itemsPage = {}", () -> itemsPage);
 
       AuMetadataPageInfo result = new AuMetadataPageInfo();
@@ -191,56 +157,5 @@ public class MetadataApiServiceImpl extends SpringLockssBaseApiController
       log.error(message, e);
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  /**
-   * Stores the metadata for an item belonging to an AU.
-   * 
-   * @param item
-   *          An ItemMetadata with the AU item metadata.
-   * @return a {@code ResponseEntity<Long>} with the identifier of the stored
-   *         metadata.
-   */
-  @Override
-  public ResponseEntity<Long> postMetadataAusItem(ItemMetadata item) {
-    log.debug2("item = {}", () -> item);
-
-    // Check authorization.
-    try {
-      SpringAuthenticationFilter.checkAuthorization(Roles.ROLE_CONTENT_ADMIN);
-    } catch (AccessControlException ace) {
-      log.warn(ace.getMessage());
-      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-    }
-
-    try {
-      Long mdItemSeq = getMetadataExtractorManager().storeAuItemMetadata(item);
-      log.debug2("mdItemSeq = {}", () -> mdItemSeq);
-      return new ResponseEntity<Long>(mdItemSeq, HttpStatus.OK);
-    } catch (Exception e) {
-      String message = "Cannot postMetadataAusItem() for item '" + item + "'";
-      log.error(message, e);
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Provides the status object.
-   * 
-   * @return an ApiStatus with the status.
-   */
-  @Override
-  public ApiStatus getApiStatus() {
-    return new ApiStatus("swagger/swagger.yaml")
-	.setReady(LockssApp.getLockssApp().isAppRunning());
-  }
-
-  /**
-   * Provides the metadata extractor manager.
-   * 
-   * @return a MetadataExtractorManager with the metadata extractor manager.
-   */
-  private MetadataExtractorManager getMetadataExtractorManager() {
-    return LockssApp.getManagerByTypeStatic(MetadataExtractorManager.class);
   }
 }

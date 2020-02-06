@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2000-2018 Board of Trustees of Leland Stanford Jr. University,
+Copyright (c) 2000-2019 Board of Trustees of Leland Stanford Jr. University,
 all rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -37,22 +37,21 @@ import org.lockss.app.LockssApp.AppSpec;
 import org.lockss.app.LockssApp.ManagerDesc;
 import org.lockss.app.LockssDaemon;
 import org.lockss.app.ServiceDescr;
+import org.lockss.metadata.query.MetadataQueryManager;
 import org.lockss.plugin.PluginManager;
-import org.lockss.metadata.extractor.MetadataExtractorManager;
-import org.lockss.metadata.extractor.job.JobDbManager;
-import org.lockss.metadata.extractor.job.JobManager;
 import org.lockss.spring.base.BaseSpringBootApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.solr.SolrAutoConfiguration;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 /**
  * The Spring-Boot application.
  */
-@SpringBootApplication
+@SpringBootApplication(exclude =  {SolrAutoConfiguration.class})
 @EnableSwagger2
 public class MdqApplication extends BaseSpringBootApplication
 	implements CommandLineRunner {
@@ -72,14 +71,8 @@ public class MdqApplication extends BaseSpringBootApplication
     METADATA_DB_MANAGER_DESC,
     // start metadata manager after pluggin manager and database manager.
     METADATA_MANAGER_DESC,
-    new ManagerDesc(LockssDaemon.managerKey(MetadataExtractorManager.class),
-	"org.lockss.metadata.extractor.MetadataExtractorManager"),
-    // Start the job database manager.
-    new ManagerDesc(LockssDaemon.managerKey(JobDbManager.class),
-	"org.lockss.metadata.extractor.job.JobDbManager"),
-    // Start the job manager.
-    new ManagerDesc(LockssDaemon.managerKey(JobManager.class),
-	"org.lockss.metadata.extractor.job.JobManager"),
+    new ManagerDesc(LockssDaemon.managerKey(MetadataQueryManager.class),
+	"org.lockss.metadata.query.MetadataQueryManager"),
     // NOTE: Any managers that are needed to decide whether a servlet is to be
     // enabled or not (through ServletDescr.isEnabled()) need to appear before
     // the AdminServletManager on the next line.
