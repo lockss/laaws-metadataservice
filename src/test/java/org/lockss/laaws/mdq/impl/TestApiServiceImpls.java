@@ -661,7 +661,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplate restTemplate = RestUtil.getSimpleFactoryRestTemplate(true);
+    RestTemplate restTemplate = RestUtil.getRestTemplate();
 
     HttpEntity<String> requestEntity = null;
 
@@ -895,7 +895,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplate restTemplate = RestUtil.getSimpleFactoryRestTemplate(true);
+    RestTemplate restTemplate = RestUtil.getRestTemplate();
 
     HttpEntity<String> requestEntity = null;
 
@@ -1163,7 +1163,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplate restTemplate = RestUtil.getSimpleFactoryRestTemplate(true);
+    RestTemplate restTemplate = RestUtil.getRestTemplate();
 
     HttpEntity<String> requestEntity = null;
 
