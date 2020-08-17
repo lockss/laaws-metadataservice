@@ -57,7 +57,7 @@ import org.lockss.metadata.query.MetadataQueryManager;
 import org.lockss.plugin.Plugin;
 import org.lockss.plugin.definable.DefinablePlugin;
 import org.lockss.test.MockArchivalUnit;
-import org.lockss.test.SpringLockssTestCase;
+import org.lockss.spring.test.SpringLockssTestCase4;
 import org.lockss.util.ListUtil;
 import org.lockss.util.rest.RestUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,7 +82,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class TestApiServiceImpls extends SpringLockssTestCase {
+public class TestApiServiceImpls extends SpringLockssTestCase4 {
   private static final L4JLogger log = L4JLogger.getLogger();
 
   private static final String UI_PORT_CONFIGURATION_TEMPLATE =

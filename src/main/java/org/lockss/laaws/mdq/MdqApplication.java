@@ -115,6 +115,7 @@ public class MdqApplication extends BaseSpringBootApplication
 	.setArgs(args)
 	.addAppConfig(LockssDaemon.PARAM_START_PLUGINS, "true")
 	.addAppConfig(PluginManager.PARAM_START_ALL_AUS, "false")
+	.setSpringApplicatonContext(getApplicationContext())
 	.setAppManagers(myManagerDescs);
       LockssApp.startStatic(LockssDaemon.class, spec);
     } else {
