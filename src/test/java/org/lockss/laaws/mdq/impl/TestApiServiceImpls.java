@@ -1200,7 +1200,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     TestRestTemplate testRestTemplate = new TestRestTemplate(restTemplate);
 
     // Set LOCKSS error handler after construction of TestRestTemplate, which sets a default error handler
-    restTemplate.setErrorHandler(new LockssResponseErrorHandler());
+    restTemplate.setErrorHandler(new LockssResponseErrorHandler(restTemplate.getMessageConverters()));
 
     try {
       ResponseEntity<UrlInfo> response = testRestTemplate.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
@@ -1235,7 +1235,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     } catch (LockssResponseErrorHandler.WrappedLockssRestHttpException e) {
 
       // Assert this is an expected failure
-      LockssRestHttpException lrhe = e.getLHRE();
+      LockssRestHttpException lrhe = e.getLRHE();
       HttpStatus statusCode = lrhe.getHttpStatus();
       assertEquals(expectedStatus, statusCode);
 
