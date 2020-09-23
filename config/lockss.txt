@@ -47,7 +47,7 @@ org.lockss.ui.port=24651
 # The database manager used to store the Archival Unit metadata.
 #
 # Using Derby.
-org.lockss.metadataDbManager..waitForExternalSetup=true
+org.lockss.metadataDbManager.waitForExternalSetup=true
 #org.lockss.metadataDbManager.derby.infologAppend=true
 ##org.lockss.metadataDbManager.derby.languageLogqueryplan=true
 #org.lockss.metadataDbManager.derby.languageLogstatementtext=true
