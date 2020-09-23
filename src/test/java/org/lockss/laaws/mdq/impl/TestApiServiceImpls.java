@@ -59,7 +59,9 @@ import org.lockss.plugin.definable.DefinablePlugin;
 import org.lockss.test.MockArchivalUnit;
 import org.lockss.spring.test.SpringLockssTestCase4;
 import org.lockss.util.ListUtil;
+import org.lockss.util.rest.LockssResponseErrorHandler;
 import org.lockss.util.rest.RestUtil;
+import org.lockss.util.rest.exception.LockssRestHttpException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.context.embedded.LocalServerPort;
@@ -1195,15 +1197,21 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     }
 
     // Make the request and get the response. 
-    ResponseEntity<UrlInfo> response = new TestRestTemplate(restTemplate)
-	.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
+    TestRestTemplate testRestTemplate = new TestRestTemplate(restTemplate);
 
-    // Get the response status.
-    HttpStatus statusCode = response.getStatusCode();
-    assertEquals(expectedStatus, statusCode);
+    // Set LOCKSS error handler after construction of TestRestTemplate, which sets a default error handler
+    restTemplate.setErrorHandler(new LockssResponseErrorHandler());
 
-    // Verify.
-    if (isSuccess(statusCode)) {
+    try {
+      ResponseEntity<UrlInfo> response = testRestTemplate.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
+
+      // Get the response status.
+      HttpStatus statusCode = response.getStatusCode();
+      assertEquals(expectedStatus, statusCode);
+
+      assertTrue(isSuccess(statusCode));
+
+      // Verify.
       UrlInfo result = response.getBody();
 
       // Parameters.
@@ -1211,19 +1219,28 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
       assertEquals(openUrlParams.size(), params.size());
 
       for (Map.Entry<String, String> param : params.entrySet()) {
-	assertTrue(openUrlParams.contains(
-	    param.getKey() + "=" + param.getValue()));
+        assertTrue(openUrlParams.contains(
+            param.getKey() + "=" + param.getValue()));
       }
 
       // URLs.
       List<String> urls = result.getUrls();
 
       if (expectedUrl == null) {
-	assertEquals(0, urls.size());
+        assertEquals(0, urls.size());
       } else {
-	assertEquals(1, urls.size());
-	assertEquals(expectedUrl, urls.get(0));
+        assertEquals(1, urls.size());
+        assertEquals(expectedUrl, urls.get(0));
       }
+    } catch (LockssResponseErrorHandler.WrappedLockssRestHttpException e) {
+
+      // Assert this is an expected failure
+      LockssRestHttpException lrhe = e.getLHRE();
+      HttpStatus statusCode = lrhe.getHttpStatus();
+      assertEquals(expectedStatus, statusCode);
+
+      assertFalse(isSuccess(statusCode));
+
     }
 
     log.debug2("Done");
