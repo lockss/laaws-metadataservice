@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2000-2019 Board of Trustees of Leland Stanford Jr. University,
+Copyright (c) 2000-2020 Board of Trustees of Leland Stanford Jr. University,
 all rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -57,8 +57,11 @@ import org.lockss.metadata.query.MetadataQueryManager;
 import org.lockss.plugin.Plugin;
 import org.lockss.plugin.definable.DefinablePlugin;
 import org.lockss.test.MockArchivalUnit;
-import org.lockss.test.SpringLockssTestCase;
+import org.lockss.spring.test.SpringLockssTestCase4;
 import org.lockss.util.ListUtil;
+import org.lockss.util.rest.LockssResponseErrorHandler;
+import org.lockss.util.rest.RestUtil;
+import org.lockss.util.rest.exception.LockssRestHttpException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.context.embedded.LocalServerPort;
@@ -81,7 +84,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class TestApiServiceImpls extends SpringLockssTestCase {
+public class TestApiServiceImpls extends SpringLockssTestCase4 {
   private static final L4JLogger log = L4JLogger.getLogger();
 
   private static final String UI_PORT_CONFIGURATION_TEMPLATE =
@@ -660,7 +663,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplate restTemplate = new RestTemplate();
+    RestTemplate restTemplate = RestUtil.getRestTemplate();
 
     HttpEntity<String> requestEntity = null;
 
@@ -894,7 +897,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplate restTemplate = new RestTemplate();
+    RestTemplate restTemplate = RestUtil.getRestTemplate();
 
     HttpEntity<String> requestEntity = null;
 
@@ -1162,7 +1165,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplate restTemplate = new RestTemplate();
+    RestTemplate restTemplate = RestUtil.getRestTemplate();
 
     HttpEntity<String> requestEntity = null;
 
@@ -1194,15 +1197,21 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
     }
 
     // Make the request and get the response. 
-    ResponseEntity<UrlInfo> response = new TestRestTemplate(restTemplate)
-	.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
+    TestRestTemplate testRestTemplate = new TestRestTemplate(restTemplate);
 
-    // Get the response status.
-    HttpStatus statusCode = response.getStatusCode();
-    assertEquals(expectedStatus, statusCode);
+    // Set LOCKSS error handler after construction of TestRestTemplate, which sets a default error handler
+    restTemplate.setErrorHandler(new LockssResponseErrorHandler(restTemplate.getMessageConverters()));
 
-    // Verify.
-    if (isSuccess(statusCode)) {
+    try {
+      ResponseEntity<UrlInfo> response = testRestTemplate.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
+
+      // Get the response status.
+      HttpStatus statusCode = response.getStatusCode();
+      assertEquals(expectedStatus, statusCode);
+
+      assertTrue(isSuccess(statusCode));
+
+      // Verify.
       UrlInfo result = response.getBody();
 
       // Parameters.
@@ -1210,19 +1219,28 @@ public class TestApiServiceImpls extends SpringLockssTestCase {
       assertEquals(openUrlParams.size(), params.size());
 
       for (Map.Entry<String, String> param : params.entrySet()) {
-	assertTrue(openUrlParams.contains(
-	    param.getKey() + "=" + param.getValue()));
+        assertTrue(openUrlParams.contains(
+            param.getKey() + "=" + param.getValue()));
       }
 
       // URLs.
       List<String> urls = result.getUrls();
 
       if (expectedUrl == null) {
-	assertEquals(0, urls.size());
+        assertEquals(0, urls.size());
       } else {
-	assertEquals(1, urls.size());
-	assertEquals(expectedUrl, urls.get(0));
+        assertEquals(1, urls.size());
+        assertEquals(expectedUrl, urls.get(0));
       }
+    } catch (LockssResponseErrorHandler.WrappedLockssRestHttpException e) {
+
+      // Assert this is an expected failure
+      LockssRestHttpException lrhe = e.getLRHE();
+      HttpStatus statusCode = lrhe.getHttpStatus();
+      assertEquals(expectedStatus, statusCode);
+
+      assertFalse(isSuccess(statusCode));
+
     }
 
     log.debug2("Done");
