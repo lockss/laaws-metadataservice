@@ -1,6 +1,6 @@
-# Release Notes
+# `laaws-metadata-service` Release Notes
 
-## Major Changes Since 2.0.2.1
+## Changes Since 2.0.2.1
 
 *   Switched to a 3-part version numbering scheme.
 
