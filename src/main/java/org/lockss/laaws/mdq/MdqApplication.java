@@ -37,6 +37,7 @@ import org.lockss.app.LockssApp.AppSpec;
 import org.lockss.app.LockssApp.ManagerDesc;
 import org.lockss.app.LockssDaemon;
 import org.lockss.app.ServiceDescr;
+import org.lockss.crawler.CrawlManagerImpl;
 import org.lockss.metadata.query.MetadataQueryManager;
 import org.lockss.plugin.PluginManager;
 import org.lockss.spring.base.BaseSpringBootApplication;
@@ -66,6 +67,7 @@ public class MdqApplication extends BaseSpringBootApplication
     // start plugin manager after generic services
     PLUGIN_MANAGER_DESC,
     STATE_MANAGER_DESC,
+    CRAWL_MANAGER_DESC,
     REPOSITORY_MANAGER_DESC,
     // start database manager before any manager that uses it.
     METADATA_DB_MANAGER_DESC,
@@ -115,6 +117,8 @@ public class MdqApplication extends BaseSpringBootApplication
 	.setArgs(args)
 	.addAppConfig(LockssDaemon.PARAM_START_PLUGINS, "true")
 	.addAppConfig(PluginManager.PARAM_START_ALL_AUS, "false")
+	.addAppConfig(CrawlManagerImpl.PARAM_CRAWLER_ENABLED, "false")
+	.addAppConfig(CrawlManagerImpl.PARAM_CRAWL_STARTER_ENABLED, "false")
 	.setSpringApplicatonContext(getApplicationContext())
 	.setAppManagers(myManagerDescs);
       LockssApp.startStatic(LockssDaemon.class, spec);
