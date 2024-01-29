@@ -47,13 +47,20 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.solr.SolrAutoConfiguration;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
+import org.springframework.context.annotation.ComponentScan;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.format.FormatterRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 /**
  * The Spring-Boot application.
  */
 @SpringBootApplication(exclude =  {SolrAutoConfiguration.class})
-@EnableSwagger2
+
+@ComponentScan(basePackages = { "org.lockss.laaws.mdq",
+  "org.lockss.laaws.mdq.api" , "org.lockss.laaws.mdq.config",
+  "org.lockss.util.rest.status", "org.lockss.metadata"})
 public class MdqApplication extends BaseSpringBootApplication
 	implements CommandLineRunner {
   private static final Logger logger =
