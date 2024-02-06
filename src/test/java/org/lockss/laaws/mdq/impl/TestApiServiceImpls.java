@@ -64,16 +64,12 @@ import org.lockss.util.rest.RestUtil;
 import org.lockss.util.rest.exception.LockssRestHttpException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationContext;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
@@ -701,12 +697,13 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
 	    requestEntity, String.class);
 
     // Get the response status.
-    HttpStatus statusCode = response.getStatusCode();
-    assertEquals(expectedStatus, statusCode);
+    HttpStatusCode statusCode = response.getStatusCode();
+    HttpStatus status = HttpStatus.valueOf(statusCode.value());
+    assertEquals(expectedStatus, status);
 
     AuMetadataPageInfo result = null;
 
-    if (isSuccess(statusCode)) {
+    if (isSuccess(status)) {
       result = new ObjectMapper().readValue(response.getBody(),
 	  AuMetadataPageInfo.class);
     }
@@ -934,11 +931,12 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
 	.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
 
     // Get the response status.
-    HttpStatus statusCode = response.getStatusCode();
-    assertEquals(expectedStatus, statusCode);
+    HttpStatusCode statusCode = response.getStatusCode();
+    HttpStatus status = HttpStatus.valueOf(statusCode.value());
+    assertEquals(expectedStatus, status);
 
     // Verify.
-    if (isSuccess(statusCode)) {
+    if (isSuccess(status)) {
       UrlInfo result = response.getBody();
 
       // Parameters.
@@ -1208,10 +1206,11 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
       ResponseEntity<UrlInfo> response = testRestTemplate.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
 
       // Get the response status.
-      HttpStatus statusCode = response.getStatusCode();
-      assertEquals(expectedStatus, statusCode);
+      HttpStatusCode statusCode = response.getStatusCode();
+      HttpStatus status = HttpStatus.valueOf(statusCode.value());
+      assertEquals(expectedStatus, status);
 
-      assertTrue(isSuccess(statusCode));
+      assertTrue(isSuccess(status));
 
       // Verify.
       UrlInfo result = response.getBody();
