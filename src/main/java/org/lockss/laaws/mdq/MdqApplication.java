@@ -46,11 +46,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
  * The Spring-Boot application.
  */
 @SpringBootApplication()
+
+@ComponentScan(basePackages = { "org.lockss.laaws.mdq",
+  "org.lockss.laaws.mdq.api" , "org.lockss.laaws.mdq.config",
+  "org.lockss.util.rest.status", "org.lockss.metadata"})
 public class MdqApplication extends BaseSpringBootApplication
 	implements CommandLineRunner {
   private static final Logger logger =
