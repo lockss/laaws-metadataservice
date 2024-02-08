@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.lockss.laaws.mdq.impl;
 
 import java.util.ConcurrentModificationException;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.lockss.app.LockssApp;
 import org.lockss.laaws.mdq.api.MetadataApiDelegate;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
