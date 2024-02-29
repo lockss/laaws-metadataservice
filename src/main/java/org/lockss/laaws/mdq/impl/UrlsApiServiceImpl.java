@@ -42,6 +42,7 @@ import org.lockss.app.LockssDaemon;
 import org.lockss.daemon.OpenUrlResolver;
 import org.lockss.daemon.OpenUrlResolver.OpenUrlInfo;
 import org.lockss.laaws.mdq.api.UrlsApiDelegate;
+import org.lockss.laaws.mdq.model.ErrorResult;
 import org.lockss.laaws.mdq.model.UrlInfo;
 import org.lockss.log.L4JLogger;
 import org.lockss.spring.base.BaseSpringApiServiceImpl;
@@ -65,7 +66,7 @@ public class UrlsApiServiceImpl extends BaseSpringApiServiceImpl
    * @return a {@code ResponseEntity<UrlInfo>} with the URL information.
    */
   @Override
-  public ResponseEntity<UrlInfo> getUrlsDoi(String doi) {
+  public ResponseEntity getUrlsDoi(String doi) {
     log.debug2("doi = {}", doi);
 
     // Check whether the service has not been fully initialized.
@@ -83,7 +84,10 @@ public class UrlsApiServiceImpl extends BaseSpringApiServiceImpl
     } catch (Exception e) {
       String message = "Cannot getUrlsDoi() for doi = '" + doi + "'";
       log.error(message, e);
-      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+      ErrorResult errorResult = new ErrorResult().message(message)
+        .code(HttpStatus.INTERNAL_SERVER_ERROR.value());
+      return new ResponseEntity<>(errorResult,
+        HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

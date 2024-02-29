@@ -263,7 +263,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
 
-    runGetSwaggerDocsTest(getTestUrlTemplate("/v2/api-docs"));
+    runGetSwaggerDocsTest(getTestUrlTemplate("/v3/api-docs"));
     getMetadataAusAuidUnAuthenticatedTest();
     getUrlsDoiUnAuthenticatedTest();
     getUrlsOpenUrlUnAuthenticatedTest();
@@ -289,7 +289,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
 
-    runGetSwaggerDocsTest(getTestUrlTemplate("/v2/api-docs"));
+    runGetSwaggerDocsTest(getTestUrlTemplate("/v3/api-docs"));
     getMetadataAusAuidAuthenticatedTest();
     getUrlsDoiAuthenticatedTest();
     getUrlsOpenUrlAuthenticatedTest();
@@ -459,10 +459,8 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
   /**
    * Performs pagination tests.
    * 
-   * @param user
-   *          A String with the request username.
-   * @param password
-   *          A String with the request password.
+   * @param credentials
+   *          A Credential with the request username/password.
    * @throws Exception
    *           if there are problems.
    */
