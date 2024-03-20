@@ -38,6 +38,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.lockss.laaws.mdq.MdqApplication;
 import org.lockss.util.rest.status.ApiStatus;
 import org.lockss.log.L4JLogger;
 import org.lockss.app.*;
@@ -60,7 +61,9 @@ import org.springframework.test.context.junit4.SpringRunner;
  * org.lockss.laaws.mdq.api.UrlsApiServiceImpl.
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    classes = {MdqApplication.class},
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestStatusApiServiceImpl extends SpringLockssTestCase4 {
   private static final L4JLogger log = L4JLogger.getLogger();
 

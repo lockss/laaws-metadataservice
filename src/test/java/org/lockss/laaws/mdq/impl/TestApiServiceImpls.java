@@ -46,6 +46,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lockss.app.LockssDaemon;
 import org.lockss.config.Configuration;
+import org.lockss.laaws.mdq.MdqApplication;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.PageInfo;
 import org.lockss.laaws.mdq.model.UrlInfo;
@@ -80,7 +81,9 @@ import org.springframework.web.util.UriComponentsBuilder;
  * org.lockss.laaws.mdq.api.UrlsApiServiceImpl.
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    classes = {MdqApplication.class},
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestApiServiceImpls extends SpringLockssTestCase4 {
   private static final L4JLogger log = L4JLogger.getLogger();
 
