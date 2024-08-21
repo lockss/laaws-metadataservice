@@ -1,4 +1,11 @@
 # `laaws-metadata-service` Release Notes
+## Changes Since 2.3.0
+* Remove  Travis CI
+* Move to OpenAPI 3
+* Move to Java 17
+* Suppress extraneous messages in tests
+* Spring 6.x and Spring Boot 3.x related changes
+
 
 ## Changes Since 2.0.2.1
 
