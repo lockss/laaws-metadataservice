@@ -46,6 +46,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lockss.app.LockssDaemon;
 import org.lockss.config.Configuration;
+import org.lockss.laaws.mdq.MdqApplication;
 import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
 import org.lockss.laaws.mdq.model.PageInfo;
 import org.lockss.laaws.mdq.model.UrlInfo;
@@ -64,15 +65,12 @@ import org.lockss.util.rest.RestUtil;
 import org.lockss.util.rest.exception.LockssRestHttpException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.context.embedded.LocalServerPort;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationContext;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
@@ -83,7 +81,9 @@ import org.springframework.web.util.UriComponentsBuilder;
  * org.lockss.laaws.mdq.api.UrlsApiServiceImpl.
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    classes = {MdqApplication.class},
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestApiServiceImpls extends SpringLockssTestCase4 {
   private static final L4JLogger log = L4JLogger.getLogger();
 
@@ -262,7 +262,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
 
-    runGetSwaggerDocsTest(getTestUrlTemplate("/v2/api-docs"));
+    runGetSwaggerDocsTest(getTestUrlTemplate("/v3/api-docs"));
     getMetadataAusAuidUnAuthenticatedTest();
     getUrlsDoiUnAuthenticatedTest();
     getUrlsOpenUrlUnAuthenticatedTest();
@@ -288,7 +288,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
     runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
 
-    runGetSwaggerDocsTest(getTestUrlTemplate("/v2/api-docs"));
+    runGetSwaggerDocsTest(getTestUrlTemplate("/v3/api-docs"));
     getMetadataAusAuidAuthenticatedTest();
     getUrlsDoiAuthenticatedTest();
     getUrlsOpenUrlAuthenticatedTest();
@@ -458,10 +458,8 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
   /**
    * Performs pagination tests.
    * 
-   * @param user
-   *          A String with the request username.
-   * @param password
-   *          A String with the request password.
+   * @param credentials
+   *          A Credential with the request username/password.
    * @throws Exception
    *           if there are problems.
    */
@@ -663,7 +661,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplate restTemplate = RestUtil.getRestTemplate();
+    RestTemplateBuilder templateBuilder = RestUtil.getRestTemplateBuilder(0, 0);
 
     HttpEntity<String> requestEntity = null;
 
@@ -696,16 +694,17 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
 
     // Make the request and get the response. 
     ResponseEntity<String> response =
-	new TestRestTemplate(restTemplate).exchange(uri, HttpMethod.GET,
+	new TestRestTemplate(templateBuilder).exchange(uri, HttpMethod.GET,
 	    requestEntity, String.class);
 
     // Get the response status.
-    HttpStatus statusCode = response.getStatusCode();
-    assertEquals(expectedStatus, statusCode);
+    HttpStatusCode statusCode = response.getStatusCode();
+    HttpStatus status = HttpStatus.valueOf(statusCode.value());
+    assertEquals(expectedStatus, status);
 
     AuMetadataPageInfo result = null;
 
-    if (isSuccess(statusCode)) {
+    if (isSuccess(status)) {
       result = new ObjectMapper().readValue(response.getBody(),
 	  AuMetadataPageInfo.class);
     }
@@ -897,7 +896,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplate restTemplate = RestUtil.getRestTemplate();
+    RestTemplateBuilder templateBuilder = RestUtil.getRestTemplateBuilder(0, 0);
 
     HttpEntity<String> requestEntity = null;
 
@@ -929,15 +928,16 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     }
 
     // Make the request and get the response. 
-    ResponseEntity<UrlInfo> response = new TestRestTemplate(restTemplate)
+    ResponseEntity<UrlInfo> response = new TestRestTemplate(templateBuilder)
 	.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
 
     // Get the response status.
-    HttpStatus statusCode = response.getStatusCode();
-    assertEquals(expectedStatus, statusCode);
+    HttpStatusCode statusCode = response.getStatusCode();
+    HttpStatus status = HttpStatus.valueOf(statusCode.value());
+    assertEquals(expectedStatus, status);
 
     // Verify.
-    if (isSuccess(statusCode)) {
+    if (isSuccess(status)) {
       UrlInfo result = response.getBody();
 
       // Parameters.
@@ -1165,7 +1165,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplate restTemplate = RestUtil.getRestTemplate();
+    RestTemplateBuilder templateBuilder = RestUtil.getRestTemplateBuilder(0, 0);
 
     HttpEntity<String> requestEntity = null;
 
@@ -1197,19 +1197,21 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     }
 
     // Make the request and get the response. 
-    TestRestTemplate testRestTemplate = new TestRestTemplate(restTemplate);
+    TestRestTemplate testRestTemplate = new TestRestTemplate(templateBuilder);
 
     // Set LOCKSS error handler after construction of TestRestTemplate, which sets a default error handler
+    RestTemplate restTemplate = testRestTemplate.getRestTemplate();
     restTemplate.setErrorHandler(new LockssResponseErrorHandler(restTemplate.getMessageConverters()));
 
     try {
       ResponseEntity<UrlInfo> response = testRestTemplate.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
 
       // Get the response status.
-      HttpStatus statusCode = response.getStatusCode();
-      assertEquals(expectedStatus, statusCode);
+      HttpStatusCode statusCode = response.getStatusCode();
+      HttpStatus status = HttpStatus.valueOf(statusCode.value());
+      assertEquals(expectedStatus, status);
 
-      assertTrue(isSuccess(statusCode));
+      assertTrue(isSuccess(status));
 
       // Verify.
       UrlInfo result = response.getBody();

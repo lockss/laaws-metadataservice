@@ -46,3 +46,5 @@ sed -i.backup "s/import org.lockss.laaws.mdq.model.ItemMetadata;/import org.lock
 # Edit AuMetadataPageInfo.java.
 CLASS=src/generated/java/org/lockss/laaws/mdq/model/AuMetadataPageInfo.java
 sed -i.backup "s/import org.lockss.laaws.mdq.model.ItemMetadata;/import org.lockss.metadata.ItemMetadata;/" $CLASS && rm $CLASS.backup
+
+rm -rf src/generated/java/org/lockss/laaws/mdq/config/SwaggerDocumentationConfig.java
