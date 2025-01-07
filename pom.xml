@@ -56,8 +56,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
     <!-- Is a Spring project -->
     <build.java.spring.skip>false</build.java.spring.skip>
-    <build.java.package>org.lockss.laaws.mdq</build.java.package>
-    <build.java.mainClass>${build.java.package}.MdqApplication</build.java.mainClass>
+    <build.java.package>org.lockss.laaws.md</build.java.package>
+    <build.java.mainClass>${build.java.package}.MdApplication</build.java.mainClass>
 
     <!-- Is a Docker project -->
     <build.docker.skip>false</build.docker.skip>

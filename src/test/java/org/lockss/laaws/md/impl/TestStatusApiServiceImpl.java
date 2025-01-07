@@ -29,7 +29,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-package org.lockss.laaws.mdq.impl;
+package org.lockss.laaws.md.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.IOException;
@@ -38,7 +38,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.lockss.laaws.mdq.MdqApplication;
+import org.lockss.laaws.md.MdApplication;
 import org.lockss.util.rest.status.ApiStatus;
 import org.lockss.log.L4JLogger;
 import org.lockss.app.*;
@@ -57,12 +57,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 /**
- * Test class for org.lockss.laaws.mdq.api.MetadataApiServiceImpl and
- * org.lockss.laaws.mdq.api.UrlsApiServiceImpl.
+ * Test class for org.lockss.laaws.md.api.MetadataApiServiceImpl and
+ * org.lockss.laaws.md.api.UrlsApiServiceImpl.
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(
-    classes = {MdqApplication.class},
+    classes = {MdApplication.class},
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestStatusApiServiceImpl extends SpringLockssTestCase4 {
   private static final L4JLogger log = L4JLogger.getLogger();

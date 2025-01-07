@@ -25,7 +25,7 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.client;
+package org.lockss.laaws.md.client;
 
 import java.nio.charset.Charset;
 import java.util.Base64;
@@ -35,7 +35,7 @@ import org.lockss.util.rest.RestUtil;
 import org.springframework.http.HttpHeaders;
 
 /**
- * A base client for all of the LAAWS-MDQ web service operations.
+ * A base client for all of the LAAWS-MD web service operations.
  */
 public class BaseClient {
   private static final String userName = "lockss-u";

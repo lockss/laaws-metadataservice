@@ -29,7 +29,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-package org.lockss.laaws.mdq.impl;
+package org.lockss.laaws.md.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -46,10 +46,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lockss.app.LockssDaemon;
 import org.lockss.config.Configuration;
-import org.lockss.laaws.mdq.MdqApplication;
-import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
-import org.lockss.laaws.mdq.model.PageInfo;
-import org.lockss.laaws.mdq.model.UrlInfo;
+import org.lockss.laaws.md.MdApplication;
+import org.lockss.laaws.md.model.AuMetadataPageInfo;
+import org.lockss.laaws.md.model.PageInfo;
+import org.lockss.laaws.md.model.UrlInfo;
 import org.lockss.log.L4JLogger;
 import org.lockss.metadata.ItemMetadata;
 import org.lockss.metadata.ItemMetadataContinuationToken;
@@ -77,12 +77,12 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * Test class for org.lockss.laaws.mdq.api.MetadataApiServiceImpl and
- * org.lockss.laaws.mdq.api.UrlsApiServiceImpl.
+ * Test class for org.lockss.laaws.md.api.MetadataApiServiceImpl and
+ * org.lockss.laaws.md.api.UrlsApiServiceImpl.
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(
-    classes = {MdqApplication.class},
+    classes = {MdApplication.class},
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestApiServiceImpls extends SpringLockssTestCase4 {
   private static final L4JLogger log = L4JLogger.getLogger();

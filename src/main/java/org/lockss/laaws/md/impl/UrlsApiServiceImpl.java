@@ -29,7 +29,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-package org.lockss.laaws.mdq.impl;
+package org.lockss.laaws.md.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,9 +41,9 @@ import java.util.Set;
 import org.lockss.app.LockssDaemon;
 import org.lockss.daemon.OpenUrlResolver;
 import org.lockss.daemon.OpenUrlResolver.OpenUrlInfo;
-import org.lockss.laaws.mdq.api.UrlsApiDelegate;
-import org.lockss.laaws.mdq.model.ErrorResult;
-import org.lockss.laaws.mdq.model.UrlInfo;
+import org.lockss.laaws.md.api.UrlsApiDelegate;
+import org.lockss.laaws.md.model.ErrorResult;
+import org.lockss.laaws.md.model.UrlInfo;
 import org.lockss.log.L4JLogger;
 import org.lockss.spring.base.BaseSpringApiServiceImpl;
 import org.springframework.http.HttpStatus;

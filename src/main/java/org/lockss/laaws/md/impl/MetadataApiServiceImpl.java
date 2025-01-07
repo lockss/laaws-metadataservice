@@ -29,14 +29,14 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-package org.lockss.laaws.mdq.impl;
+package org.lockss.laaws.md.impl;
 
 import java.util.ConcurrentModificationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.lockss.app.LockssApp;
-import org.lockss.laaws.mdq.api.MetadataApiDelegate;
-import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
-import org.lockss.laaws.mdq.model.PageInfo;
+import org.lockss.laaws.md.api.MetadataApiDelegate;
+import org.lockss.laaws.md.model.AuMetadataPageInfo;
+import org.lockss.laaws.md.model.PageInfo;
 import org.lockss.log.L4JLogger;
 import org.lockss.metadata.ItemMetadataContinuationToken;
 import org.lockss.metadata.ItemMetadataPage;
