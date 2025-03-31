@@ -30,6 +30,7 @@ paths:
       description: Get the full metadata stored for an AU given the AU identifier
         or a pageful of the metadata defined by the continuation token and size
       operationId: getMetadataAusAuid
+      # new roles: ROLE_CONTENT_ACCESS, ROLE_AU_ADMIN
       parameters:
       - name: auid
         in: path
@@ -69,6 +70,7 @@ paths:
       description: Provides the URL that results from performing an OpenURL query.
         With query parameters inline
       operationId: getUrlsOpenUrl
+      # new roles: ROLE_CONTENT_ACCESS, ROLE_AU_ADMIN
       parameters:
       - name: params
         in: query
@@ -100,6 +102,7 @@ paths:
       summary: Gets the URL for a DOI
       description: Provides the URL for a DOI given the DOI
       operationId: getUrlsDoi
+      # new roles: ROLE_CONTENT_ACCESS, ROLE_AU_ADMIN
       parameters:
       - name: doi
         in: query
@@ -128,6 +131,7 @@ paths:
       description: Get a list of all currently active jobs or a pageful of the list
         defined by the continuation token and size
       operationId: getMdupdates
+      # new roles: ROLE_AU_ADMIN
       parameters:
         - name: limit
           in: query
@@ -159,6 +163,7 @@ paths:
       summary: Perform an AU metadata update operation
       description: Perform an AU metadata update operation given the update specification
       operationId: postMdupdates
+      # new roles: ROLE_AU_ADMIN
       parameters:
         - name: force
           in: query
@@ -194,6 +199,7 @@ paths:
       summary: Delete all of the currently queued and active jobs
       description: Delete all of the currently queued and active jobs
       operationId: deleteMdupdates
+      # new roles: ROLE_AU_ADMIN
       responses:
         200:
           description: Count of jobs successfully deleted
@@ -215,6 +221,7 @@ paths:
       summary: Get a job
       description: Get a job given the job identifier
       operationId: getMdupdatesJobid
+      # new roles: ROLE_AU_ADMIN
       parameters:
         - name: jobid
           in: path
@@ -242,6 +249,7 @@ paths:
       description: Delete a job given the job identifier, stopping any current processing,
         if necessary
       operationId: deleteMdupdatesJobid
+      # new roles: ROLE_AU_ADMIN
       parameters:
         - name: jobid
           in: path
@@ -269,6 +277,7 @@ paths:
       summary: Get the status of the service
       description: Get the status of the service
       operationId: getStatus
+      # no credentials required
       responses:
         200:
           description: The status of the service
