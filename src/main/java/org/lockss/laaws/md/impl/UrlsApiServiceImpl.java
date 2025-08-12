@@ -45,6 +45,8 @@ import org.lockss.laaws.md.api.UrlsApiDelegate;
 import org.lockss.laaws.md.model.ErrorResult;
 import org.lockss.laaws.md.model.UrlInfo;
 import org.lockss.log.L4JLogger;
+import org.lockss.spring.auth.AuthUtil;
+import org.lockss.spring.auth.Roles;
 import org.lockss.spring.base.BaseSpringApiServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,6 +76,8 @@ public class UrlsApiServiceImpl extends BaseSpringApiServiceImpl
       // Yes: Notify the client.
       return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
     }
+
+    AuthUtil.checkHasRole(Roles.ROLE_CONTENT_ACCESS, Roles.ROLE_AU_ADMIN);
 
     try {
       // Build an OpenURL query.
@@ -107,6 +111,8 @@ public class UrlsApiServiceImpl extends BaseSpringApiServiceImpl
       // Yes: Notify the client.
       return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
     }
+
+    AuthUtil.checkHasRole(Roles.ROLE_CONTENT_ACCESS, Roles.ROLE_AU_ADMIN);
 
     try {
       // Build the OpenURL query.

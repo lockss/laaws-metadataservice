@@ -55,7 +55,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.security.AccessControlException;
 import java.util.ConcurrentModificationException;
 
 import static org.lockss.servlet.DebugPanel.ACTION_FORCE_REINDEX_METADATA;
@@ -92,13 +91,7 @@ public class MdupdatesApiServiceImpl extends BaseSpringApiServiceImpl
       return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
-    // Check for required role
-    try {
-      AuthUtil.checkHasRole(Roles.ROLE_CONTENT_ADMIN);
-    } catch (AccessControlException ace) {
-      log.warn(ace.getMessage());
-      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-    }
+    AuthUtil.checkHasRole(Roles.ROLE_AU_ADMIN);
 
     try {
       int removedCount = getJobManager().removeAllJobs();
@@ -131,13 +124,7 @@ public class MdupdatesApiServiceImpl extends BaseSpringApiServiceImpl
       return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
-    // Check for required role
-    try {
-      AuthUtil.checkHasRole(Roles.ROLE_CONTENT_ADMIN);
-    } catch (AccessControlException ace) {
-      log.warn(ace.getMessage());
-      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-    }
+    AuthUtil.checkHasRole(Roles.ROLE_AU_ADMIN);
 
     try {
       JobAuStatus jobAuStatus = getJobManager().removeJob(jobid);
@@ -181,6 +168,8 @@ public class MdupdatesApiServiceImpl extends BaseSpringApiServiceImpl
       // Yes: Notify the client.
       return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
     }
+
+    AuthUtil.checkHasRole(Roles.ROLE_AU_ADMIN);
 
     if (limit == null || limit.intValue() < 0) {
       String message =
@@ -269,6 +258,8 @@ public class MdupdatesApiServiceImpl extends BaseSpringApiServiceImpl
       return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
+    AuthUtil.checkHasRole(Roles.ROLE_AU_ADMIN);
+
     try {
       JobAuStatus jobAuStatus = getJobManager().getJobStatus(jobid);
       log.trace("jobAuStatus = {}", () -> jobAuStatus);
@@ -312,27 +303,16 @@ public class MdupdatesApiServiceImpl extends BaseSpringApiServiceImpl
       return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
-    // Check for required role
-    try {
-      AuthUtil.checkHasRole(Roles.ROLE_CONTENT_ADMIN);
-    } catch (AccessControlException ace) {
-      log.warn(ace.getMessage());
-      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-    }
+    AuthUtil.checkHasRole(Roles.ROLE_AU_ADMIN);
 
     // Check whether metadata extraction is not enabled.
     if (!LockssApp.getManagerByTypeStatic(MetadataExtractorManager.class)
 	.isIndexingEnabled()) {
       // Yes: Add to the audit log a reference to this operation, if necessary.
-      try {
-        if (force) {
-          audit(ACTION_FORCE_REINDEX_METADATA, null);
-        } else {
-          audit(ACTION_REINDEX_METADATA, null);
-        }
-      } catch (AccessControlException ace) {
-        log.warn(ace.getMessage());
-        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+      if (force) {
+        audit(ACTION_FORCE_REINDEX_METADATA, null);
+      } else {
+        audit(ACTION_REINDEX_METADATA, null);
       }
 
       // Report the problem.
@@ -348,16 +328,11 @@ public class MdupdatesApiServiceImpl extends BaseSpringApiServiceImpl
       if (metadataUpdateSpec == null) {
 	// Yes: Add to the audit log a reference to this operation, if
 	// necessary.
-	try {
-	  if (force) {
-	    audit(ACTION_FORCE_REINDEX_METADATA, null);
-	  } else {
-	    audit(ACTION_REINDEX_METADATA, null);
-	  }
-	} catch (AccessControlException ace) {
-	  log.warn(ace.getMessage());
-	  return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-	}
+        if (force) {
+          audit(ACTION_FORCE_REINDEX_METADATA, null);
+        } else {
+          audit(ACTION_REINDEX_METADATA, null);
+        }
 
 	// Report the problem.
 	String message = "Invalid metadata update specification: null";
@@ -369,15 +344,10 @@ public class MdupdatesApiServiceImpl extends BaseSpringApiServiceImpl
       log.trace("auid = {}", auid);
 
       // Add to the audit log a reference to this operation, if necessary.
-      try {
-        if (force) {
-          audit(ACTION_FORCE_REINDEX_METADATA, auid);
-        } else {
-          audit(ACTION_REINDEX_METADATA, auid);
-        }
-      } catch (AccessControlException ace) {
-        log.warn(ace.getMessage());
-        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+      if (force) {
+        audit(ACTION_FORCE_REINDEX_METADATA, auid);
+      } else {
+        audit(ACTION_REINDEX_METADATA, auid);
       }
 
       if (auid == null || auid.isEmpty()) {
@@ -485,40 +455,5 @@ public class MdupdatesApiServiceImpl extends BaseSpringApiServiceImpl
     return LockssApp.getManagerByTypeStatic(JobManager.class);
   }
 
-  /**
-   * Adds to the audit log a reference to this operation, if necessary.
-   * 
-   * @param action
-   *          A String with the name of the operation.
-   * @param auId
-   *          A String with the identifier (auid) of the archival unit.
-   * @throws AccessControlException if the user cannot be validated.
-   */
-  private void audit(String action, String auId) throws AccessControlException {
-    log.debug2("action = {}", action);
-    log.debug2("auId = {}", auId);
 
-    String userName =
-	SecurityContextHolder.getContext().getAuthentication().getName();
-    log.trace("userName = {}", userName);
-
-    // Get the user account.
-    UserAccount userAccount = null;
-
-    try {
-      userAccount =
-          LockssDaemon.getLockssDaemon().getAccountManager().getUser(userName);
-      log.trace("userAccount = {}", userAccount);
-    } catch (Exception e) {
-      log.error("userName = {}", userName);
-      log.error("LockssDaemon.getLockssDaemon().getAccountManager()."
-          + "getUser(" + userName + ")", e);
-      throw new AccessControlException("Unable to get user '" + userName + "'");
-    }
-
-    if (userAccount != null && !DebugPanel.noAuditActions.contains(action)) {
-      userAccount.auditableEvent("Called AusApi web service operation '"
-	  + action + "' AU ID: " + auId);
-    }
-  }
 }

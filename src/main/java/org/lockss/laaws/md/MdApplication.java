@@ -135,7 +135,7 @@ public class MdApplication extends BaseSpringBootApplication
 	.addAppConfig(CrawlManagerImpl.PARAM_CRAWL_STARTER_ENABLED, "false")
 	.setSpringApplicatonContext(getApplicationContext())
 	.setAppManagers(myManagerDescs);
-      LockssApp.startStatic(LockssDaemon.class, spec);
+      startLockssApp(spec);
     } else {
       // No: Do nothing. This happens when a test is started and before the
       // test setup has got a chance to inject the appropriate command line
