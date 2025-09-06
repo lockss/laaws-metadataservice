@@ -29,3 +29,4 @@ src/generated/java/org/lockss/laaws/*/api/ApiException.java
 src/generated/java/org/lockss/laaws/*/api/NotFoundException.java
 src/generated/java/org/lockss/laaws/*/model/ApiStatus.java
 src/generated/java/org/lockss/laaws/*/model/ItemMetadata.java
+src/generated/java/org/lockss/laaws/*/model/PageInfo.java

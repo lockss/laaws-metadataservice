@@ -128,7 +128,7 @@ public class MetadataApiServiceImpl extends BaseSpringApiServiceImpl
       log.trace("curLink = {}", () -> curLinkBuffer.toString());
 
       pi.setCurLink(curLinkBuffer.toString());
-      pi.setResultsPerPage(itemsPage.getItems().size());
+      pi.setItemsInPage(itemsPage.getItems().size());
 
       // Check whether there is a response continuation token.
       if (itemsPage.getContinuationToken() != null) {

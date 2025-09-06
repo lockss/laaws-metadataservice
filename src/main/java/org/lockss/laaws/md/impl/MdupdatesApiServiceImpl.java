@@ -210,7 +210,7 @@ public class MdupdatesApiServiceImpl extends BaseSpringApiServiceImpl
 	log.trace("curLink = {}", curLinkBuffer.toString());
 
       pi.setCurLink(curLinkBuffer.toString());
-      pi.setResultsPerPage(jobPage.getJobs().size());
+      pi.setItemsInPage(jobPage.getJobs().size());
 
       // Check whether there is a response continuation token.
       if (jobPage.getContinuationToken() != null) {

@@ -670,7 +670,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
 
     PageInfo pageInfo = auMetadata.getPageInfo();
     assertNull(pageInfo.getTotalCount());
-    assertEquals(expectedItems.size(), pageInfo.getResultsPerPage().intValue());
+    assertEquals(expectedItems.size(), pageInfo.getItemsInPage().intValue());
 
     if (expectedContinuationToken != null) {
       assertEquals(expectedContinuationToken.toWebResponseContinuationToken(),
