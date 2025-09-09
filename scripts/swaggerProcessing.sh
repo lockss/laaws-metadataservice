@@ -46,6 +46,7 @@ sed -i.backup "s/import org.lockss.laaws.md.model.ItemMetadata;/import org.locks
 # Edit AuMetadataPageInfo.java.
 CLASS=src/generated/java/org/lockss/laaws/md/model/AuMetadataPageInfo.java
 sed -i.backup "s/import org.lockss.laaws.md.model.ItemMetadata;/import org.lockss.metadata.ItemMetadata;/" $CLASS && rm $CLASS.backup
+sed -i.backup "s/import org.lockss.laaws.md.model.PageInfo;/import org.lockss.util.rest.repo.model.PageInfo;/" $CLASS && rm $CLASS.backup
 
 # Edit the ApiDelegate.
 API_DELEGATE=src/generated/java/org/lockss/laaws/md/api/MdupdatesApiDelegate.java
@@ -62,5 +63,6 @@ sed -i.backup "s/import org.lockss.laaws.md.model.Status;/import org.lockss.meta
 # Edit JobPageInfo.java.
 CLASS=src/generated/java/org/lockss/laaws/md/model/JobPageInfo.java
 sed -i.backup "s/import org.lockss.laaws.md.model.Job;/import org.lockss.metadata.extractor.job.Job;/" $CLASS && rm $CLASS.backup
+sed -i.backup "s/import org.lockss.laaws.md.model.PageInfo;/import org.lockss.util.rest.repo.model.PageInfo;/" $CLASS && rm $CLASS.backup
 
 rm -rf src/generated/java/org/lockss/laaws/md/config/SwaggerDocumentationConfig.java
