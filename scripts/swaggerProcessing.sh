@@ -32,7 +32,12 @@
 
 function fixImport() {
 JAVA_SRC=$1
-sed -i.backup "s/import $2/import $3/" $JAVA_SRC && rm $JAVA_SRC.backup
+sed -i.backup "s/import $2;/import $3;/" $JAVA_SRC && rm $JAVA_SRC.backup
+}
+
+function fixResponseCode1234() {
+JAVA_SRC=$1
+sed -i.backup 's/responseCode = "1234"/responseCode = "default"/' $JAVA_SRC && rm $JAVA_SRC.backup
 }
 
 # Edit StatusApiDelegate.java.
@@ -42,6 +47,7 @@ fixImport $STATUS_API_DELEGATE org.lockss.laaws.md.model.ApiStatus org.lockss.ut
 # Edit StatusApi.java.
 STATUS_API=src/generated/java/org/lockss/laaws/md/api/StatusApi.java
 fixImport $STATUS_API org.lockss.laaws.md.model.ApiStatus org.lockss.util.rest.status.ApiStatus
+fixResponseCode1234 $STATUS_API
 
 # Edit the MetadataApiDelegate.java.
 METADATA_API_DELEGATE=src/generated/java/org/lockss/laaws/md/api/MetadataApiDelegate.java
@@ -50,6 +56,7 @@ fixImport $METADATA_API_DELEGATE org.lockss.laaws.md.model.ItemMetadata org.lock
 # Edit MetadataApi.java.
 METADATA_API=src/generated/java/org/lockss/laaws/md/api/MetadataApi.java
 fixImport $METADATA_API org.lockss.laaws.md.model.ItemMetadata org.lockss.metadata.ItemMetadata
+fixResponseCode1234 $METADATA_API
 
 # Edit AuMetadataPageInfo.java.
 AUMETADATAPAGEINFO=src/generated/java/org/lockss/laaws/md/model/AuMetadataPageInfo.java
@@ -67,10 +74,15 @@ MDUPDATES_API=src/generated/java/org/lockss/laaws/md/api/MdupdatesApi.java
 fixImport $MDUPDATES_API org.lockss.laaws.md.model.Job org.lockss.metadata.extractor.job.Job
 fixImport $MDUPDATES_API org.lockss.laaws.md.model.MetadataUpdateSpec org.lockss.util.rest.md.MetadataUpdateSpec
 fixImport $MDUPDATES_API org.lockss.laaws.md.model.Status org.lockss.metadata.extractor.job.Status
+fixResponseCode1234 $MDUPDATES_API
 
 # Edit JobPageInfo.java.
 JOBPAGEINFO=src/generated/java/org/lockss/laaws/md/model/JobPageInfo.java
 fixImport $JOBPAGEINFO org.lockss.laaws.md.model.Job org.lockss.metadata.extractor.job.Job
 fixImport $JOBPAGEINFO org.lockss.laaws.md.model.PageInfo org.lockss.util.rest.repo.model.PageInfo
+
+# Edit UrlsApi.java.
+URLS_API=src/generated/java/org/lockss/laaws/md/api/UrlsApi.java
+fixResponseCode1234 $URLS_API
 
 rm -f src/generated/java/org/lockss/laaws/md/config/SwaggerDocumentationConfig.java
