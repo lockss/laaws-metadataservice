@@ -41,12 +41,14 @@ info:
 security:
 - basicAuth: []
 tags:
-- name: Default
-  description: Default section
+- name: mdupdates
+  description: Metadata update operations
 - name: metadata
-  description: Operations related to metadata
+  description: Metadata operations
+- name: status
+  description: Status operations
 - name: urls
-  description: Operations that return URLs
+  description: URL operations
 paths:
   /metadata/aus/{auid}:
     get:
