@@ -40,49 +40,54 @@ JAVA_SRC=$1
 sed -i.backup 's/responseCode = "1234"/responseCode = "default"/' $JAVA_SRC && rm $JAVA_SRC.backup
 }
 
+# Support both Maven (src/generated/java) and Gradle (build/generated/sources/openapi/src/main/java) paths
+GENERATED_DIR="${GENERATED_DIR:-src/generated/java}"
+API_DIR="${GENERATED_DIR}/org/lockss/laaws/md/api"
+MODEL_DIR="${GENERATED_DIR}/org/lockss/laaws/md/model"
+
 # Edit StatusApiDelegate.java.
-STATUS_API_DELEGATE=src/generated/java/org/lockss/laaws/md/api/StatusApiDelegate.java
+STATUS_API_DELEGATE=${API_DIR}/StatusApiDelegate.java
 fixImport $STATUS_API_DELEGATE org.lockss.laaws.md.model.ApiStatus org.lockss.util.rest.status.ApiStatus
 
 # Edit StatusApi.java.
-STATUS_API=src/generated/java/org/lockss/laaws/md/api/StatusApi.java
+STATUS_API=${API_DIR}/StatusApi.java
 fixImport $STATUS_API org.lockss.laaws.md.model.ApiStatus org.lockss.util.rest.status.ApiStatus
 fixResponseCode1234 $STATUS_API
 
 # Edit the MetadataApiDelegate.java.
-METADATA_API_DELEGATE=src/generated/java/org/lockss/laaws/md/api/MetadataApiDelegate.java
+METADATA_API_DELEGATE=${API_DIR}/MetadataApiDelegate.java
 fixImport $METADATA_API_DELEGATE org.lockss.laaws.md.model.ItemMetadata org.lockss.metadata.ItemMetadata
 
 # Edit MetadataApi.java.
-METADATA_API=src/generated/java/org/lockss/laaws/md/api/MetadataApi.java
+METADATA_API=${API_DIR}/MetadataApi.java
 fixImport $METADATA_API org.lockss.laaws.md.model.ItemMetadata org.lockss.metadata.ItemMetadata
 fixResponseCode1234 $METADATA_API
 
 # Edit AuMetadataPageInfo.java.
-AUMETADATAPAGEINFO=src/generated/java/org/lockss/laaws/md/model/AuMetadataPageInfo.java
+AUMETADATAPAGEINFO=${MODEL_DIR}/AuMetadataPageInfo.java
 fixImport $AUMETADATAPAGEINFO org.lockss.laaws.md.model.ItemMetadata org.lockss.metadata.ItemMetadata
 fixImport $AUMETADATAPAGEINFO org.lockss.laaws.md.model.PageInfo org.lockss.util.rest.repo.model.PageInfo
 
 # Edit MdupdatesApiDelegate.java.
-MDUPDATES_API_DELEGATE=src/generated/java/org/lockss/laaws/md/api/MdupdatesApiDelegate.java
+MDUPDATES_API_DELEGATE=${API_DIR}/MdupdatesApiDelegate.java
 fixImport $MDUPDATES_API_DELEGATE org.lockss.laaws.md.model.Job org.lockss.metadata.extractor.job.Job
 fixImport $MDUPDATES_API_DELEGATE org.lockss.laaws.md.model.MetadataUpdateSpec org.lockss.util.rest.md.MetadataUpdateSpec
 fixImport $MDUPDATES_API_DELEGATE org.lockss.laaws.md.model.Status org.lockss.metadata.extractor.job.Status
 
 # Edit MdupdatesApi.java.
-MDUPDATES_API=src/generated/java/org/lockss/laaws/md/api/MdupdatesApi.java
+MDUPDATES_API=${API_DIR}/MdupdatesApi.java
 fixImport $MDUPDATES_API org.lockss.laaws.md.model.Job org.lockss.metadata.extractor.job.Job
 fixImport $MDUPDATES_API org.lockss.laaws.md.model.MetadataUpdateSpec org.lockss.util.rest.md.MetadataUpdateSpec
 fixImport $MDUPDATES_API org.lockss.laaws.md.model.Status org.lockss.metadata.extractor.job.Status
 fixResponseCode1234 $MDUPDATES_API
 
 # Edit JobPageInfo.java.
-JOBPAGEINFO=src/generated/java/org/lockss/laaws/md/model/JobPageInfo.java
+JOBPAGEINFO=${MODEL_DIR}/JobPageInfo.java
 fixImport $JOBPAGEINFO org.lockss.laaws.md.model.Job org.lockss.metadata.extractor.job.Job
 fixImport $JOBPAGEINFO org.lockss.laaws.md.model.PageInfo org.lockss.util.rest.repo.model.PageInfo
 
 # Edit UrlsApi.java.
-URLS_API=src/generated/java/org/lockss/laaws/md/api/UrlsApi.java
+URLS_API=${API_DIR}/UrlsApi.java
 fixResponseCode1234 $URLS_API
 
-rm -f src/generated/java/org/lockss/laaws/md/config/SwaggerDocumentationConfig.java
+rm -f ${GENERATED_DIR}/org/lockss/laaws/md/config/SwaggerDocumentationConfig.java
