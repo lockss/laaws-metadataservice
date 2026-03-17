@@ -41,7 +41,7 @@ public class BaseClient {
   private static final String userName = "lockss-u";
   private static final String password = "lockss-p";
 
-  private static final String REST_PORT = "24650";
+  private static final String REST_PORT = "24615";
   protected static final String baseUri = "http://localhost:" + REST_PORT;
 
   /**
