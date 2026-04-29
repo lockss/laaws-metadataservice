@@ -56,7 +56,7 @@ public class GetUrlsOpenUrlClient extends BaseClient {
     }
 
     String url = baseUri + "/urls/openurl";
-    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+    UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(url);
 
     for (int i = 0; i < args.length; i++) {
       builder = builder.queryParam("params", args[i]);
@@ -69,7 +69,7 @@ public class GetUrlsOpenUrlClient extends BaseClient {
 	HttpMethod.GET, new HttpEntity<String>(null, getHttpHeaders()),
 	UrlInfo.class);
 
-    int status = response.getStatusCodeValue();
+    int status = response.getStatusCode().value();
     System.out.println("status = " + status);
     UrlInfo result = response.getBody();
     System.out.println("result = " + result);

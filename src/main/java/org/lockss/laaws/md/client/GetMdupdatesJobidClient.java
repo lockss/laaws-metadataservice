@@ -66,7 +66,7 @@ public class GetMdupdatesJobidClient extends BaseClient {
 	HttpMethod.GET, new HttpEntity<String>(null, getHttpHeaders()),
 	Status.class);
 
-    int status = response.getStatusCodeValue();
+    int status = response.getStatusCode().value();
     System.out.println("status = " + status);
     Status result = response.getBody();
     System.out.println("result = " + result);

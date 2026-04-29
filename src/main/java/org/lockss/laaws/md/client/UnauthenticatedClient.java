@@ -77,7 +77,7 @@ public class UnauthenticatedClient {
 	BaseClient.getRestTemplate().exchange(uri, HttpMethod.GET,
 	    new HttpEntity<String>(null, headers), AuMetadataPageInfo.class);
 
-    int status = response.getStatusCodeValue();
+    int status = response.getStatusCode().value();
     System.out.println("status = " + status);
     AuMetadataPageInfo result = response.getBody();
     System.out.println("result = " + result);

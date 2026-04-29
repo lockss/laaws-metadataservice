@@ -64,9 +64,8 @@ import org.lockss.util.rest.repo.model.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -581,7 +580,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplateBuilder templateBuilder = RestUtil.getRestTemplateBuilder(0, 0);
+    RestTemplate restTemplate = RestUtil.buildRestTemplate(0, 0);
 
     HttpEntity<String> requestEntity = null;
 
@@ -614,7 +613,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
 
     // Make the request and get the response. 
     ResponseEntity<String> response =
-	new TestRestTemplate(templateBuilder).exchange(uri, HttpMethod.GET,
+	restTemplate.exchange(uri, HttpMethod.GET,
 	    requestEntity, String.class);
 
     // Get the response status.
@@ -774,12 +773,12 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     String template = getTestUrlTemplate("/urls/doi");
 
     // Create the URI of the request to the REST service.
-    URI uri = UriComponentsBuilder.fromHttpUrl(template).queryParam("doi", doi)
+    URI uri = UriComponentsBuilder.fromUriString(template).queryParam("doi", doi)
 	.build().encode().toUri();
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplateBuilder templateBuilder = RestUtil.getRestTemplateBuilder(0, 0);
+    RestTemplate restTemplate = RestUtil.buildRestTemplate(0, 0);
 
     HttpEntity<String> requestEntity = null;
 
@@ -811,7 +810,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     }
 
     // Make the request and get the response. 
-    ResponseEntity<UrlInfo> response = new TestRestTemplate(templateBuilder)
+    ResponseEntity<UrlInfo> response = restTemplate
 	.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
 
     // Get the response status.
@@ -980,7 +979,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     String template = getTestUrlTemplate("/urls/openurl");
 
     // Create the URI of the request to the REST service.
-    UriComponentsBuilder ucb = UriComponentsBuilder.fromHttpUrl(template);
+    UriComponentsBuilder ucb = UriComponentsBuilder.fromUriString(template);
 
     if (openUrlParams != null) {
       for (String param : openUrlParams) {
@@ -992,7 +991,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     log.trace("uri = {}", () -> uri);
 
     // Initialize the request to the REST service.
-    RestTemplateBuilder templateBuilder = RestUtil.getRestTemplateBuilder(0, 0);
+    RestTemplate restTemplate = RestUtil.buildRestTemplate(0, 0);
 
     HttpEntity<String> requestEntity = null;
 
@@ -1024,7 +1023,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     }
 
     // Make the request and get the response.
-    ResponseEntity<UrlInfo> response = new TestRestTemplate(templateBuilder)
+    ResponseEntity<UrlInfo> response = restTemplate
 	.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
 
     // Get the response status.

@@ -72,7 +72,7 @@ public class PostMdupdatesClient extends BaseClient {
 	HttpMethod.POST, new HttpEntity<MetadataUpdateSpec>(params,
 	    getHttpHeaders()), Job.class);
 
-    int status = response.getStatusCodeValue();
+    int status = response.getStatusCode().value();
     System.out.println("status = " + status);
     Job result = response.getBody();
     System.out.println("result = " + result);

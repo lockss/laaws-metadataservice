@@ -44,7 +44,7 @@ public class DeleteMdupdatesClient extends BaseClient {
 	HttpMethod.DELETE, new HttpEntity<String>(null, getHttpHeaders()),
 	Integer.class);
 
-    int status = response.getStatusCodeValue();
+    int status = response.getStatusCode().value();
     System.out.println("status = " + status);
     Integer result = response.getBody();
     System.out.println("result = " + result);

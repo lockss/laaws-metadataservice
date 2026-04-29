@@ -66,7 +66,7 @@ public class DeleteMdupdatesJobidClient extends BaseClient {
 	HttpMethod.DELETE, new HttpEntity<String>(null, getHttpHeaders()),
 	Job.class);
 
-    int status = response.getStatusCodeValue();
+    int status = response.getStatusCode().value();
     System.out.println("status = " + status);
     Job result = response.getBody();
     System.out.println("result = " + result);

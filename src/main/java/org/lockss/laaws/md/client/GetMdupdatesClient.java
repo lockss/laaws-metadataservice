@@ -48,7 +48,7 @@ public class GetMdupdatesClient extends BaseClient {
     String url = baseUri + "/mdupdates";
     System.out.println("url = " + url);
 
-    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+    UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(url);
 
     if (args.length > 1) {
       builder = builder.queryParam(args[1], args[2]);
@@ -65,7 +65,7 @@ public class GetMdupdatesClient extends BaseClient {
 	HttpMethod.GET, new HttpEntity<String>(null, getHttpHeaders()),
 	JobPageInfo.class);
 
-    int status = response.getStatusCodeValue();
+    int status = response.getStatusCode().value();
     System.out.println("status = " + status);
     JobPageInfo result = response.getBody();
     System.out.println("result = " + result);
