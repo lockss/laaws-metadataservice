@@ -59,9 +59,7 @@ import org.lockss.plugin.definable.DefinablePlugin;
 import org.lockss.test.MockArchivalUnit;
 import org.lockss.spring.test.SpringLockssTestCase4;
 import org.lockss.util.ListUtil;
-import org.lockss.util.rest.LockssResponseErrorHandler;
 import org.lockss.util.rest.RestUtil;
-import org.lockss.util.rest.exception.LockssRestHttpException;
 import org.lockss.util.rest.repo.model.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -72,7 +70,6 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -1026,24 +1023,17 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
       requestEntity = new HttpEntity<String>(null, headers);
     }
 
-    // Make the request and get the response. 
-    TestRestTemplate testRestTemplate = new TestRestTemplate(templateBuilder);
+    // Make the request and get the response.
+    ResponseEntity<UrlInfo> response = new TestRestTemplate(templateBuilder)
+	.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
 
-    // Set LOCKSS error handler after construction of TestRestTemplate, which sets a default error handler
-    RestTemplate restTemplate = testRestTemplate.getRestTemplate();
-    restTemplate.setErrorHandler(new LockssResponseErrorHandler(restTemplate.getMessageConverters()));
+    // Get the response status.
+    HttpStatusCode statusCode = response.getStatusCode();
+    HttpStatus status = HttpStatus.valueOf(statusCode.value());
+    assertEquals(expectedStatus, status);
 
-    try {
-      ResponseEntity<UrlInfo> response = testRestTemplate.exchange(uri, HttpMethod.GET, requestEntity, UrlInfo.class);
-
-      // Get the response status.
-      HttpStatusCode statusCode = response.getStatusCode();
-      HttpStatus status = HttpStatus.valueOf(statusCode.value());
-      assertEquals(expectedStatus, status);
-
-      assertTrue(isSuccess(status));
-
-      // Verify.
+    // Verify.
+    if (isSuccess(status)) {
       UrlInfo result = response.getBody();
 
       // Parameters.
@@ -1064,15 +1054,6 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
         assertEquals(1, urls.size());
         assertEquals(expectedUrl, urls.get(0));
       }
-    } catch (LockssResponseErrorHandler.WrappedLockssRestHttpException e) {
-
-      // Assert this is an expected failure
-      LockssRestHttpException lrhe = e.getLRHE();
-      HttpStatus statusCode = lrhe.getHttpStatus();
-      assertEquals(expectedStatus, statusCode);
-
-      assertFalse(isSuccess(statusCode));
-
     }
 
     log.debug2("Done");
