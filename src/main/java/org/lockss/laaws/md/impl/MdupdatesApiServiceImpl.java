@@ -416,15 +416,15 @@ public class MdupdatesApiServiceImpl extends BaseSpringApiServiceImpl
 
       JobAuStatus jobAuStatus = null;
 
-      if (canonicalUpdateType.equals(MD_UPDATE_FULL_EXTRACTION)
-	  || canonicalUpdateType.equals(MD_UPDATE_INCREMENTAL_EXTRACTION)) {
-	if (!LockssApp.getManagerByTypeStatic(MetadataExtractorManager.class)
-	    .isEligibleForReindexing(auid)) {
-	  String message = "AU is not eligible for reindexing per the index "
-	      + "priority configuration: auid = '" + auid + "'";
-	  log.warn(message);
-	  return new ResponseEntity<>(HttpStatus.CONFLICT);
-	}
+      if (canonicalUpdateType.equals(MD_UPDATE_FULL_EXTRACTION) ||
+          canonicalUpdateType.equals(MD_UPDATE_INCREMENTAL_EXTRACTION)) {
+        if (!LockssApp.getManagerByTypeStatic(MetadataExtractorManager.class)
+            .isEligibleForReindexing(auid)) {
+          String message = "AU is not eligible for reindexing per the index "
+              + "priority configuration: auid = '" + auid + "'";
+          log.warn(message);
+          return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
       }
 
       if (canonicalUpdateType.equals(MD_UPDATE_FULL_EXTRACTION)) {
