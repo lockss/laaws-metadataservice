@@ -418,10 +418,19 @@ public class MdupdatesApiServiceImpl extends BaseSpringApiServiceImpl
 
       if (canonicalUpdateType.equals(MD_UPDATE_FULL_EXTRACTION) ||
           canonicalUpdateType.equals(MD_UPDATE_INCREMENTAL_EXTRACTION)) {
-        if (!LockssApp.getManagerByTypeStatic(MetadataExtractorManager.class)
-            .isEligibleForReindexing(auid)) {
+        MetadataExtractorManager mdxManager =
+            LockssApp.getManagerByTypeStatic(MetadataExtractorManager.class);
+        if (!mdxManager.isEligibleForReindexing(auid)) {
           String message = "AU is not eligible for reindexing per the index "
               + "priority configuration: auid = '" + auid + "'";
+          log.warn(message);
+          return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        // Skip AUs whose plugin cannot produce article metadata; there is
+        // nothing to index and a job would extract nothing.
+        if (!mdxManager.hasArticleMetadata(auid)) {
+          String message = "AU has no article metadata extractor; there is "
+              + "nothing to index: auid = '" + auid + "'";
           log.warn(message);
           return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
