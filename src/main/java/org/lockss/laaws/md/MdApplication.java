@@ -29,7 +29,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-package org.lockss.laaws.mdq;
+package org.lockss.laaws.md;
 
 import static org.lockss.app.ManagerDescs.*;
 import org.lockss.app.LockssApp;
@@ -38,6 +38,9 @@ import org.lockss.app.LockssApp.ManagerDesc;
 import org.lockss.app.LockssDaemon;
 import org.lockss.app.ServiceDescr;
 import org.lockss.crawler.CrawlManagerImpl;
+import org.lockss.metadata.extractor.MetadataExtractorManager;
+import org.lockss.metadata.extractor.job.JobDbManager;
+import org.lockss.metadata.extractor.job.JobManager;
 import org.lockss.metadata.query.MetadataQueryManager;
 import org.lockss.plugin.PluginManager;
 import org.lockss.spring.base.BaseSpringBootApplication;
@@ -53,13 +56,13 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SpringBootApplication()
 
-@ComponentScan(basePackages = { "org.lockss.laaws.mdq",
-  "org.lockss.laaws.mdq.api" , "org.lockss.laaws.mdq.config",
+@ComponentScan(basePackages = { "org.lockss.laaws.md",
+  "org.lockss.laaws.md.api" , "org.lockss.laaws.md.config",
   "org.lockss.util.rest.status", "org.lockss.metadata"})
-public class MdqApplication extends BaseSpringBootApplication
+public class MdApplication extends BaseSpringBootApplication
 	implements CommandLineRunner {
   private static final Logger logger =
-      LoggerFactory.getLogger(MdqApplication.class);
+      LoggerFactory.getLogger(MdApplication.class);
 
   // Manager descriptors.  The order of this table determines the order in
   // which managers are initialized and started.
@@ -73,10 +76,18 @@ public class MdqApplication extends BaseSpringBootApplication
     REPOSITORY_MANAGER_DESC,
     // start database manager before any manager that uses it.
     METADATA_DB_MANAGER_DESC,
-    // start metadata manager after pluggin manager and database manager.
+    // start metadata manager after plugin manager and database manager.
     METADATA_MANAGER_DESC,
     new ManagerDesc(LockssDaemon.managerKey(MetadataQueryManager.class),
 	"org.lockss.metadata.query.MetadataQueryManager"),
+    new ManagerDesc(LockssDaemon.managerKey(MetadataExtractorManager.class),
+	"org.lockss.metadata.extractor.MetadataExtractorManager"),
+    // Start the job database manager.
+    new ManagerDesc(LockssDaemon.managerKey(JobDbManager.class),
+	"org.lockss.metadata.extractor.job.JobDbManager"),
+    // Start the job manager.
+    new ManagerDesc(LockssDaemon.managerKey(JobManager.class),
+	"org.lockss.metadata.extractor.job.JobManager"),
     // NOTE: Any managers that are needed to decide whether a servlet is to be
     // enabled or not (through ServletDescr.isEnabled()) need to appear before
     // the AdminServletManager on the next line.
@@ -99,7 +110,7 @@ public class MdqApplication extends BaseSpringBootApplication
     configure();
 
     // Start the REST service.
-    SpringApplication.run(MdqApplication.class, args);
+    SpringApplication.run(MdApplication.class, args);
   }
 
   /**
@@ -112,10 +123,10 @@ public class MdqApplication extends BaseSpringBootApplication
     // Check whether there are command line arguments available.
     if (args != null && args.length > 0) {
       // Yes: Start the LOCKSS daemon.
-      logger.info("Starting the LOCKSS Metadata Query Service");
+      logger.info("Starting the LOCKSS Metadata Service");
 
       AppSpec spec = new AppSpec()
-	.setService(ServiceDescr.SVC_MDQ)
+	.setService(ServiceDescr.SVC_MD)
 	.setArgs(args)
 	.addAppConfig(LockssDaemon.PARAM_START_PLUGINS, "true")
 	.addAppConfig(PluginManager.PARAM_START_ALL_AUS, "false")
@@ -124,7 +135,7 @@ public class MdqApplication extends BaseSpringBootApplication
 	.addAppConfig(CrawlManagerImpl.PARAM_CRAWL_STARTER_ENABLED, "false")
 	.setSpringApplicatonContext(getApplicationContext())
 	.setAppManagers(myManagerDescs);
-      LockssApp.startStatic(LockssDaemon.class, spec);
+      startLockssApp(spec);
     } else {
       // No: Do nothing. This happens when a test is started and before the
       // test setup has got a chance to inject the appropriate command line

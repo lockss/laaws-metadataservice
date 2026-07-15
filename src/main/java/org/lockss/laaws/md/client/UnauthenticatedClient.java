@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016-2019 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2017-2019 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,19 +25,23 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.client;
+package org.lockss.laaws.md.client;
 
 import java.net.URI;
-import org.lockss.laaws.mdq.model.UrlInfo;
+import java.util.Collections;
+import org.lockss.laaws.md.model.AuMetadataPageInfo;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * Client for the getUrlsOpenUrl() operation.
+ * Client for an unauthenticated user.
  */
-public class GetUrlsOpenUrlClient extends BaseClient {
+public class UnauthenticatedClient {
 
   /**
    * Entry point.
@@ -51,27 +55,31 @@ public class GetUrlsOpenUrlClient extends BaseClient {
     }
 
     if (args.length < 1) {
-      System.err.println("ERROR: Missing command line argument(s) with OpenURL "
-	  + "query parameter(s)");
+      System.err.println("ERROR: Missing command line argument with the "
+	  + "identifier of the Archival Unit for which its metadata is "
+	  + "requested.");
     }
 
-    String url = baseUri + "/urls/openurl";
-    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
+    String template = BaseClient.baseUri + "/metadata/aus/{auid}";
 
-    for (int i = 0; i < args.length; i++) {
-      builder = builder.queryParam("params", args[i]);
-    }
+    // Create the URI of the request to the REST service.
+    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
+	.build().expand(Collections.singletonMap("auid", args[0]));
 
-    URI uri = builder.build().encode().toUri();
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(uriComponents)
+	.build().encode().toUri();
     System.out.println("uri = " + uri);
 
-    ResponseEntity<UrlInfo> response = getRestTemplate().exchange(uri,
-	HttpMethod.GET, new HttpEntity<String>(null, getHttpHeaders()),
-	UrlInfo.class);
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    ResponseEntity<AuMetadataPageInfo> response =
+	BaseClient.getRestTemplate().exchange(uri, HttpMethod.GET,
+	    new HttpEntity<String>(null, headers), AuMetadataPageInfo.class);
 
     int status = response.getStatusCodeValue();
     System.out.println("status = " + status);
-    UrlInfo result = response.getBody();
+    AuMetadataPageInfo result = response.getBody();
     System.out.println("result = " + result);
   }
 }

@@ -29,19 +29,21 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-package org.lockss.laaws.mdq.impl;
+package org.lockss.laaws.md.impl;
 
 import java.util.ConcurrentModificationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.lockss.app.LockssApp;
-import org.lockss.laaws.mdq.api.MetadataApiDelegate;
-import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
-import org.lockss.laaws.mdq.model.PageInfo;
+import org.lockss.laaws.md.api.MetadataApiDelegate;
+import org.lockss.laaws.md.model.AuMetadataPageInfo;
 import org.lockss.log.L4JLogger;
 import org.lockss.metadata.ItemMetadataContinuationToken;
 import org.lockss.metadata.ItemMetadataPage;
 import org.lockss.metadata.query.MetadataQueryManager;
+import org.lockss.spring.auth.AuthUtil;
+import org.lockss.spring.auth.Roles;
 import org.lockss.spring.base.BaseSpringApiServiceImpl;
+import org.lockss.util.rest.repo.model.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -85,6 +87,8 @@ public class MetadataApiServiceImpl extends BaseSpringApiServiceImpl
       return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
+    AuthUtil.checkHasRole(Roles.ROLE_CONTENT_ACCESS, Roles.ROLE_AU_ADMIN);
+
     // Validation of requested page size.
     if (limit == null || limit.intValue() < 0) {
       String message = "Limit of requested items must be a non-negative "
@@ -124,7 +128,7 @@ public class MetadataApiServiceImpl extends BaseSpringApiServiceImpl
       log.trace("curLink = {}", () -> curLinkBuffer.toString());
 
       pi.setCurLink(curLinkBuffer.toString());
-      pi.setResultsPerPage(itemsPage.getItems().size());
+      pi.setItemsInPage(itemsPage.getItems().size());
 
       // Check whether there is a response continuation token.
       if (itemsPage.getContinuationToken() != null) {

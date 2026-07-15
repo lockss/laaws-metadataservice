@@ -29,10 +29,9 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-package org.lockss.laaws.mdq.impl;
+package org.lockss.laaws.md.impl;
 
-import org.lockss.app.LockssApp;
-import org.lockss.laaws.mdq.api.StatusApiDelegate;
+import org.lockss.laaws.md.api.StatusApiDelegate;
 import org.lockss.util.rest.status.ApiStatus;
 import org.lockss.spring.status.SpringLockssBaseApiController;
 import org.springframework.stereotype.Service;

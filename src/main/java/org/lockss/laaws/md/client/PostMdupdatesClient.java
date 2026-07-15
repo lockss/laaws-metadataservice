@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016-2019 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2016-2020 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,66 +25,56 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.client;
+package org.lockss.laaws.md.client;
 
-import java.net.URI;
-import java.util.Collections;
-import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
+import org.lockss.metadata.extractor.job.Job;
+import org.lockss.util.rest.md.MetadataUpdateSpec;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-/**
- * Client for the getMetadataAusAuid() operation.
- */
-public class GetMetadataAusAuidClient extends BaseClient {
+import java.net.URI;
 
-  /**
-   * Entry point.
-   * 
-   * @param args A String[] with the command line arguments.
-   * @throws Exception if there are errors.
-   */
+/**
+ * Client for the postMdupdates() operation.
+ */
+public class PostMdupdatesClient extends BaseClient {
+
   public static void main(String[] args) throws Exception {
     for (int i = 0; i < args.length; i++) {
       System.out.println("args[" + i + "] = " + args[i]);
     }
 
     if (args.length < 1) {
-      System.err.println("ERROR: Missing command line argument with the "
-	  + "identifier of the Archival Unit for which its metadata is "
-	  + "requested.");
+      System.err.println("ERROR: Missing command line arguments with the "
+	  + "identifier of the Archival Unit and the metadata update "
+	  + "operation to be performed.");
+    } else if (args.length < 2) {
+      System.err.println("ERROR: Missing command line arguments with the "
+	  + "metadata update operation to be performed.");
     }
 
-    String template = baseUri + "/metadata/aus/{auid}";
+    MetadataUpdateSpec params = new MetadataUpdateSpec();
+    params.setAuid(args[0]);
+    params.setUpdateType(args[1]);
+    System.out.println("params = '" + params + "'");
+
+    String template = baseUri + "/mdupdates";
 
     // Create the URI of the request to the REST service.
-    UriComponents uriComponents = UriComponentsBuilder.fromUriString(template)
-	.build().expand(Collections.singletonMap("auid", args[0]));
-
-    UriComponentsBuilder builder =
-	UriComponentsBuilder.newInstance().uriComponents(uriComponents);
-
-    if (args.length > 1) {
-      builder = builder.queryParam(args[1], args[2]);
-
-      if (args.length > 3) {
-	builder = builder.queryParam(args[3], args[4]);
-      }
-    }
-
-    URI uri = builder.build().encode().toUri();
+    URI uri = UriComponentsBuilder.newInstance().uriComponents(
+	UriComponentsBuilder.fromUriString(template).build())
+	.build().encode().toUri();
     System.out.println("uri = " + uri);
 
-    ResponseEntity<AuMetadataPageInfo> response = getRestTemplate()
-	.exchange(uri, HttpMethod.GET, new HttpEntity<String>(null,
-	    getHttpHeaders()), AuMetadataPageInfo.class);
+    ResponseEntity<Job> response = getRestTemplate().exchange(uri,
+	HttpMethod.POST, new HttpEntity<MetadataUpdateSpec>(params,
+	    getHttpHeaders()), Job.class);
 
     int status = response.getStatusCodeValue();
     System.out.println("status = " + status);
-    AuMetadataPageInfo result = response.getBody();
+    Job result = response.getBody();
     System.out.println("result = " + result);
   }
 }

@@ -29,7 +29,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-package org.lockss.laaws.mdq.impl;
+package org.lockss.laaws.md.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -46,10 +46,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lockss.app.LockssDaemon;
 import org.lockss.config.Configuration;
-import org.lockss.laaws.mdq.MdqApplication;
-import org.lockss.laaws.mdq.model.AuMetadataPageInfo;
-import org.lockss.laaws.mdq.model.PageInfo;
-import org.lockss.laaws.mdq.model.UrlInfo;
+import org.lockss.laaws.md.MdApplication;
+import org.lockss.laaws.md.model.AuMetadataPageInfo;
+import org.lockss.laaws.md.model.UrlInfo;
 import org.lockss.log.L4JLogger;
 import org.lockss.metadata.ItemMetadata;
 import org.lockss.metadata.ItemMetadataContinuationToken;
@@ -63,6 +62,7 @@ import org.lockss.util.ListUtil;
 import org.lockss.util.rest.LockssResponseErrorHandler;
 import org.lockss.util.rest.RestUtil;
 import org.lockss.util.rest.exception.LockssRestHttpException;
+import org.lockss.util.rest.repo.model.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -77,12 +77,12 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * Test class for org.lockss.laaws.mdq.api.MetadataApiServiceImpl and
- * org.lockss.laaws.mdq.api.UrlsApiServiceImpl.
+ * Test class for org.lockss.laaws.md.api.MetadataApiServiceImpl and
+ * org.lockss.laaws.md.api.UrlsApiServiceImpl.
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(
-    classes = {MdqApplication.class},
+    classes = {MdApplication.class},
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestApiServiceImpls extends SpringLockssTestCase4 {
   private static final L4JLogger log = L4JLogger.getLogger();
@@ -131,6 +131,8 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
   // Credentials.
   private final Credentials USER_ADMIN =
       this.new Credentials("lockss-u", "lockss-p");
+  private final Credentials AU_ADMIN =
+      new Credentials("au-admin", "I'mAuAdmin");
   private final Credentials CONTENT_ADMIN =
       this.new Credentials("content-admin", "I'mContentAdmin");
   private final Credentials ACCESS_CONTENT =
@@ -245,32 +247,6 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
   }
 
   /**
-   * Runs the tests with authentication turned off.
-   * 
-   * @throws Exception
-   *           if there are problems.
-   */
-  @Test
-  public void runUnAuthenticatedTests() throws Exception {
-    log.debug2("Invoked");
-
-    // Specify the command line parameters to be used for the tests.
-    List<String> cmdLineArgs = getCommandLineArguments();
-    cmdLineArgs.add("-p");
-    cmdLineArgs.add("test/config/testAuthOff.txt");
-
-    CommandLineRunner runner = appCtx.getBean(CommandLineRunner.class);
-    runner.run(cmdLineArgs.toArray(new String[cmdLineArgs.size()]));
-
-    runGetSwaggerDocsTest(getTestUrlTemplate("/v3/api-docs"));
-    getMetadataAusAuidUnAuthenticatedTest();
-    getUrlsDoiUnAuthenticatedTest();
-    getUrlsOpenUrlUnAuthenticatedTest();
-
-    log.debug2("Done");
-  }
-
-  /**
    * Runs the tests with authentication turned on.
    * 
    * @throws Exception
@@ -322,60 +298,6 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
 
     log.debug2("cmdLineArgs = {}", () -> cmdLineArgs);
     return cmdLineArgs;
-  }
-
-  /**
-   * Runs the getMetadataAusAuid()-related un-authenticated-specific tests.
-   * 
-   * @throws Exception
-   *           if there are problems.
-   */
-  private void getMetadataAusAuidUnAuthenticatedTest() throws Exception {
-    log.debug2("Invoked");
-
-    // No AUId: Spring reports it cannot find a match to an endpoint.
-    runTestGetMetadataAusAuid(null, null, null, null, HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(null, null, null, ANYBODY, HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(null, -1, null, null, HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(null, null, null, ANYBODY, HttpStatus.NOT_FOUND);
-
-    // Empty AUId: Spring reports it cannot find a match to an endpoint.
-    runTestGetMetadataAusAuid(EMPTY_STRING, null, null, null,
-	HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(EMPTY_STRING, null, null, ANYBODY,
-	HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(EMPTY_STRING, -1, null, null,
-	HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(EMPTY_STRING, -1, null, ANYBODY,
-	HttpStatus.NOT_FOUND);
-
-    // Unknown AUId.
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, null, null, null,
-	HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, null, null, ANYBODY,
-	HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, 1, null, null,
-	HttpStatus.NOT_FOUND);
-    runTestGetMetadataAusAuid(UNKNOWN_AUID, 1, null, ANYBODY,
-	HttpStatus.NOT_FOUND);
-
-    // Success getting all with no credentials.
-    verifyMetadata(AU_1_MD, null, runTestGetMetadataAusAuid(AUID_1, null, null,
-	null, HttpStatus.OK));
-
-    // Pagination with no credentials.
-    runTestGetMetadataAusAuidPagination(null);
-
-    // Success getting all with with bad credentials.
-    verifyMetadata(AU_2_MD, null, runTestGetMetadataAusAuid(AUID_2, null, null,
-	ANYBODY, HttpStatus.OK));
-
-    // Pagination with bad credentials.
-    runTestGetMetadataAusAuidPagination(ANYBODY);
-
-    getMetadataAusAuidCommonTest();
-
-    log.debug2("Done");
   }
 
   /**
@@ -444,12 +366,13 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     // Success.
     verifyMetadata(AU_1_MD, null, runTestGetMetadataAusAuid(AUID_1, null, null,
 	USER_ADMIN, HttpStatus.OK));
+    runTestGetMetadataAusAuid(AUID_2, null, null, CONTENT_ADMIN, HttpStatus.FORBIDDEN);
     verifyMetadata(AU_2_MD, null, runTestGetMetadataAusAuid(AUID_2, null, null,
-	CONTENT_ADMIN, HttpStatus.OK));
+        AU_ADMIN, HttpStatus.OK));
 
     // Pagination.
     runTestGetMetadataAusAuidPagination(USER_ADMIN);
-    runTestGetMetadataAusAuidPagination(CONTENT_ADMIN);
+    runTestGetMetadataAusAuidPagination(AU_ADMIN);
     runTestGetMetadataAusAuidPagination(ACCESS_CONTENT);
 
     log.debug2("Done");
@@ -747,7 +670,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
 
     PageInfo pageInfo = auMetadata.getPageInfo();
     assertNull(pageInfo.getTotalCount());
-    assertEquals(expectedItems.size(), pageInfo.getResultsPerPage().intValue());
+    assertEquals(expectedItems.size(), pageInfo.getItemsInPage().intValue());
 
     if (expectedContinuationToken != null) {
       assertEquals(expectedContinuationToken.toWebResponseContinuationToken(),
@@ -766,43 +689,6 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
       expectedItems.get(i).setId(auMetadata.getItems().get(i).getId());
       assertEquals(expectedItems.get(i), auMetadata.getItems().get(i));
     }
-
-    log.debug2("Done");
-  }
-
-  /**
-   * Runs the getUrlsDoi()-related un-authenticated-specific tests.
-   */
-  private void getUrlsDoiUnAuthenticatedTest() {
-    log.debug2("Invoked");
-
-    // No DOI.
-    runTestGetUrlsDoi(null, null, HttpStatus.OK, null);
-    runTestGetUrlsDoi(null, ANYBODY, HttpStatus.OK, null);
-
-    // Empty DOI.
-    runTestGetUrlsDoi(EMPTY_STRING, null, HttpStatus.OK, null);
-    runTestGetUrlsDoi(EMPTY_STRING, ANYBODY, HttpStatus.OK, null);
-
-    // Unknown DOI.
-    runTestGetUrlsDoi(UNKNOWN_DOI, null, HttpStatus.OK, null);
-    runTestGetUrlsDoi(UNKNOWN_DOI, ANYBODY, HttpStatus.OK, null);
-
-    // DOI of the first item of the first Archival Unit in the test system.
-    String doi = ITEM_METADATA_1_1.getScalarMap().get("doi");
-    String expectedUrl = ITEM_METADATA_1_1.getMapMap().get("url").get("Access");
-
-    runTestGetUrlsDoi(doi, null, HttpStatus.OK, expectedUrl);
-    runTestGetUrlsDoi(doi, ANYBODY, HttpStatus.OK, expectedUrl);
-
-    // DOI of the second item of the first Archival Unit in the test system.
-    doi = ITEM_METADATA_1_2.getScalarMap().get("doi");
-    expectedUrl = ITEM_METADATA_1_2.getMapMap().get("url").get("Access");
-
-    runTestGetUrlsDoi(doi, null, HttpStatus.OK, expectedUrl);
-    runTestGetUrlsDoi(doi, ANYBODY, HttpStatus.OK, expectedUrl);
-
-    getUrlsDoiCommonTest();
 
     log.debug2("Done");
   }
@@ -848,7 +734,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
     runTestGetUrlsDoi(null, USER_ADMIN, HttpStatus.OK, null);
 
     // Empty DOI.
-    runTestGetUrlsDoi(EMPTY_STRING, CONTENT_ADMIN, HttpStatus.OK, null);
+    runTestGetUrlsDoi(EMPTY_STRING, AU_ADMIN, HttpStatus.OK, null);
 
     // Unknown DOI.
     runTestGetUrlsDoi(UNKNOWN_DOI, ACCESS_CONTENT, HttpStatus.OK, null);
@@ -965,62 +851,6 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
   }
 
   /**
-   * Runs the getUrlsOpenUrl()-related un-authenticated-specific tests.
-   */
-  private void getUrlsOpenUrlUnAuthenticatedTest() {
-    log.debug2("Invoked");
-
-    // No OpenURL params.
-    runTestGetUrlsOpenUrl(null, null, HttpStatus.BAD_REQUEST, null);
-    runTestGetUrlsOpenUrl(null, ANYBODY, HttpStatus.BAD_REQUEST, null);
-
-    // Empty OpenURL params.
-    List<String> params = new ArrayList<>();
-    runTestGetUrlsOpenUrl(params, null, HttpStatus.BAD_REQUEST, null);
-    runTestGetUrlsOpenUrl(params, ANYBODY, HttpStatus.BAD_REQUEST, null);
-
-    // Unknown DOI.
-    params = ListUtil.list("rft_id=info:doi/" + UNKNOWN_DOI);
-    runTestGetUrlsOpenUrl(params, null, HttpStatus.OK, null);
-    runTestGetUrlsOpenUrl(params, ANYBODY, HttpStatus.OK, null);
-
-    // DOI of the first item of the first Archival Unit in the test system.
-    params = ListUtil.list(
-	"rft_id=info:doi/" + ITEM_METADATA_1_1.getScalarMap().get("doi"));
-    String expectedUrl = ITEM_METADATA_1_1.getMapMap().get("url").get("Access");
-
-    runTestGetUrlsOpenUrl(params, null, HttpStatus.OK, expectedUrl);
-    runTestGetUrlsOpenUrl(params, ANYBODY, HttpStatus.OK, expectedUrl);
-
-    // Multiple parameters for the second item of the first Archival Unit in the
-    // test system.
-    params = ListUtil.list(
-	"rft.issn=" + ITEM_METADATA_1_2.getMapMap().get("issn").get("p_issn"),
-	"rft.volume=" + ITEM_METADATA_1_2.getScalarMap().get("volume"),
-	"rft.spage=" + ITEM_METADATA_1_2.getScalarMap().get("start_page"));
-    expectedUrl = ITEM_METADATA_1_2.getMapMap().get("url").get("Access");
-
-    runTestGetUrlsOpenUrl(params, null, HttpStatus.OK, expectedUrl);
-    runTestGetUrlsOpenUrl(params, ANYBODY, HttpStatus.OK, expectedUrl);
-
-    // Multiple parameters for the first item of the second Archival Unit in the
-    // test system.
-    params = ListUtil.list(
-	"rft.issn=" + ITEM_METADATA_2_1.getMapMap().get("issn").get("p_issn"),
-	"rft.volume=" + ITEM_METADATA_2_1.getScalarMap().get("volume"),
-	"rft.spage=" + ITEM_METADATA_2_1.getScalarMap().get("start_page"));
-
-    expectedUrl = ITEM_METADATA_2_1.getMapMap().get("url").get("Access");
-
-    runTestGetUrlsOpenUrl(params, null, HttpStatus.OK, expectedUrl);
-    runTestGetUrlsOpenUrl(params, ANYBODY, HttpStatus.OK, expectedUrl);
-
-    getUrlsOpenUrlCommonTest();
-
-    log.debug2("Done");
-  }
-
-  /**
    * Runs the getUrlsOpenUrl()-related authenticated-specific tests.
    */
   private void getUrlsOpenUrlAuthenticatedTest() {
@@ -1104,7 +934,7 @@ public class TestApiServiceImpls extends SpringLockssTestCase4 {
 
     expectedUrl = ITEM_METADATA_1_3.getMapMap().get("url").get("Access");
 
-    runTestGetUrlsOpenUrl(params, CONTENT_ADMIN, HttpStatus.OK, expectedUrl);
+    runTestGetUrlsOpenUrl(params, AU_ADMIN, HttpStatus.OK, expectedUrl);
 
     // Multiple parameters for the fifth item of the first Archival Unit in the
     // test system.

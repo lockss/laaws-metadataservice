@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-Copyright (c) 2000-2023, Board of Trustees of Leland Stanford Jr. University
+Copyright (c) 2000-2026, Board of Trustees of Leland Stanford Jr. University
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -38,13 +38,13 @@ POSSIBILITY OF SUCH DAMAGE.
   <parent>
     <groupId>org.lockss</groupId>
     <artifactId>lockss-parent-pom</artifactId>
-    <version>1.17.1</version>
+    <version>1.18.0</version>
     <relativePath />
   </parent>
 
   <groupId>org.lockss.laaws</groupId>
   <artifactId>laaws-metadata-service</artifactId>
-  <version>2.7.1</version>
+  <version>2.8.0</version>
   <packaging>jar</packaging>
 
   <name>laaws-metadata-service</name>
@@ -56,13 +56,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
     <!-- Is a Spring project -->
     <build.java.spring.skip>false</build.java.spring.skip>
-    <build.java.package>org.lockss.laaws.mdq</build.java.package>
-    <build.java.mainClass>${build.java.package}.MdqApplication</build.java.mainClass>
+    <build.java.projectAbbr>md</build.java.projectAbbr>
+    <build.java.mainClass>${build.java.package}.MdApplication</build.java.mainClass>
 
     <!-- Is a Docker project -->
     <build.docker.skip>false</build.docker.skip>
-    <build.docker.dockerBuild.restPort>24650</build.docker.dockerBuild.restPort>
-    <build.docker.dockerBuild.uiPort>24651</build.docker.dockerBuild.uiPort>
+    <build.docker.dockerBuild.restPort>24615</build.docker.dockerBuild.restPort>
+    <build.docker.dockerBuild.uiPort>24605</build.docker.dockerBuild.uiPort>
 
     <!-- Needs lockss-legacy repository for lockss-plugins -->
     <repository.enabled.lockss-legacy>true</repository.enabled.lockss-legacy>

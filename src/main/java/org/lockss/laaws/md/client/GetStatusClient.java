@@ -1,6 +1,6 @@
 /*
 
- Copyright (c) 2016-2019 Board of Trustees of Leland Stanford Jr. University,
+ Copyright (c) 2018-2019 Board of Trustees of Leland Stanford Jr. University,
  all rights reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,19 +25,20 @@
  in this Software without prior written authorization from Stanford University.
 
  */
-package org.lockss.laaws.mdq.client;
+package org.lockss.laaws.md.client;
 
 import java.net.URI;
-import org.lockss.laaws.mdq.model.UrlInfo;
+import org.lockss.util.rest.status.ApiStatus;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * Client for the getUrlsDoi() operation.
+ * Client for the getStatus() operation.
  */
-public class GetUrlsDoiClient extends BaseClient {
+public class GetStatusClient extends BaseClient {
 
   /**
    * Entry point.
@@ -46,29 +47,25 @@ public class GetUrlsDoiClient extends BaseClient {
    * @throws Exception if there are errors.
    */
   public static void main(String[] args) throws Exception {
-    for (int i = 0; i < args.length; i++) {
-      System.out.println("args[" + i + "] = " + args[i]);
-    }
-
-    if (args.length < 1) {
-      System.err.println("ERROR: Missing command line argument with the DOI "
-	  + "for which the URL is requested.");
-    }
-
-    String url = baseUri + "/urls/doi";
+    String template = baseUri + "/status";
 
     // Create the URI of the request to the REST service.
-    URI uri = UriComponentsBuilder.fromUriString(url).queryParam("doi", args[0])
-	.build().encode().toUri();
+    UriComponents uriComponents =
+	UriComponentsBuilder.fromUriString(template).build();
+
+    UriComponentsBuilder builder =
+	UriComponentsBuilder.newInstance().uriComponents(uriComponents);
+
+    URI uri = builder.build().encode().toUri();
     System.out.println("uri = " + uri);
 
-    ResponseEntity<UrlInfo> response = getRestTemplate().exchange(uri,
+    ResponseEntity<ApiStatus> response = getRestTemplate().exchange(uri,
 	HttpMethod.GET, new HttpEntity<String>(null, getHttpHeaders()),
-	UrlInfo.class);
+	ApiStatus.class);
 
     int status = response.getStatusCodeValue();
     System.out.println("status = " + status);
-    UrlInfo result = response.getBody();
+    ApiStatus result = response.getBody();
     System.out.println("result = " + result);
   }
 }

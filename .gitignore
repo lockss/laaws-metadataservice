@@ -205,3 +205,7 @@ local.properties
 /*/pom.xml.bak
 /.surefire-*
 /TAGS
+
+# Patched version of the spec for swagger-codegen
+/src/main/resources/swagger/swagger.yaml.spring
+/src/main/resources/swagger/swagger.yaml.python
