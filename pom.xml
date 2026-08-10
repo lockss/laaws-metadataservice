@@ -55,12 +55,12 @@ POSSIBILITY OF SUCH DAMAGE.
     <gitProjectId>laaws-metadataservice</gitProjectId>
 
     <!-- Is a Spring project -->
-    <build.java.spring.skip>false</build.java.spring.skip>
+    <skipSpring>false</skipSpring>
     <build.java.projectAbbr>md</build.java.projectAbbr>
     <build.java.mainClass>${build.java.package}.MdApplication</build.java.mainClass>
 
     <!-- Is a Docker project -->
-    <build.docker.skip>false</build.docker.skip>
+    <skipDockerBuild>false</skipDockerBuild>
     <build.docker.dockerBuild.restPort>24615</build.docker.dockerBuild.restPort>
     <build.docker.dockerBuild.uiPort>24605</build.docker.dockerBuild.uiPort>
 
